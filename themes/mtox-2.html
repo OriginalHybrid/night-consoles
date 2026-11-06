@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MTOX-2 — Population-Genome Sequencer · uispace</title>
+<meta name="description" content="Clean-room recreation of a population-genome sequencer with cohort and scan-queue panels.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .m-cohort { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 8px; font-family: var(--mono); font-size: var(--fs-body); padding: 4px 0; border-bottom: 1px solid var(--rule2); }
+  .m-cohort:last-child { border-bottom: 0; }
+  .m-cohort .u-n { color: var(--dim); font-size: 8px; }
+  .m-scan { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; font-family: var(--mono); font-size: var(--fs-body); }
+  .m-scan .u-q { color: var(--text); } .m-scan .u-s { color: var(--dim); font-size: 8px; }
+  .m-scan .u-cur { color: var(--accent); animation: u-breathe 2.4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'mtox-2', brand:'MTOX-2', brandSub:'SEQUENCER',
+  subtitle:'POPULATION-GENOME SEQUENCER', subtitleSub:'COHORT 88 · 12,400 SAMPLES · RUN 311',
+  meta:[{r2:'SAMPLES',r1:'12,400'},{r2:'QUEUE',r1:'<b class="u-accent">08</b> PENDING'},{r2:'DEPTH',r1:'31.4×',hide:true}],
+  status:'SEQUENCING', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'COHORT', tag:'88', body:'<div style="display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--dim);padding-bottom:4px;border-bottom:1px solid var(--rule)"><span>REGION</span><span>SAMPLES</span><span>STATE</span></div>' +
+        [['North basin','3,112','DONE'],['Delta strip','2,840','DONE'],['Highland','1,904','SCAN'],['Coastal','2,201','SCAN'],['Interior','1,488','HOLD'],['Islands','855','DONE']].map(([r,n,s])=>'<div class="m-cohort"><span>'+r+'</span><span class="u-n">'+n+'</span><span class="u-pill '+(s==='DONE'?'u-ok':s==='SCAN'?'u-warn':'')+'">'+s+'</span></div>').join('') +
+        '</div>' },
+      { title:'CHAIN OF CUSTODY', tag:'AUDIT', fill:false, body:'<ul class="u-list">' +
+        [['01','field collection','08-12'],['02','cold chain','08-13'],['03','library prep','08-15'],['04','sequencer','08-17'],['05','archive','08-18']].map(([i,n,d])=>'<li><span class="u-idx">'+i+'</span><span>'+n+'</span><span class="u-val">'+d+'</span></li>').join('') +
+        '</ul>' }
+    ]},
+    { panels:[
+      { title:'GENOME VIEW', tag:'COHORT 88', hot:true, canvas:'helix', canvasOpts:{n:60,seed:7},
+        overlay:'<div class="u-corner tl">RUN 311 · 31.4×</div><div class="u-corner tr">CHR 1–22 + X</div><div class="u-corner bl">VARIANTS 4.2M</div><div class="u-corner br">Ti/Tv 2.04</div>' },
+      { title:'SCAN QUEUE', tag:'PENDING', fill:false, body:'<div class="m-scan">' +
+        [['S-8812','10:42','done'],['S-8813','10:44','scan'],['S-8814','—','queued'],['S-8815','—','queued'],['S-8816','—','queued']].map(([s,t,st])=>'<span class="u-q '+(st==='scan'?'u-cur':'')+'">'+s+'</span><span class="u-s">'+(st==='scan'?'▶ '+t:st==='done'?'✓ '+t:'· '+st)+'</span>').join('') +
+        '</div>' }
+    ]},
+    { panels:[
+      { title:'MARKER PROFILE', tag:'PRS', canvas:'radar', canvasOpts:{points:8,seed:14} },
+      { title:'VARIANTS', tag:'TIER', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="u-stat"><span class="u-v u-accent">4.2M</span><span class="u-k">Total</span></div><div class="u-stat"><span class="u-v u-data">2.04</span><span class="u-k">Ti/Tv</span></div><div class="u-stat"><span class="u-v">31.4×</span><span class="u-k">Depth</span></div><div class="u-stat"><span class="u-v u-alarm">12</span><span class="u-k">Pathogenic</span></div></div>' },
+      { title:'SCAN LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('10:12','RUN ','run 311 started · cohort 88') +
+        U.logLine('10:18','EVT ','S-8812 complete · 31.2×') +
+        U.logLine('10:24','NOTE','Ti/Tv 2.04 within band') +
+        U.logLine('10:31','WARN','12 pathogenic candidates flagged') +
+        U.logLine('10:42','EVT ','S-8813 scanning') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'12,400 SAMPLES'},{text:'QUEUE 08'},{text:'RUN 311'},{text:'MTOX-2 · population genome'}],
+  sign:'MTOX-2 · population-genome sequencer'
+});
+</script>
+</body>
+</html>
