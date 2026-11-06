@@ -72,6 +72,7 @@
     align-items: center; font-family: var(--mono); font-size: 8px; }
   .h-meter > span { color: var(--dim); letter-spacing: .08em; }
   .h-meter > b { text-align: right; color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .h-meter > b i { font-style: normal; font-size: 6.5px; letter-spacing: .06em; color: var(--ink3); margin-left: 2px; }
   .h-track { position: relative; height: 8px; background: var(--rule2); overflow: hidden; }
   .h-track i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--v, 50%); background: var(--accent); }
   .h-track.u-d i { background: var(--data); }
@@ -85,14 +86,22 @@
   .h-levels .r .dn { color: var(--accent); }
 
   /* control tiles */
-  .h-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; flex: 1 1 auto; }
-  .h-tile { display: flex; align-items: center; justify-content: center; min-height: 0;
+  .h-tiles { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 4px; flex: 1 1 auto; }
+  .h-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    min-height: 0; padding: 3px 4px; text-align: center; overflow: hidden;
     border: 1px solid var(--rule2); background: color-mix(in srgb, var(--panel) 52%, transparent);
     color: var(--accent); cursor: pointer; transition: background .15s, border-color .15s; }
   .h-tile:hover, .h-tile:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent);
     border-color: color-mix(in srgb, var(--accent) 60%, transparent); outline: none; }
-  .h-tile svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.1; opacity: .85; }
-  .h-tile.u-c { color: var(--cool); } .h-tile.u-d { color: var(--data); }
+  .h-tile svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.1; opacity: .85; }
+  .h-tile .cap { font-family: var(--mono); font-size: 7px; line-height: 1.15; letter-spacing: .12em; color: color-mix(in srgb, var(--dim) 78%, var(--text)); }
+  .h-tile:hover .cap, .h-tile:focus-visible .cap { color: var(--accent); }
+  .h-tile.u-c { color: var(--cool); } .h-tile.u-c .cap { color: color-mix(in srgb, var(--cool) 65%, var(--dim)); }
+  .h-tile.u-d { color: var(--data); } .h-tile.u-d .cap { color: color-mix(in srgb, var(--data) 65%, var(--dim)); }
+
+  /* small section caption identifying a readout group */
+  .h-cap { font-family: var(--mono); font-size: 6.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 3px; }
 
   /* specimen reference strip */
   .h-spec { border-top: 1px solid var(--rule2); margin-top: 5px; padding-top: 4px;
@@ -120,11 +129,12 @@
   <main class="h-main">
     <!-- row 1 · surface -->
     <section class="u-plate u-notch h-plate" style="grid-area:1/1">
-      <div class="u-head"><b>SURFACE</b> <span class="u-dim">/ CH 01</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>SURFACE</b> <span class="u-dim">/ CH 01 · Z-MAP</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
         <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 92px">
           <div class="u-canvas-wrap" id="surface"></div>
           <div class="h-ladder">
+            <div class="h-cap">SCAN READOUT</div>
             <div class="r hot"><span>PEAK</span><b>93.25</b></div>
             <div class="r"><span>PH1</span><b>93.25</b></div>
             <div class="r"><span>PH2</span><b>23.62</b></div>
@@ -141,7 +151,7 @@
 
     <!-- row 1 · route -->
     <section class="u-plate u-notch h-plate" style="grid-area:1/2">
-      <div class="u-head"><b>ROUTE</b> <span class="u-dim">/ TR1 SM311</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>ROUTE</b> <span class="u-dim">/ CARRIER 12A</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas" style="position:relative">
         <div class="u-canvas-wrap h-fill" id="route"></div>
         <div class="h-logbox">
@@ -157,10 +167,11 @@
 
     <!-- row 1 · prism + intake -->
     <section class="u-plate u-notch h-plate" style="grid-area:1/3">
-      <div class="u-head"><b>PRISM</b> <span class="u-dim">/ GAUGE PAIR</span><span style="margin-left:auto" class="u-src sim" id="aq-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>PRISM</b> <span class="u-dim">/ SAT · MULT</span><span style="margin-left:auto" class="u-src sim" id="aq-badge"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
         <div class="u-canvas-wrap" id="prism" style="flex:1 1 auto;min-height:70px"></div>
         <div class="h-intake-wrap">
+          <div class="h-cap">INTAKE AIR · OPEN-METEO</div>
           <div class="h-intake">
             <div><span>PM 2.5</span><b><span data-aq="pm25">11.0</span><i>µg/m³</i></b></div>
             <div><span>PM 10</span><b><span data-aq="pm10">21.0</span><i>µg/m³</i></b></div>
@@ -174,11 +185,12 @@
 
     <!-- row 2 · spool -->
     <section class="u-plate u-notch h-plate" style="grid-area:2/1">
-      <div class="u-head"><b>SPOOL</b> <span class="u-dim">/ DR 128</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>SPOOL</b> <span class="u-dim">/ DRIVE 03</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
         <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 88px">
           <div class="u-canvas-wrap" id="spool"></div>
           <div class="h-ladder">
+            <div class="h-cap">DRIVE</div>
             <div class="r hot"><span>SR</span><b>3</b></div>
             <div class="r"><span>DR</span><b>128</b></div>
             <div class="r"><span>ROT</span><b>15.2</b></div>
@@ -193,7 +205,7 @@
 
     <!-- row 2 · assay -->
     <section class="u-plate u-notch h-plate" style="grid-area:2/2">
-      <div class="u-head"><b>ASSAY</b> <span class="u-dim">/ HEX-44-C</span><span style="margin-left:auto" class="u-src sim" id="pdb-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>ASSAY</b> <span class="u-dim">/ HEX-44-C · ABS</span><span style="margin-left:auto" class="u-src sim" id="pdb-badge"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
         <div class="h-fill" style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:8px">
           <div class="h-kv" style="align-content:center">
@@ -217,16 +229,17 @@
 
     <!-- row 2 · fast matrix -->
     <section class="u-plate u-notch h-plate" style="grid-area:2/3">
-      <div class="u-head"><b>FAST</b> <span class="u-dim">/ GRID 8×6</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>FAST</b> <span class="u-dim">/ STATE MATRIX</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
         <div class="h-ops" id="ops"></div>
+        <div class="h-cap" style="margin:2px 0 3px">CELL = ASSAY STATE · DASH = ROUTE</div>
         <div class="u-canvas-wrap h-fill" id="matrix"></div>
       </div>
     </section>
 
     <!-- row 3 · meters -->
     <section class="u-plate u-notch h-plate" style="grid-area:3/1/4/3">
-      <div class="u-head"><b>METERS</b> <span class="u-dim">/ LIVE TRAIN</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>METERS</b> <span class="u-dim">/ 10 CHANNELS</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body" style="display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:6px">
         <div class="h-meters" id="meters"></div>
         <div class="h-levels" id="levels"></div>
@@ -235,12 +248,12 @@
 
     <!-- row 3 · control tiles + specimen reference -->
     <section class="u-plate u-notch h-plate" style="grid-area:3/3">
-      <div class="u-head"><b>CONTROL</b> <span class="u-dim">/ 12A</span><span style="margin-left:auto" class="u-src sim" id="gbif-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>CONTROL</b> <span class="u-dim">/ OPERATIONS</span><span style="margin-left:auto" class="u-src sim" id="gbif-badge"><i></i>SIM</span></div>
       <div class="u-body" style="display:flex;flex-direction:column;gap:4px">
         <div class="h-tiles" id="tiles"></div>
         <div class="h-spec">
           <b id="gbif-name">Arabidopsis thaliana</b>
-          <span><span class="num" id="gbif-count">318,951</span> RECORDS · <span id="gbif-rank">SPECIES</span></span>
+          <span><span class="num" id="gbif-count">318,951</span> GBIF RECORDS · <span id="gbif-rank">SPECIES</span></span>
         </div>
       </div>
     </section>
@@ -369,7 +382,7 @@ U.canvas('#route', (ctx, w, h, t) => {
 U.canvas('#prism', (ctx, w, h, t) => {
   const accent = U.css('--accent'), cool = U.css('--cool'), dim = U.css('--dim');
   const mono = MONO();
-  const draw = (cx, val, label) => {
+  const draw = (cx, val, label, sub) => {
     const top = h * .26, bot = h * .68, half = Math.min(w * .085, (bot - top) * .52);
     ctx.save();
     ctx.strokeStyle = cool; ctx.globalAlpha = .8; ctx.lineWidth = 1;
@@ -390,13 +403,15 @@ U.canvas('#prism', (ctx, w, h, t) => {
 
     ctx.globalAlpha = .95; ctx.font = '600 13px ' + mono; ctx.textAlign = 'center';
     ctx.fillStyle = U.css('--text'); ctx.fillText(label, cx, bot + 20);
-    ctx.globalAlpha = .5; ctx.font = '6.5px ' + mono; ctx.fillStyle = dim;
-    ctx.fillText('SAT', cx - half, bot + 10); ctx.fillText('MULT', cx + half, bot + 10);
+    ctx.globalAlpha = .62; ctx.font = '6.5px ' + mono; ctx.fillStyle = dim;
+    ctx.fillText(sub, cx, bot + 32);
+    ctx.globalAlpha = .5; ctx.font = '6px ' + mono;
+    ctx.fillText('A', cx - half, bot + 10); ctx.fillText('B', cx + half, bot + 10);
     ctx.restore();
   };
   const a = .62 + Math.sin(t * .6) * .02, b = .38 + Math.cos(t * .5) * .02;
-  draw(w * .30, a, '54.64');
-  draw(w * .72, b, '61.81');
+  draw(w * .30, a, '54.64', 'A · SATURATION');
+  draw(w * .72, b, '61.81', 'B · MULTIPLICITY');
 }, { fps: 10 });
 
 /* ---------------------------------------------------------------- spool (torus of loops) */
@@ -452,7 +467,7 @@ U.canvas('#assay', (ctx, w, h, t) => {
   ctx.fillText('ASSAY 04', cx, cy + r + 16);
 
   /* bar chart on the right */
-  const n = 10, base = h - 16, top = h * .18;
+  const n = 10, base = h - 24, top = h * .18;
   const availW = w * .60, x0 = w * .44, bw = Math.min(11, availW / n * .46), step = availW / n;
   ctx.globalAlpha = .30; ctx.strokeStyle = dim; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(x0 - 8, base + .5); ctx.lineTo(w - 4, base + .5); ctx.stroke();
@@ -466,6 +481,8 @@ U.canvas('#assay', (ctx, w, h, t) => {
     ctx.globalAlpha = .55; ctx.fillStyle = dim; ctx.font = '6px ' + mono; ctx.textAlign = 'center';
     ctx.fillText(String(i + 1), x + bw / 2, base + 8);
   }
+  ctx.globalAlpha = .38; ctx.fillStyle = dim; ctx.font = '6px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('CH 01–10 · REL. FLUORESCENCE', 2, h - 3);
   ctx.restore();
 }, { fps: 2 });
 
@@ -515,14 +532,14 @@ U.canvas('#matrix', (ctx, w, h) => {
   document.getElementById('ops').innerHTML = ops.map((o, i) => '<span' + (i === 0 || i === 3 ? ' class="on"' : '') + '>' + o + '</span>').join('');
 
   const meters = [
-    ['OXY', 98, ''], ['CAR', 74, 'u-c'], ['PSI', 56, ''], ['TEMP', 42, 'u-d'],
-    ['VOL', 63, ''], ['PH', 73, 'u-c'], ['CO₂', 12, 'u-a'], ['N₂', 78, ''],
-    ['PRT', 55, ''], ['BUF', 31, 'u-d']
+    ['OXY', 98, '', '%'], ['CAR', 74, 'u-c', '%'], ['PSI', 56, '', 'psi'], ['TEMP', 42, 'u-d', '°C'],
+    ['VOL', 63, '', '%'], ['PH', 73, 'u-c', ''], ['CO₂', 12, 'u-a', '%'], ['N₂', 78, '', '%'],
+    ['PRT', 55, '', '%'], ['BUF', 31, 'u-d', '%']
   ];
-  document.getElementById('meters').innerHTML = meters.map(([k, v, cls]) =>
+  document.getElementById('meters').innerHTML = meters.map(([k, v, cls, unit]) =>
     '<div class="h-meter"><span>' + k + '</span>' +
     '<div class="h-track ' + cls + '"><i style="--v:' + v + '%"></i></div>' +
-    '<b>' + (k === 'PH' ? '7.34' : v) + '</b></div>'
+    '<b>' + (k === 'PH' ? '7.34' : v) + '<i>' + (unit || '') + '</i></b></div>'
   ).join('');
 
   const levels = [['Lv 2', '+0.4', 'up'], ['Lv 3', '−0.2', 'dn'], ['Lv 4', '94%', ''], ['Lv 5', 'OK', ''],
@@ -532,19 +549,20 @@ U.canvas('#matrix', (ctx, w, h) => {
   ).join('');
 
   const icons = [
-    '<path d="M5 18h20M8 18l5-7 4 4 5-8"/>',
-    '<rect x="6" y="9" width="18" height="12"/><path d="M6 15h18"/>',
-    '<path d="M6 20V10M12 20V6M18 20V13M24 20V9"/>',
-    '<path d="M15 5l9 10-9 10L6 15z"/>',
-    '<circle cx="15" cy="15" r="7"/><path d="M15 8v7l5 3"/>',
-    '<path d="M5 15h6l3-7 3 14 3-7h5"/>',
-    '<path d="M15 6v18M6 15h18"/>',
-    '<rect x="7" y="7" width="16" height="16"/><path d="M11 3v6M19 3v6M3 11h6M3 19h6"/>',
-    '<circle cx="9" cy="9" r="2.5"/><circle cx="21" cy="9" r="2.5"/><circle cx="15" cy="21" r="2.5"/>'
+    ['FLUSH', '<path d="M5 18h20M8 18l5-7 4 4 5-8"/>'],
+    ['TRANSFER', '<rect x="6" y="9" width="18" height="12"/><path d="M6 15h18"/>'],
+    ['SPECTRUM', '<path d="M6 20V10M12 20V6M18 20V13M24 20V9"/>'],
+    ['ALIGN', '<path d="M15 5l9 10-9 10L6 15z"/>'],
+    ['CYCLE', '<circle cx="15" cy="15" r="7"/><path d="M15 8v7l5 3"/>'],
+    ['TRACE', '<path d="M5 15h6l3-7 3 14 3-7h5"/>'],
+    ['INJECT', '<path d="M15 6v18M6 15h18"/>'],
+    ['CALIBRATE', '<rect x="7" y="7" width="16" height="16"/><path d="M11 3v6M19 3v6M3 11h6M3 19h6"/>'],
+    ['BIND', '<circle cx="9" cy="9" r="2.5"/><circle cx="21" cy="9" r="2.5"/><circle cx="15" cy="21" r="2.5"/>']
   ];
-  document.getElementById('tiles').innerHTML = icons.map((d, i) =>
-    '<button class="h-tile' + (i === 3 ? ' u-c' : i === 6 ? ' u-d' : '') + '" aria-label="Control ' + (i + 1) + '">' +
-    '<svg viewBox="0 0 30 30" aria-hidden="true">' + d + '</svg></button>'
+  document.getElementById('tiles').innerHTML = icons.map(([label, d], i) =>
+    '<button class="h-tile' + (i === 3 ? ' u-c' : i === 6 ? ' u-d' : '') + '" aria-label="' + label + '" title="' + label + '">' +
+    '<svg viewBox="0 0 30 30" aria-hidden="true">' + d + '</svg>' +
+    '<span class="cap">' + label + '</span></button>'
   ).join('');
 })();
 
