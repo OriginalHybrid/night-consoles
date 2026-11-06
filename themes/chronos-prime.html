@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHRONOS-PRIME — Time-Anomaly Observatory · uispace</title>
+<meta name="description" content="Clean-room recreation of a time-anomaly observatory with a live atomic-time reference.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .ch-time { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+  .ch-time .t { font-family: var(--mono); font-size: clamp(30px, 4.4vw, 64px); letter-spacing: .06em; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .ch-time .d { font-family: var(--mono); font-size: var(--fs-lab); letter-spacing: .28em; color: var(--dim); margin-top: 10px; }
+  .ch-anom { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 8px; font-family: var(--mono); font-size: var(--fs-body); padding: 5px 0; border-bottom: 1px solid var(--rule2); }
+  .ch-anom:last-child { border-bottom: 0; }
+  .ch-anom .u-n { color: var(--dim); font-size: 8px; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+const ANOM = [
+  ['A-114','Δ +0.0041 s','STABLE'],['A-115','Δ −0.0122 s','WATCH'],['A-116','Δ +0.4410 s','CRIT'],
+  ['A-117','Δ +0.0003 s','STABLE'],['A-118','Δ −0.0081 s','WATCH'],['A-119','Δ +1.2044 s','CRIT']
+];
+U.shell({
+  name:'chronos-prime', brand:'CHRONOS', brandSub:'PRIME',
+  subtitle:'TIME-ANOMALY OBSERVATORY', subtitleSub:'ARRAY 3 · REFERENCE TAI · DRIFT MONITOR',
+  meta:[{r2:'ANOMALIES',r1:'06 TRACKED'},{r2:'DRIFT',r1:'<b class="u-accent">+0.0041 s</b>'},{r2:'EPOCH',r1:'J2000.0',hide:true}],
+  status:'LOCKED', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'ANOMALY REGISTER', tag:'ARRAY 3', body:'<div style="display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--dim);padding-bottom:4px;border-bottom:1px solid var(--rule)"><span>ID</span><span>OFFSET</span><span>STATE</span></div>' +
+        ANOM.map(([id,d,s],i)=>'<div class="ch-anom'+(s==='CRIT'?' u-hot':'')+'"><span>'+id+'</span><span class="u-n" style="color:'+(s==='CRIT'?'var(--alarm)':'inherit')+'">'+d+'</span><span class="u-pill '+(s==='STABLE'?'u-ok':s==='WATCH'?'u-warn':'u-alarm')+'">'+s+'</span></div>').join('') },
+      { title:'REFERENCE', tag:'TAI', fill:false, body:'<dl class="u-kv" id="tai-rows"><dt>UTC</dt><dd>—</dd><dt>Offset</dt><dd>+00:00</dd><dt>Leap s</dt><dd>37</dd><dt>Drift</dt><dd>+0.0041 s</dd><dt>Stability</dt><dd class="u-accent">1.2e−15</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'TIME LATTICE', tag:'Δ MONITOR', hot:true, canvas:'scan', canvasOpts:{seed:6},
+        overlay:'<div class="ch-time"><div><div class="t" data-clock="local">--:--:--</div><div class="d">TAI REFERENCE · LOCKED</div></div></div><div class="u-corner tl">ARRAY 3</div><div class="u-corner tr">J2000.0</div><div class="u-corner bl">Δ +0.0041 s</div><div class="u-corner br">STABILITY 1.2e−15</div>' },
+      { title:'ANOMALY PROFILE', tag:'A-116', canvas:'wave', canvasOpts:{lanes:2,amp:.2} }
+    ]},
+    { panels:[
+      { title:'CAUSALITY', tag:'CONE', canvas:'contour', canvasOpts:{seed:29,sx:1.6,cy:.45}, overlay:'<div class="u-corner tl">LIGHT CONE</div><div class="u-corner br">Δt 1.20 s</div>' },
+      { title:'OBSERVATIONS', tag:'LOG', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="9">' +
+        U.logLine('03:14','EVT ','array 3 reference lock acquired') +
+        U.logLine('03:22','NOTE','anomaly A-116 offset +0.441 s') +
+        U.logLine('03:31','ALRM','causality margin below 0.5 s') +
+        U.logLine('03:44','EVT ','A-116 reclassified critical') +
+        U.logLine('03:58','NOTE','epoch J2000.0 broadcast stable') +
+        '</div>' },
+      { title:'CLOCKS', tag:'SYNC', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="u-stat"><span class="u-v u-accent">4</span><span class="u-k">Optical</span></div><div class="u-stat"><span class="u-v">2</span><span class="u-k">Cesium</span></div><div class="u-stat"><span class="u-v u-data">±0.4 ns</span><span class="u-k">Agreement</span></div><div class="u-stat"><span class="u-v u-alarm">1</span><span class="u-k">Faulted</span></div></div>' }
+    ]}
+  ],
+  footer:[{text:'06 ANOMALIES'},{text:'DRIFT +0.0041 s'},{text:'A-116 CRITICAL',cls:'u-alarm'},{text:'CHRONOS-PRIME · time observatory'}],
+  sign:'CHRONOS-PRIME · time-anomaly observatory'
+});
+
+U.api.timezone('Etc/UTC').then(({data,state})=>{
+  const rows = document.getElementById('tai-rows'); if (!rows) return;
+  rows.innerHTML = '<dt>UTC</dt><dd>'+String(data.utc).slice(11,19)+'</dd><dt>Offset</dt><dd>'+data.offset+'</dd><dt>Leap s</dt><dd>37</dd><dt>Drift</dt><dd>+0.0041 s</dd><dt>Stability</dt><dd class="u-accent">1.2e−15</dd>';
+  const b = document.querySelector('[data-plate="tai"] .u-src');
+  U.setSrc(b, state, state === 'live' ? 'LIVE' : 'SIM');
+});
+</script>
+</body>
+</html>
