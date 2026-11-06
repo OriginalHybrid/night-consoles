@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PAWN-7 NIGHTMARKET — Cyberpunk Pawn-Shop Terminal · uispace</title>
+<meta name="description" content="Clean-room recreation of a nightmarket pawn-shop terminal with a live crypto price board.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .p-neon { text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 65%, transparent); }
+  .p-window { position: relative; }
+  .p-window .u-corner { color: var(--cool); }
+  .p-price { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 10px; font-family: var(--mono); font-size: var(--fs-body); align-items: baseline; }
+  .p-price .u-pair { color: var(--text); letter-spacing: .08em; }
+  .p-price .u-up { color: var(--data); } .p-price .u-dn { color: var(--alarm); }
+  .p-price .u-rule { border-bottom: 1px solid var(--rule2); }
+  .p-tagchip { display: inline-block; padding: 0 5px; border: 1px solid var(--rule); border-radius: 2px; font-size: 8px; color: var(--cool); }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+const ACQ = [
+  ['LOT-881','CYBERDECK MK.IV','9,400','HOLD'],
+  ['LOT-882','NEURAL SHUNT (PAIR)','3,120','OPEN'],
+  ['LOT-883','OPTIC ARRAY — MIL-SPEC','7,750','OPEN'],
+  ['LOT-884','SYNTH LIVER, SERIES 3','1,980','HOLD'],
+  ['LOT-885','UNLABELED CORTEX CHIP','—','QUAR'],
+  ['LOT-886','BALLISTIC WEAVE, WORN','640','OPEN']
+];
+const TX = [
+  ['22:04:11','BUY ','lot 881 intake — seller 0x4f2'],
+  ['22:11:47','SELL','neural shunt → booth 12'],
+  ['22:19:03','NOTE','cortex chip flagged quarantine'],
+  ['22:26:55','BUY ','optic array, provenance unclear'],
+  ['22:31:12','ALRM','ledger mismatch 42 cr — audit'],
+  ['22:44:38','SELL','ballistic weave → runner 9'],
+  ['22:51:09','NOTE','night shift handover in 68 min']
+];
+
+U.shell({
+  name:'pawn-7-nightmarket', brand:'PAWN-7', brandSub:'NIGHTMARKET',
+  subtitle:'NIGHTMARKET EXCHANGE', subtitleSub:'BAY 7 · NO REFUNDS · CASH OR CREDIT',
+  meta:[{r2:'LEDGER',r1:'TOTAL <b class="u-accent">4,812 cr</b>'},{r2:'QUEUE',r1:'06 HOLD'},{r2:'SHIFT',r1:'NIGHT 22:00–06:00',hide:true}],
+  status:'OPEN', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'ACQUISITIONS', tag:'LOT QUEUE',
+        body:'<table class="u-tbl"><thead><tr><th>Lot</th><th>Item</th><th class="u-r">Cr</th><th>State</th></tr></thead><tbody>' +
+          ACQ.map(([id,n,p,s],i)=>'<tr'+(i===4?' class="u-hot"':'')+'><td class="u-k">'+id+'</td><td>'+n+'</td><td class="u-n">'+p+'</td><td><span class="u-pill '+(s==='OPEN'?'u-ok':s==='QUAR'?'u-alarm':'u-warn')+'">'+s+'</span></td></tr>').join('') +
+          '</tbody></table><div style="margin-top:10px"><div class="u-spread"><span class="u-lab">FLOOR CAPACITY</span><span class="u-num">71%</span></div><div class="u-bar u-striped"><i style="--v:71%"></i></div></div>' },
+      { title:'LEDGER', tag:'BALANCE', tight:true, body:
+        '<dl class="u-kv"><dt>Cash on hand</dt><dd class="u-accent">4,812 cr</dd><dt>Held deposits</dt><dd>1,204 cr</dd><dt>Outstanding</dt><dd class="u-alarm">318 cr</dd><dt>Night volume</dt><dd>9,442 cr</dd><dt>Fee tier</dt><dd>B · 3.5%</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'SHOP WINDOW', tag:'FEED 7', hot:true, canvas:'matrix', canvasOpts:{seed:11,color:'--accent'}, cls:'u-fill',
+        overlay:'<div class="u-corner tl">NIGHTMARKET · CAM 07</div><div class="u-corner tr">▮ REC</div><div class="u-corner bl">F/1.8 · 1/60</div><div class="u-corner br">22:44:38</div>' },
+      { title:'PRICE BOARD', tag:'ORACLE FEED', src:'live', srcLabel:'LIVE', fill:false, id:'crypto',
+        body:'<div class="p-price" id="crypto-rows"><span class="u-pair">BTC/USD</span><span class="u-num">—</span><span class="u-dim">—</span><span class="u-pair">ETH/USD</span><span class="u-num">—</span><span class="u-dim">—</span><span class="u-pair">XMR/USD</span><span class="u-num">—</span><span class="u-dim">—</span></div><div class="u-spread u-lab" style="margin-top:8px;border-top:1px solid var(--rule2);padding-top:6px"><span>VENUE 7 · SETTLE T+0</span><span class="u-dim">DISCOUNT 2.4%</span></div>' }
+    ]},
+    { panels:[
+      { title:'TRANSACTIONS', tag:'ROLLING', src:'sim', fill:true, tight:true, scroll:true, body:'<div class="u-log" data-log data-max="12">' + TX.map(([t,tag,m])=>U.logLine(t,tag,m,tag==='ALRM'?'u-alarm':tag==='NOTE'?'u-hot':'')).join('') + '</div>' },
+      { title:'OPEN DEMANDS', tag:'BOUNTY', fill:false, body:'<ul class="u-list">' +
+        [['→','Cortex chip, unlabeled','2,400'],['→','Optic array, mil-spec','1,900'],['→','Coolant, 40 L','780'],['→','ID blank, clean','6,200']].map(([a,b,c])=>'<li><span class="u-idx">'+a+'</span><span>'+b+'</span><span class="u-val u-accent">'+c+'</span></li>').join('') +
+        '</ul>' }
+    ]}
+  ],
+  footer:[{text:'<span class="u-accent">●</span> OPEN'},{text:'BOOTH 12 ACTIVE'},{text:'FEE 3.5%',hide:true},{text:'NO REFUNDS · NO NAMES'}],
+  sign:'PAWN-7 · nightmarket terminal'
+});
+
+U.api.crypto(['bitcoin','ethereum','monero']).then(({data,state})=>{
+  const rows = document.getElementById('crypto-rows');
+  if (!rows) return;
+  rows.innerHTML = data.map((c)=>{
+    const name = c.id === 'bitcoin' ? 'BTC/USD' : c.id === 'ethereum' ? 'ETH/USD' : 'XMR/USD';
+    const cls = c.chg >= 0 ? 'u-up' : 'u-dn';
+    return '<span class="u-pair">'+name+'</span><span class="u-num">'+U.fmt(c.price,2)+'</span><span class="'+cls+'">'+(c.chg>=0?'+':'')+U.fmt(c.chg,2)+'%</span>';
+  }).join('');
+  const plate = document.querySelector('[data-plate="crypto"] .u-src');
+  U.setSrc(plate, state, state === 'live' ? 'LIVE' : 'SIM');
+});
+</script>
+</body>
+</html>
