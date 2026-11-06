@@ -1,0 +1,6 @@
+# keep source files LF regardless of the local autocrlf setting
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.woff2 binary
