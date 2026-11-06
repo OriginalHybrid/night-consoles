@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GYRE WATCH — Storm Forecasting Aerostat · uispace</title>
+<meta name="description" content="Clean-room recreation of a storm-forecasting aerostat console wired to live weather data.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .w-hero { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+  .w-hero .n { font-family: var(--mono); font-size: clamp(38px,5vw,76px); line-height: .9; color: var(--text); }
+  .w-hero .n small { font-size: .32em; color: var(--dim); letter-spacing: .2em; }
+  .w-hero .k { font-family: var(--mono); font-size: 8px; letter-spacing: .3em; color: var(--dim); margin-top: 8px; }
+  .w-cell { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; font-family: var(--mono); font-size: var(--fs-body); padding: 4px 0; border-bottom: 1px solid var(--rule2); }
+  .w-cell:last-child { border-bottom: 0; }
+  .w-cell .u-v { color: var(--accent); }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'gyre-watch', brand:'GYRE WATCH', brandSub:'AEROSTAT',
+  subtitle:'STORM FORECASTING AEROSTAT', subtitleSub:'STATION GYRE-2 · 18.4 km · SECTOR 7',
+  meta:[{r2:'STATION',r1:'GYRE-2 · 18.4 km'},{r2:'TRACK',r1:'<b class="u-accent">CAT 3</b>'},{r2:'WIND',r1:'— kt',hide:true}],
+  status:'TRACKING', statusCls:'u-warn',
+  cols:[
+    { panels:[
+      { title:'STORM CELL', tag:'TRACK 07', body:'<div class="w-cell"><span>Position</span><span class="u-v">22.4°N 131.8°E</span></div><div class="w-cell"><span>Pressure</span><span class="u-v">948 hPa</span></div><div class="w-cell"><span>Max wind</span><span class="u-v">104 kt</span></div><div class="w-cell"><span>Gust</span><span class="u-v">128 kt</span></div><div class="w-cell"><span>Radius</span><span>184 km</span></div><div class="w-cell"><span>Motion</span><span>NW 14 kt</span></div><div class="w-cell"><span>Category</span><span class="u-pill u-warn">CAT 3</span></div>' +
+        '<div style="margin-top:12px"><div class="u-spread"><span class="u-lab">CONFIDENCE CONE</span><span class="u-num u-data">78%</span></div><div class="u-bar u-data"><i style="--v:78%"></i></div></div>' },
+      { title:'STATION', tag:'AEROSTAT', fill:false, body:'<dl class="u-kv"><dt>Altitude</dt><dd>18.4 km</dd><dt>Pressure</dt><dd>72 hPa</dd><dt>Temp</dt><dd class="u-cool">−54 °C</dd><dt>Battery</dt><dd class="u-data">84%</dd><dt>Link</dt><dd>12.4 dB</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'STORM FIELD', tag:'SECTOR 7', hot:true, canvas:'contour', canvasOpts:{seed:19,sx:1.7,cy:.5},
+        overlay:'<div class="w-hero"><div><div class="n" data-tick data-base="948" data-drift="0.6" data-dec="0">948<small> hPa</small></div><div class="k">CENTRAL PRESSURE</div></div></div><div class="u-corner tl">TRACK 07 · NW 14 kt</div><div class="u-corner tr">CAT 3</div><div class="u-corner bl">R 184 km</div><div class="u-corner br">CONE 78%</div>' },
+      { title:'WIND PROFILE', tag:'18.4 km', canvas:'wave', canvasOpts:{lanes:3,amp:.2} }
+    ]},
+    { panels:[
+      { title:'LIVE WEATHER', tag:'AEROSTAT', src:'live', srcLabel:'LIVE', id:'wx', fill:false, body:'<dl class="u-kv" id="wx-rows"><dt>Temp</dt><dd>—</dd><dt>Wind</dt><dd>—</dd><dt>Gust</dt><dd>—</dd><dt>Pressure</dt><dd>—</dd><dt>Cloud</dt><dd>—</dd></dl>' },
+      { title:'FORECAST', tag:'48 H', canvas:'bars', canvasOpts:{n:48,seed:17,speed:.8} },
+      { title:'WATCH LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('05:04','EVT ','storm cell track 07 updated') +
+        U.logLine('05:12','WARN','central pressure 948 hPa') +
+        U.logLine('05:19','EVT ','confidence cone 78%') +
+        U.logLine('05:24','NOTE','aerostat station nominal') +
+        U.logLine('05:31','EVT ','landfall window 41 h') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'TRACK 07 · CAT 3',cls:'u-warn'},{text:'948 hPa'},{text:'CONE 78%'},{text:'GYRE WATCH · aerostat'}],
+  sign:'GYRE WATCH · storm forecasting aerostat'
+});
+
+U.api.openMeteo(22.4,131.8).then(({data,state})=>{
+  const rows = document.getElementById('wx-rows'); if (!rows) return;
+  rows.innerHTML = '<dt>Temp</dt><dd>'+U.fmt(data.temp,1)+' °C</dd><dt>Wind</dt><dd>'+U.fmt(data.wind,1)+' km/h</dd><dt>Gust</dt><dd>'+U.fmt(data.gust,1)+' km/h</dd><dt>Pressure</dt><dd>'+U.fmt(data.pressure,0)+' hPa</dd><dt>Cloud</dt><dd>'+U.fmt(data.cloud,0)+'%</dd>';
+  const b = document.querySelector('[data-plate="wx"] .u-src'); U.setSrc(b,state,state==='live'?'LIVE':'SIM');
+});
+</script>
+</body>
+</html>
