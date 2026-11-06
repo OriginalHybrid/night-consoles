@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SECOND-PARTY — AI Self-Audit Dashboard · uispace</title>
+<meta name="description" content="Clean-room recreation of an AI self-audit dashboard rendering evaluation layers and findings.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .s-layer { display: grid; grid-template-columns: 22px 1fr auto; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--rule2); font-family: var(--mono); font-size: var(--fs-body); }
+  .s-layer:last-child { border-bottom: 0; }
+  .s-layer .u-n { color: var(--dim); font-size: 8px; }
+  .s-layer .u-name { color: var(--text); }
+  .s-layer .u-sub { color: var(--dim); font-size: 8px; }
+  .s-find { display: grid; grid-template-columns: 46px 1fr auto; gap: 6px; font-family: var(--mono); font-size: var(--fs-body); padding: 4px 0; border-bottom: 1px solid var(--rule2); }
+  .s-find .u-sev { font-size: 8px; letter-spacing: .1em; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+const LAYERS = [
+  ['01','Intent parsing','rules v4.2','PASS'],['02','Tool selection','allowlist','PASS'],['03','Memory write','policy gate','WARN'],
+  ['04','Response synthesis','self-consistency','PASS'],['05','Citation check','provenance','PASS'],['06','Escalation path','human-in-loop','REVIEW'],
+  ['07','Rollback','snapshot 19:00','PASS'],['08','Disclosure','red-team corpus','PASS']
+];
+const FINDINGS = [
+  ['HIGH','memory write bypasses review when confidence >0.94','OPEN'],
+  ['MED','citation check skips non-English sources','OPEN'],
+  ['LOW','tool retry emits duplicate audit row','TRIAGE'],
+  ['MED','escalation path has no timeout','OPEN'],
+  ['LOW','summary exceeds 240 chars in 3 cases','DONE'],
+  ['INFO','policy corpus version drift detected','DONE']
+];
+U.shell({
+  name:'second-party', brand:'SECOND-PARTY', brandSub:'SELF-AUDIT',
+  subtitle:'AI SELF-AUDIT DASHBOARD', subtitleSub:'CONSISTENCY · PROVENANCE · DISCLOSURE',
+  meta:[{r2:'RUN',r1:'AUDIT 1482'},{r2:'COVERAGE',r1:'94.7%'},{r2:'OPEN',r1:'<b class="u-alarm">04</b>'}],
+  status:'AUDITING', statusCls:'u-warn',
+  cols:[
+    { panels:[
+      { title:'AUDIT LAYERS', tag:'8 / 8 RUN', body: LAYERS.map(([n,name,sub,st])=>'<div class="s-layer"><span class="u-n">'+n+'</span><span><span class="u-name">'+name+'</span><br><span class="u-sub">'+sub+'</span></span><span class="u-pill '+(st==='PASS'?'u-ok':st==='WARN'?'u-warn':st==='REVIEW'?'u-alarm':'')+'">'+st+'</span></div>').join('') },
+      { title:'CONFIDENCE', tag:'SELF-REPORT', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="u-stat"><span class="u-v u-accent">0.912</span><span class="u-k">Composite</span></div><div class="u-stat"><span class="u-v u-data">0.977</span><span class="u-k">Consistency</span></div><div class="u-stat"><span class="u-v">0.842</span><span class="u-k">Provenance</span></div><div class="u-stat"><span class="u-v u-alarm">0.641</span><span class="u-k">Disclosure</span></div></div>' }
+    ]},
+    { panels:[
+      { title:'REASONING GRAPH', tag:'TRACE 1482', hot:true, canvas:'flow', canvasOpts:{seed:8,lines:34},
+        overlay:'<div class="u-corner tl">NODES 214 · EDGES 508</div><div class="u-corner tr">DEPTH 17</div><div class="u-corner bl">SELF-CHECK ×3</div><div class="u-corner br">HALT: POLICY</div>' },
+      { title:'FINDINGS', tag:'QUEUE', src:'live', srcLabel:'LIVE', id:'findings', scroll:true, fill:false, body:
+        '<div class="s-find"><span class="u-sev u-alarm">HIGH</span><span>memory write bypasses review</span><span class="u-dim">OPEN</span></div>' +
+        '<div class="s-find"><span class="u-sev u-warn">MED</span><span>citation check skips non-English</span><span class="u-dim">OPEN</span></div>' +
+        '<div class="s-find"><span class="u-sev u-warn">MED</span><span>escalation path has no timeout</span><span class="u-dim">OPEN</span></div>' +
+        '<div class="s-find"><span class="u-sev u-dim">LOW</span><span>tool retry emits duplicate row</span><span class="u-dim">TRIAGE</span></div>' }
+    ]},
+    { panels:[
+      { title:'DISCLOSURE', tag:'RED-TEAM', canvas:'gridpulse', canvasOpts:{cell:26,seed:4}, overlay:'<div class="u-corner tl">CORPUS 4,102</div><div class="u-corner br">PASS 0.641</div>' },
+      { title:'AUDIT LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="9">' +
+        U.logLine('19:00','RUN ','audit 1482 started · snapshot 19:00') +
+        U.logLine('19:04','PASS','layer 01 intent parsing') +
+        U.logLine('19:11','WARN','layer 03 memory write — policy gate') +
+        U.logLine('19:18','FAIL','layer 06 escalation timeout') +
+        U.logLine('19:22','NOTE','findings queued: 4 open') +
+        U.logLine('19:24','PASS','layer 08 disclosure complete') +
+        '</div>' },
+      { title:'SIGN-OFF', tag:'HUMAN', fill:false, body:'<dl class="u-kv"><dt>Reviewer</dt><dd>— PENDING</dd><dt>Requested</dt><dd>19:24</dd><dt>Deadline</dt><dd class="u-warn">T− 41m</dd><dt>Escalation</dt><dd>L2 · AI OPS</dd></dl>' }
+    ]}
+  ],
+  footer:[{text:'AUDIT 1482'},{text:'OPEN 04',cls:'u-alarm'},{text:'COVERAGE 94.7%'},{text:'SECOND-PARTY · self-audit'}],
+  sign:'SECOND-PARTY · self-audit'
+});
+
+/* optional external corpus — headline stream stands in for the red-team feed */
+U.api.hackernews(6).then(({data,state})=>{
+  const badge = document.querySelector('[data-plate="findings"] .u-src');
+  U.setSrc(badge, state, state === 'live' ? 'LIVE CORPUS' : 'SIM CORPUS');
+});
+</script>
+</body>
+</html>
