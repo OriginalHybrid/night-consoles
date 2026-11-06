@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TIDAL-3 — Distributed Sentiment Analysis · uispace</title>
+<meta name="description" content="Clean-room recreation of a distributed sentiment dashboard fed by a live headline stream.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .d-sent { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; font-family: var(--mono); font-size: var(--fs-body); padding: 5px 0; border-bottom: 1px solid var(--rule2); }
+  .d-sent:last-child { border-bottom: 0; }
+  .d-sent .u-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .d-sent .u-score { font-variant-numeric: tabular-nums; }
+  .d-meter { display: flex; height: 8px; border-radius: 1px; overflow: hidden; }
+  .d-meter i { display: block; height: 100%; }
+  .d-meter .pos { background: var(--data); } .d-meter .neu { background: var(--rule); } .d-meter .neg { background: var(--alarm); }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'tidal-3', brand:'TIDAL-3', brandSub:'SENTIMENT',
+  subtitle:'DISTRIBUTED SENTIMENT ANALYSIS', subtitleSub:'12 SHARDS · 4.2M POSTS / H · STREAM 7',
+  meta:[{r2:'SHARDS',r1:'12 / 12 ONLINE'},{r2:'TONE',r1:'<b class="u-data">+0.42</b>'},{r2:'RATE',r1:'4.2M/h',hide:true}],
+  status:'STREAMING', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'TONE DISTRIBUTION', tag:'12 SHARDS', body:'<div class="d-meter"><i class="pos" style="width:46%"></i><i class="neu" style="width:32%"></i><i class="neg" style="width:22%"></i></div><div class="u-spread" style="margin-top:4px"><span class="u-lab u-data">POS 46%</span><span class="u-lab">NEU 32%</span><span class="u-lab u-alarm">NEG 22%</span></div>' +
+        '<div class="u-bars" style="margin-top:14px">' +
+        [['shard 01',61],['shard 02',48],['shard 03',72],['shard 04',33],['shard 05',58],['shard 06',44]].map(([n,v])=>'<div class="u-brow"><span>'+n+'</span><div class="u-bar '+(v<40?'u-alarm':'u-data')+'"><i style="--v:'+v+'%"></i></div><span class="u-n">'+v+'</span></div>').join('') +
+        '</div>' },
+      { title:'SHARD HEALTH', tag:'LATENCY', fill:false, body:'<dl class="u-kv"><dt>Ingest p50</dt><dd>41 ms</dd><dt>p99</dt><dd class="u-accent">212 ms</dd><dt>Dropped</dt><dd>0.00%</dd><dt>Model</dt><dd>tidal-3b</dd><dt>Drift</dt><dd class="u-data">0.012</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'SENTIMENT FIELD', tag:'STREAM 7', hot:true, canvas:'flow', canvasOpts:{seed:21,lines:36},
+        overlay:'<div class="u-corner tl">12 SHARDS AGGREGATE</div><div class="u-corner tr">TONE +0.42</div><div class="u-corner bl">4.2M POSTS / H</div><div class="u-corner br">MODEL 3b</div>' },
+      { title:'LIVE CORPUS', tag:'HEADLINES', src:'live', srcLabel:'LIVE', id:'hn', scroll:true, fill:false, body:'<div id="hn-rows"><div class="d-sent"><span class="u-t">loading stream…</span><span class="u-score">—</span></div></div>' }
+    ]},
+    { panels:[
+      { title:'TONE CURVE', tag:'24 H', canvas:'wave', canvasOpts:{lanes:3,amp:.18} },
+      { title:'KEYWORDS', tag:'TOP', fill:false, body:'<div style="display:flex;gap:4px;flex-wrap:wrap">' +
+        [['signal',72],['routing',64],['latency',58],['mesh',51],['panel',44],['drift',31],['cascade',28]].map(([w,v])=>'<span class="u-pill '+(v>60?'u-ok':v<35?'u-alarm':'')+'">'+w+' '+v+'</span>').join('') +
+        '</div>' },
+      { title:'SHARD LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="9">' +
+        U.logLine('17:02','EVT ','shard 03 tone +0.72 peak') +
+        U.logLine('17:08','NOTE','shard 04 negative cluster') +
+        U.logLine('17:12','ALRM','shard 04 latency 212 ms') +
+        U.logLine('17:19','EVT ','model drift within band') +
+        U.logLine('17:24','EVT ','aggregate tone +0.42') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'12 / 12 SHARDS'},{text:'TONE +0.42',cls:'u-data'},{text:'4.2M POSTS/H',hide:true},{text:'TIDAL-3 · sentiment'}],
+  sign:'TIDAL-3 · distributed sentiment'
+});
+
+U.api.hackernews(7).then(({data,state})=>{
+  const rows = document.getElementById('hn-rows'); if (!rows) return;
+  rows.innerHTML = data.map((d,i)=>{
+    const tone = ((Math.sin(i * 2.1) + 1) / 2);
+    const cls = tone > .62 ? 'u-data' : tone < .34 ? 'u-alarm' : 'u-dim';
+    return '<div class="d-sent"><span class="u-t">'+d.title+'</span><span class="u-score '+cls+'">'+(tone>.5?'+':'')+U.fmt((tone-.5)*2,2)+'</span></div>';
+  }).join('');
+  const b = document.querySelector('[data-plate="hn"] .u-src'); U.setSrc(b,state,state==='live'?'LIVE':'SIM');
+});
+</script>
+</body>
+</html>
