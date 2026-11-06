@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TARSUS RETURN — Salvage-Tug Cockpit at L5 · uispace</title>
+<meta name="description" content="Clean-room recreation of a salvage-tug cockpit with orbital tracks and a live ISS position feed.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .t-cons { display: grid; gap: 6px; }
+  .t-cons .u-brow { grid-template-columns: 66px 1fr 40px; }
+  .t-approach { display: grid; grid-template-columns: 1fr auto; gap: 5px 8px; font-family: var(--mono); font-size: var(--fs-body); }
+  .t-approach .u-lbl { color: var(--dim); font-size: 8px; letter-spacing: .1em; }
+  .t-approach .u-v { color: var(--text); text-align: right; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'tarsus-lost', brand:'TARSUS', brandSub:'RETURN',
+  subtitle:'SALVAGE-TUG COCKPIT', subtitleSub:'L5 · DERELICT 7B · APPROACH VECTOR 02',
+  meta:[{r2:'RANGE',r1:'<b class="u-accent">2.41</b> km'},{r2:'CLOSING',r1:'0.18 m/s'},{r2:'ΔV BUDGET',r1:'412 m/s',hide:true}],
+  status:'APPROACH', statusCls:'u-warn',
+  cols:[
+    { panels:[
+      { title:'CONSUMABLES', tag:'TUG', body:'<div class="t-cons u-bars">' +
+        [['Main prop',72,'u-data'],['RCS',54,''],['Power',81,'u-data'],['O₂',63,''],['Water',44,'u-cool'],['Scrubber',29,'u-alarm']].map(([n,v,c])=>'<div class="u-brow"><span>'+n+'</span><div class="u-bar '+c+'"><i style="--v:'+v+'%"></i></div><span class="u-n">'+v+'%</span></div>').join('') +
+        '</div><dl class="u-kv" style="margin-top:12px"><dt>Mass ratio</dt><dd>1.42</dd><dt>Burn window</dt><dd class="u-accent">T− 11:24</dd><dt>Fuel</dt><dd>412 kg</dd></dl>' },
+      { title:'APPROACH', tag:'VECTOR 02', fill:false, body:'<div class="t-approach">' +
+        [['SLANT RANGE','2.41 km'],['CLOSING RATE','0.18 m/s'],['LATERAL','−4.2 m'],['ROTATION','0.6 °/s'],['ATTITUDE','0.7° ERR'],['CORRIDOR','± 8 m'],['HANDOFF','T− 41 m'],['AUTHORITY','PILOT']].map(([a,b])=>'<span class="u-lbl">'+a+'</span><span class="u-v'+(a==='HANDOFF'?' u-accent':'')+'">'+b+'</span>').join('') +
+        '</div>' }
+    ]},
+    { panels:[
+      { title:'ORBITAL PLOT', tag:'L5 TRAFFIC', hot:true, canvas:'orbit', canvasOpts:{n:6,hot:3,squash:.55,seed:12},
+        overlay:'<div class="u-corner tl">TARSUS RETURN · HULL 7B</div><div class="u-corner tr">EPOCH 22:44:38</div><div class="u-corner bl">INC 4.21°</div><div class="u-corner br">ΔV 412 m/s</div>' },
+      { title:'DERELICT', tag:'TARGET 7B', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="u-stat"><span class="u-v u-accent">7B</span><span class="u-k">Target</span></div><div class="u-stat"><span class="u-v">3.4</span><span class="u-k">Mass kt</span></div><div class="u-stat"><span class="u-v u-data">14.2</span><span class="u-k">Spin °/s</span></div><div class="u-stat"><span class="u-v u-alarm">CUT</span><span class="u-k">Hull state</span></div></div>' }
+    ]},
+    { panels:[
+      { title:'ISS EPHEMERIS', tag:'LIVE', src:'live', srcLabel:'LIVE', id:'iss', fill:false, body:'<dl class="u-kv" id="iss-rows"><dt>Latitude</dt><dd>—</dd><dt>Longitude</dt><dd>—</dd><dt>Altitude</dt><dd>—</dd><dt>Velocity</dt><dd>—</dd><dt>Visibility</dt><dd>—</dd></dl>' },
+      { title:'CONJUNCTION LADDER', tag:'SORTED', canvas:'ladder', canvasOpts:{rows:7,hot:1} },
+      { title:'COMMS', tag:'TUG NET', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('22:31','TX  ','tarsus → control: approach vector locked') +
+        U.logLine('22:34','RX  ','control: hold corridor, no burn') +
+        U.logLine('22:38','NOTE','lateral drift −4.2 m corrected') +
+        U.logLine('22:41','RX  ','derelict transponder intermittent') +
+        U.logLine('22:44','TX  ','requesting docking probe extend') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'APPROACH 02'},{text:'RANGE 2.41 km'},{text:'ΔV 412 m/s',hide:true},{text:'TARSUS · salvage tug'}],
+  sign:'TARSUS RETURN · salvage tug'
+});
+
+U.api.iss().then(({data,state})=>{
+  const rows = document.getElementById('iss-rows'); if (!rows) return;
+  rows.innerHTML = '<dt>Latitude</dt><dd>'+U.fmt(data.lat,3)+'°</dd><dt>Longitude</dt><dd>'+U.fmt(data.lon,3)+'°</dd><dt>Altitude</dt><dd>'+U.fmt(data.alt,1)+' km</dd><dt>Velocity</dt><dd>'+U.fmt(data.vel,0)+' km/h</dd><dt>Visibility</dt><dd>'+data.vis+'</dd>';
+  const badge = document.querySelector('[data-plate="iss"] .u-src');
+  U.setSrc(badge, state, state === 'live' ? 'LIVE' : 'SIM');
+});
+</script>
+</body>
+</html>
