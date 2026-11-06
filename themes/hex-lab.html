@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HEX-LAB — Multi-Instrument Biolab Rig · uispace</title>
-<meta name="description" content="Clean-room recreation of a multi-instrument biolab rig: six assay channels, a wireframe surface scan, sample routing and a live intake feed. Part of the uispace gallery.">
-<!-- Data: rig telemetry is deterministic SIM. Reference blocks are live public feeds —
-     Open-Meteo Air Quality (intake), GBIF (specimen taxon), RCSB PDB (assay reference). -->
+<title>HEX-LAB — Genomics Bench · uispace</title>
+<meta name="description" content="Clean-room recreation of a genomics workbench: sequencing coverage, sample pipeline, spectrophotometer QC, centrifuge, qPCR, 96-well plate and incubator. Part of the uispace gallery.">
+<!-- Data: bench telemetry is deterministic SIM. Reference blocks are live public feeds —
+     Open-Meteo Air Quality (environment), GBIF (specimen reference), RCSB PDB (structure reference). -->
 <link rel="stylesheet" href="../shared/u-base.css">
 <style>
   :root { --gap: 5px; --pad: 8px; --rule2: color-mix(in srgb, var(--dim) 26%, transparent); }
@@ -14,25 +14,37 @@
   main.h-main {
     display: grid; gap: 5px; padding: 5px; min-height: 0; background: var(--bg);
     grid-template-columns: minmax(0,1fr) minmax(0,1.04fr) minmax(0,1fr);
-    grid-template-rows: 1.12fr .9fr .62fr;
+    grid-template-rows: 1.06fr .96fr .68fr;
   }
   .h-main .u-plate > .u-head { min-height: 20px; padding: 3px 8px; letter-spacing: .16em; }
   .h-main .u-plate > .u-head b { letter-spacing: .18em; }
   .h-main > .u-plate > .u-body { padding: 6px 7px; }
   .h-body-canvas { display: flex; flex-direction: column; gap: 4px; padding: 0 !important; }
   .h-fill { flex: 1 1 auto; min-height: 0; position: relative; }
-  .h-corners-txt { font-family: var(--mono); font-size: 7px; letter-spacing: .12em; color: var(--dim); }
 
-  /* value ladder beside the surface scan */
+  /* two-column measure table: label left, value + unit right */
+  .h-kv { display: grid; grid-template-columns: 1fr auto; gap: 0 8px;
+    font-family: var(--mono); font-size: 8px; line-height: 1.75; color: var(--dim); }
+  .h-kv b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .h-kv b i { font-style: normal; font-size: 6.5px; color: var(--ink3); margin-left: 2px; }
+
   .h-ladder { display: flex; flex-direction: column; justify-content: center; gap: 1px;
     padding-left: 8px; border-left: 1px solid var(--rule2); font-family: var(--mono); font-size: 8px; }
   .h-ladder .r { display: flex; justify-content: space-between; gap: 6px; color: var(--dim); line-height: 1.65; }
   .h-ladder .r b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
   .h-ladder .r.hot b { color: var(--data); }
   .h-ladder .r.cool b { color: var(--cool); }
+  .h-ladder .r b i { font-style: normal; font-size: 6px; color: var(--ink3); margin-left: 1px; }
 
-  /* experiment log floating over the route map */
-  .h-logbox { position: absolute; right: 6px; top: 6px; width: 176px; padding: 5px 6px;
+  .h-cap { font-family: var(--mono); font-size: 6.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 3px; }
+
+  .h-strip { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border-top: 1px solid var(--rule2); padding-top: 4px; margin-top: auto;
+    font-family: var(--mono); font-size: 7px; letter-spacing: .09em; color: var(--dim); }
+
+  /* pipeline log */
+  .h-logbox { position: absolute; right: 6px; top: 6px; width: 178px; padding: 5px 6px;
     border: 1px solid var(--rule2); background: color-mix(in srgb, var(--bg) 84%, transparent); }
   .h-logbox h4 { margin: 0 0 3px; font: 400 7px var(--mono); letter-spacing: .16em;
     text-transform: uppercase; color: var(--accent); }
@@ -41,38 +53,29 @@
   .h-logbox time { color: var(--dim); margin-right: 5px; }
   .h-logbox .hot { color: var(--cool); }
 
-  /* compact key/value table used by intake + specimen */
-  .h-kv { display: grid; grid-template-columns: 1fr auto; gap: 0 8px;
-    font-family: var(--mono); font-size: 8px; line-height: 1.7; color: var(--dim); }
-  .h-kv b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .h-kv .unit { color: var(--ink3); font-size: 7px; margin-left: 2px; }
-
-  .h-intake-wrap { position: relative; z-index: 2; padding-top: 2px; }
-  .h-intake { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 10px; }
-  .h-intake > div { display: block; min-width: 0;
-    font-family: var(--mono); font-size: 8px; line-height: 1.5; letter-spacing: .09em; color: var(--dim); }
-  .h-intake > div > span { display: block; }
-  .h-intake b { display: block; font-weight: 500; font-size: 11px; line-height: 1.2; color: var(--text);
+  /* environment (live) */
+  .h-env { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 10px; }
+  .h-env > div { display: block; min-width: 0; font-family: var(--mono); font-size: 7px;
+    line-height: 1.5; letter-spacing: .08em; color: var(--dim); }
+  .h-env > div > span { display: block; }
+  .h-env b { display: block; font-weight: 500; font-size: 10px; line-height: 1.2; color: var(--text);
     font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .h-intake i { font-style: normal; font-size: 6.5px; color: var(--ink3); margin-left: 2px; }
+  .h-env i { font-style: normal; font-size: 6.5px; color: var(--ink3); margin-left: 2px; }
 
-  .h-strip { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    border-top: 1px solid var(--rule2); padding-top: 4px; margin-top: 4px;
-    font-family: var(--mono); font-size: 7px; letter-spacing: .1em; color: var(--dim); }
+  /* three absorbance cells: label and value on one baseline */
+  .h-tri { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 10px;
+    border-top: 1px solid var(--rule2); border-bottom: 1px solid var(--rule2); padding: 3px 0; margin: 2px 0; }
+  .h-tri > div { display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+    font-family: var(--mono); font-size: 7px; letter-spacing: .08em; color: var(--dim); }
+  .h-tri b { font-size: 10px; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
 
-  /* ops chips above the matrix */
-  .h-ops { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 5px; margin-bottom: 4px; }
-  .h-ops span { font: 7px/1.55 var(--mono); letter-spacing: .1em; text-align: center;
-    color: var(--ink3); border: 1px solid var(--rule2); padding: 0 3px; }
-  .h-ops span.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
-
-  /* horizontal meters */
+  /* incubator meters */
   .h-meters { display: flex; flex-direction: column; justify-content: space-between; }
-  .h-meter { display: grid; grid-template-columns: 38px minmax(0,1fr) 46px; gap: 6px;
+  .h-meter { display: grid; grid-template-columns: 40px minmax(0,1fr) 62px; gap: 6px;
     align-items: center; font-family: var(--mono); font-size: 8px; }
-  .h-meter > span { color: var(--dim); letter-spacing: .08em; }
+  .h-meter > span { color: var(--dim); letter-spacing: .07em; }
   .h-meter > b { text-align: right; color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .h-meter > b i { font-style: normal; font-size: 6.5px; letter-spacing: .06em; color: var(--ink3); margin-left: 2px; }
+  .h-meter > b i { font-style: normal; font-size: 6.5px; letter-spacing: .05em; color: var(--ink3); margin-left: 2px; }
   .h-track { position: relative; height: 8px; background: var(--rule2); overflow: hidden; }
   .h-track i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--v, 50%); background: var(--accent); }
   .h-track.u-d i { background: var(--data); }
@@ -82,11 +85,12 @@
     border-left: 1px solid var(--rule2); padding-left: 9px; font-family: var(--mono); font-size: 7.5px; }
   .h-levels .r { display: flex; justify-content: space-between; gap: 6px; color: var(--dim); }
   .h-levels .r b { color: var(--text); font-weight: 400; font-variant-numeric: tabular-nums; }
-  .h-levels .r .up { color: var(--cool); }
-  .h-levels .r .dn { color: var(--accent); }
+  .h-levels .r .ok { color: var(--data); }
+  .h-levels .r .warn { color: var(--accent); }
 
-  /* control tiles */
-  .h-tiles { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 4px; flex: 1 1 auto; }
+  /* protocol tiles */
+  .h-tiles { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(0, 1fr);
+    gap: 4px; flex: 1 1 auto; }
   .h-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     min-height: 0; padding: 3px 4px; text-align: center; overflow: hidden;
     border: 1px solid var(--rule2); background: color-mix(in srgb, var(--panel) 52%, transparent);
@@ -94,166 +98,173 @@
   .h-tile:hover, .h-tile:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent);
     border-color: color-mix(in srgb, var(--accent) 60%, transparent); outline: none; }
   .h-tile svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.1; opacity: .85; }
-  .h-tile .cap { font-family: var(--mono); font-size: 7px; line-height: 1.15; letter-spacing: .12em; color: color-mix(in srgb, var(--dim) 78%, var(--text)); }
+  .h-tile .cap { font-family: var(--mono); font-size: 7px; line-height: 1.15; letter-spacing: .12em;
+    color: color-mix(in srgb, var(--dim) 78%, var(--text)); }
   .h-tile:hover .cap, .h-tile:focus-visible .cap { color: var(--accent); }
   .h-tile.u-c { color: var(--cool); } .h-tile.u-c .cap { color: color-mix(in srgb, var(--cool) 65%, var(--dim)); }
   .h-tile.u-d { color: var(--data); } .h-tile.u-d .cap { color: color-mix(in srgb, var(--data) 65%, var(--dim)); }
 
-  /* small section caption identifying a readout group */
-  .h-cap { font-family: var(--mono); font-size: 6.5px; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--dim); margin-bottom: 3px; }
-
-  /* specimen reference strip */
-  .h-spec { border-top: 1px solid var(--rule2); margin-top: 5px; padding-top: 4px;
-    font-family: var(--mono); font-size: 7px; letter-spacing: .07em; color: var(--dim); line-height: 1.5; }
-  .h-spec b { display: block; font-weight: 500; font-size: 8px; letter-spacing: .04em;
+  /* specimen reference */
+  .h-spec { border-top: 1px solid var(--rule2); margin-top: 4px; padding-top: 4px;
+    font-family: var(--mono); font-size: 7px; letter-spacing: .06em; color: var(--dim); line-height: 1.5; }
+  .h-spec b { display: block; font-weight: 500; font-size: 8px; letter-spacing: .03em;
     color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .h-spec .num { color: var(--data); font-variant-numeric: tabular-nums; }
+
+  /* qPCR table */
+  .h-ct { display: grid; grid-template-columns: 1fr auto; gap: 0 6px;
+    font-family: var(--mono); font-size: 8px; line-height: 1.8; color: var(--dim); }
+  .h-ct b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .h-ct .hot { color: var(--cool); }
 </style>
 </head>
 <body>
 <div class="u-app">
   <!-- ───────────────────────────────────────────────────────── top chrome -->
   <header class="u-top u-rule-pattern">
-    <div class="u-brand"><i></i>HEX-LAB<small>LAB-7</small></div>
-    <div class="u-cell"><span class="u-r1"><b>BIO-CYBERNETIC</b> RIG</span><span class="u-r2">TEC-9 · HEX BAY · RUN 12A</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r1">RIG <span class="u-pill u-ok"><span class="u-dot"></span>ONLINE</span></span><span class="u-r2">5 / 6 CHANNELS</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">OXY / PSI</span><span class="u-r1 u-mono">98.0 % · 11.0</span></div>
+    <div class="u-brand"><i></i>HEX-LAB<small>BAY 7</small></div>
+    <div class="u-cell"><span class="u-r1"><b>GENOMICS</b> BENCH</span><span class="u-r2">TEC-9 · SAMPLE-TO-ANSWER · RUN 12A</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r1">BENCH <span class="u-pill u-ok"><span class="u-dot"></span>RUNNING</span></span><span class="u-r2">5 / 6 ASSAYS</span></div>
     <div class="u-cell u-hide-sm"><span class="u-r2">SAMPLE</span><span class="u-r1 u-mono u-accent">HEX-44-C</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">LIBRARY</span><span class="u-r1 u-mono">12.4 nM</span></div>
     <div class="u-cell u-grow"></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">ALARM</span><span class="u-r1"><span class="u-pill u-alarm"><span class="u-dot"></span>01</span></span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">QC</span><span class="u-r1"><span class="u-pill u-warn">1 HOLD</span></span></div>
     <div class="u-cell"><span class="u-r2">LOCAL</span><span class="u-r1 u-mono" data-clock="local">--:--:--</span></div>
   </header>
 
-  <!-- ───────────────────────────────────────────────────────── instruments -->
+  <!-- ───────────────────────────────────────────────────────── bench -->
   <main class="h-main">
-    <!-- row 1 · surface -->
+    <!-- row 1 · sequencing coverage -->
     <section class="u-plate u-notch h-plate" style="grid-area:1/1">
-      <div class="u-head"><b>SURFACE</b> <span class="u-dim">/ CH 01 · Z-MAP</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>COVERAGE</b> <span class="u-dim">/ CHR 07</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
-        <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 92px">
-          <div class="u-canvas-wrap" id="surface"></div>
+        <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 96px">
+          <div class="u-canvas-wrap" id="coverage"></div>
           <div class="h-ladder">
-            <div class="h-cap">SCAN READOUT</div>
-            <div class="r hot"><span>PEAK</span><b>93.25</b></div>
-            <div class="r"><span>PH1</span><b>93.25</b></div>
-            <div class="r"><span>PH2</span><b>23.62</b></div>
-            <div class="r"><span>PH3</span><b>10.40</b></div>
-            <div class="r hot"><span>PHS</span><b>23.62</b></div>
-            <div class="r"><span>AGE</span><b>10.40</b></div>
-            <div class="r cool"><span>CON</span><b>−0.61</b></div>
-            <div class="r"><span>±</span><b>1.62</b></div>
+            <div class="h-cap">RUN 12A</div>
+            <div class="r hot"><span>MEAN</span><b>38.2<i>×</i></b></div>
+            <div class="r"><span>MAX</span><b>96<i>×</i></b></div>
+            <div class="r"><span>READS</span><b>4.28<i>M</i></b></div>
+            <div class="r"><span>N50</span><b>12.4<i>kb</i></b></div>
+            <div class="r hot"><span>Q30</span><b>94.2<i>%</i></b></div>
+            <div class="r"><span>GC</span><b>41.3<i>%</i></b></div>
+            <div class="r cool"><span>DUP</span><b>3.2<i>%</i></b></div>
           </div>
         </div>
-        <div class="h-strip"><span>RT 3.4 s · MESH 26×16</span><span>Z 0–96</span></div>
+        <div class="h-strip"><span>ALIGNED 98.7 % · MISMATCH 0.42 %</span><span>CHR 07 · 0–48 Mb</span></div>
       </div>
     </section>
 
-    <!-- row 1 · route -->
+    <!-- row 1 · sample pipeline -->
     <section class="u-plate u-notch h-plate" style="grid-area:1/2">
-      <div class="u-head"><b>ROUTE</b> <span class="u-dim">/ CARRIER 12A</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>PIPELINE</b> <span class="u-dim">/ SAMPLE-TO-ANSWER</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas" style="position:relative">
-        <div class="u-canvas-wrap h-fill" id="route"></div>
+        <div class="u-canvas-wrap h-fill" id="pipeline"></div>
         <div class="h-logbox">
-          <h4>Experiment log</h4>
-          <p><time>12:38</time>AUX +0.02</p>
-          <p><time>12:39</time>MOD-RGM sync</p>
-          <p><time>12:41</time><span class="hot">BYPASS</span> engaged</p>
-          <p><time>12:44</time>TR1 pack sealed</p>
+          <h4>Run log</h4>
+          <p><time>12:38</time>library 12.4 nM</p>
+          <p><time>12:39</time>PCR 38 cycles done</p>
+          <p><time>12:41</time><span class="hot">QC hold</span> A260/280</p>
+          <p><time>12:44</time>flowcell primed</p>
         </div>
-        <div class="h-strip" style="border-top:0;padding-top:0;margin-top:0"><span>CARRIER 12A · 7 NODES</span><span>Δ 0.38 s</span></div>
+        <div class="h-strip" style="border-top:0;padding-top:0"><span>7 STAGES · ETA 02:14</span><span>STEP 5 / 7</span></div>
       </div>
     </section>
 
-    <!-- row 1 · prism + intake -->
+    <!-- row 1 · spectrophotometer QC + environment -->
     <section class="u-plate u-notch h-plate" style="grid-area:1/3">
-      <div class="u-head"><b>PRISM</b> <span class="u-dim">/ SAT · MULT</span><span style="margin-left:auto" class="u-src sim" id="aq-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>SPECTRO</b> <span class="u-dim">/ A260 · A280 · A230</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
-        <div class="u-canvas-wrap" id="prism" style="flex:1 1 auto;min-height:70px"></div>
-        <div class="h-intake-wrap">
-          <div class="h-cap">INTAKE AIR · OPEN-METEO</div>
-          <div class="h-intake">
-            <div><span>PM 2.5</span><b><span data-aq="pm25">11.0</span><i>µg/m³</i></b></div>
-            <div><span>PM 10</span><b><span data-aq="pm10">21.0</span><i>µg/m³</i></b></div>
-            <div><span>OZONE</span><b><span data-aq="o3">44</span><i>µg/m³</i></b></div>
-            <div><span>NO₂</span><b><span data-aq="no2">18</span><i>µg/m³</i></b></div>
-          </div>
-          <div class="h-strip"><span>INTAKE · 51.50N 0.12W</span><span>AQI <span data-aq="aqi">38</span></span></div>
+        <div class="u-canvas-wrap" id="spectro" style="flex:1 1 auto;min-height:80px"></div>
+        <div class="h-tri">
+          <div><span>A260</span><b>0.61</b></div>
+          <div><span>A280</span><b>0.34</b></div>
+          <div><span>A230</span><b>0.29</b></div>
         </div>
+        <div class="h-cap" style="margin:2px 0 2px;display:flex;align-items:center;justify-content:space-between;gap:6px">
+          <span>ENVIRONMENT · OPEN-METEO</span>
+          <span class="u-src sim" id="env-badge"><i></i>SIM</span>
+        </div>
+        <div class="h-env">
+          <div><span>PM 2.5</span><b><span data-aq="pm25">11.0</span><i>µg/m³</i></b></div>
+          <div><span>PM 10</span><b><span data-aq="pm10">21.0</span><i>µg/m³</i></b></div>
+          <div><span>OZONE</span><b><span data-aq="o3">44</span><i>µg/m³</i></b></div>
+          <div><span>NO₂</span><b><span data-aq="no2">18</span><i>µg/m³</i></b></div>
+        </div>
+        <div class="h-strip"><span>INTAKE · 51.50N 0.12W</span><span>AQI <span data-aq="aqi">38</span></span></div>
       </div>
     </section>
 
-    <!-- row 2 · spool -->
+    <!-- row 2 · centrifuge -->
     <section class="u-plate u-notch h-plate" style="grid-area:2/1">
-      <div class="u-head"><b>SPOOL</b> <span class="u-dim">/ DRIVE 03</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>CENTRIFUGE</b> <span class="u-dim">/ ROTOR 24</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
-        <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 88px">
-          <div class="u-canvas-wrap" id="spool"></div>
+        <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 96px">
+          <div class="u-canvas-wrap" id="rotor"></div>
           <div class="h-ladder">
-            <div class="h-cap">DRIVE</div>
-            <div class="r hot"><span>SR</span><b>3</b></div>
-            <div class="r"><span>DR</span><b>128</b></div>
-            <div class="r"><span>ROT</span><b>15.2</b></div>
-            <div class="r"><span>ERA</span><b>3.4</b></div>
-            <div class="r cool"><span>AGE</span><b>0.41</b></div>
-            <div class="r"><span>DRF</span><b>0.021</b></div>
-            <div class="r"><span>ENT</span><b>2.84</b></div>
+            <div class="h-cap">SPIN</div>
+            <div class="r hot"><span>RPM</span><b>14,000</b></div>
+            <div class="r"><span>RCF</span><b>18.4<i>k×g</i></b></div>
+            <div class="r"><span>TEMP</span><b>4.0<i>°C</i></b></div>
+            <div class="r hot"><span>TIME</span><b>02:31</b></div>
+            <div class="r"><span>LOAD</span><b>24 / 24</b></div>
+            <div class="r cool"><span>BAL</span><b>0.02<i>g</i></b></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- row 2 · assay -->
+    <!-- row 2 · qPCR -->
     <section class="u-plate u-notch h-plate" style="grid-area:2/2">
-      <div class="u-head"><b>ASSAY</b> <span class="u-dim">/ HEX-44-C · ABS</span><span style="margin-left:auto" class="u-src sim" id="pdb-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>qPCR</b> <span class="u-dim">/ 40 CYCLES</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
-        <div class="h-fill" style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:8px">
-          <div class="h-kv" style="align-content:center">
-            <span>ABS 260</span><b>0.61</b>
-            <span>A260/280</span><b>1.81</b>
-            <span>RATIO</span><b>1.94</b>
-            <span>CYCLES</span><b>38</b>
-            <span>YIELD</span><b>31.62</b>
-            <span>PURITY</span><b>0.842</b>
-            <span>GLOV</span><b>0.000</b>
-            <span>VAR</span><b>0.18</b>
+        <div class="h-fill" style="display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px">
+          <div class="h-ct" style="align-content:center">
+            <span>TARGET</span><b>HEX-44</b>
+            <span>Ct mean</span><b class="hot">18.4</b>
+            <span>Ct SD</span><b>0.12</b>
+            <span>EFF</span><b>96.2<i>%</i></b>
+            <span>R²</span><b>0.998</b>
+            <span>MELT</span><b>82.1<i>°C</i></b>
+            <span>NTC</span><b>—</b>
+            <span>WELLS</span><b>19 / 24</b>
           </div>
-          <div class="u-canvas-wrap" id="assay"></div>
+          <div class="u-canvas-wrap" id="qpcr"></div>
         </div>
         <div class="h-strip">
           <span>REF <b class="u-mono" id="pdb-id">4HHB</b> · <span id="pdb-method">X-RAY</span> · <span id="pdb-res">1.74 Å</span></span>
-          <span id="pdb-year">1984 · RCSB PDB</span>
+          <span style="display:flex;align-items:center;gap:6px"><span class="u-src sim" id="pdb-badge"><i></i>SIM</span><span id="pdb-year">1984 · RCSB PDB</span></span>
         </div>
       </div>
     </section>
 
-    <!-- row 2 · fast matrix -->
+    <!-- row 2 · 96-well plate -->
     <section class="u-plate u-notch h-plate" style="grid-area:2/3">
-      <div class="u-head"><b>FAST</b> <span class="u-dim">/ STATE MATRIX</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-head"><b>WELL PLATE</b> <span class="u-dim">/ 96 WELLS</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body h-body-canvas">
-        <div class="h-ops" id="ops"></div>
-        <div class="h-cap" style="margin:2px 0 3px">CELL = ASSAY STATE · DASH = ROUTE</div>
-        <div class="u-canvas-wrap h-fill" id="matrix"></div>
+        <div class="u-canvas-wrap h-fill" id="plate"></div>
+        <div class="h-strip" style="border-top:0;padding-top:0"><span>S SAMPLE · I INCUBATING · C CONTROL · F FAIL</span><span>8 ROWS × 12 COLS</span></div>
       </div>
     </section>
 
-    <!-- row 3 · meters -->
+    <!-- row 3 · incubator -->
     <section class="u-plate u-notch h-plate" style="grid-area:3/1/4/3">
-      <div class="u-head"><b>METERS</b> <span class="u-dim">/ 10 CHANNELS</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
-      <div class="u-body" style="display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:6px">
+      <div class="u-head"><b>INCUBATOR</b> <span class="u-dim">/ ATMOSPHERE · 37.0 °C</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-body" style="display:grid;grid-template-columns:minmax(0,1fr) 118px;gap:6px">
         <div class="h-meters" id="meters"></div>
         <div class="h-levels" id="levels"></div>
       </div>
     </section>
 
-    <!-- row 3 · control tiles + specimen reference -->
+    <!-- row 3 · protocol + specimen reference -->
     <section class="u-plate u-notch h-plate" style="grid-area:3/3">
-      <div class="u-head"><b>CONTROL</b> <span class="u-dim">/ OPERATIONS</span><span style="margin-left:auto" class="u-src sim" id="gbif-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>PROTOCOL</b> <span class="u-dim">/ ACTIONS</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body" style="display:flex;flex-direction:column;gap:4px">
         <div class="h-tiles" id="tiles"></div>
         <div class="h-spec">
           <b id="gbif-name">Arabidopsis thaliana</b>
           <span><span class="num" id="gbif-count">318,951</span> GBIF RECORDS · <span id="gbif-rank">SPECIES</span></span>
+          <span class="u-src sim" id="gbif-badge" style="margin-top:2px"><i></i>SIM</span>
         </div>
       </div>
     </section>
@@ -261,19 +272,16 @@
 
   <!-- ───────────────────────────────────────────────────────── footer -->
   <footer class="u-bot">
-    <div class="u-cell"><span class="u-r2">FRQ 442.2 Hz</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">AMP 0.74</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">PXA 14.2°</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">TMP −150 °C</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">DRF 0.018</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">OXY 94%</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">PSI 11.1</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">CO₂ 0.42</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">PH 7.34</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">CON 0.87</span></div>
-    <div class="u-cell u-hide-sm"><span class="u-r2">HUM 38%</span></div>
-    <div class="u-cell u-grow"><span class="u-r2 u-dim">HEX-LAB V3.2 · bio-cybernetic rig · TEC-9 / LAB-7 · EXP IN PROGRESS</span></div>
-    <div class="u-cell"><span class="u-r2 u-accent">MEN_FHW / 12A</span></div>
+    <div class="u-cell"><span class="u-r2">READS 4.28 M</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">N50 12.4 kb</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">Q30 94.2%</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">GC 41.3%</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">DUP 3.2%</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">MAP 98.7%</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">COV 38.2×</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">Ct 18.4</span></div>
+    <div class="u-cell u-grow"><span class="u-r2 u-dim">HEX-LAB V3.2 · genomics bench · TEC-9 / BAY 7 · RUN 12A IN PROGRESS</span></div>
+    <div class="u-cell"><span class="u-r2 u-accent">SAMPLE HEX-44-C</span></div>
   </footer>
 </div>
 
@@ -286,281 +294,337 @@ U.page('hex-lab', { scan: false });
 const MONO = () => getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
 const TAU = Math.PI * 2;
 
-/* ---------------------------------------------------------------- surface scan
-   height field projected isometrically; rows/cols drawn as one polyline each */
-U.canvas('#surface', (ctx, w, h, t) => {
-  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+/* ---------------------------------------------------------------- sequencing coverage
+   depth-of-coverage track across a 48 Mb window; y is read depth in × */
+U.canvas('#coverage', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
+  const mono = MONO();
   U.draw.grid(ctx, w, h, cool, 30, .05);
-  const cols = 26, rows = 16;
-  const cx = w * .52, cy = h * .46;
-  const sx = Math.min(w * .040, 26), sy = Math.min(h * .032, 19), amp = Math.min(h * .30, 74);
-  const f = (i, j) => Math.sin(i * .44 + t * .55) * .46 +
-    Math.cos(j * .52 + i * .16 + t * .4) * .33 +
-    Math.sin((i + j) * .19 - t * .7) * .21;
-  const X = (i, j) => cx + (i - cols / 2) * sx - (j - rows / 2) * sx * .55;
-  const Y = (i, j) => cy + (j - rows / 2) * sy - f(i, j) * amp;
 
-  ctx.save(); ctx.lineWidth = 1; ctx.strokeStyle = accent;
-  for (let j = 0; j <= rows; j++) {
-    ctx.beginPath();
-    for (let i = 0; i <= cols; i++) { const x = X(i, j), y = Y(i, j); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-    ctx.globalAlpha = .08 + .30 * (j / rows);
-    ctx.stroke();
-  }
-  for (let i = 0; i <= cols; i++) {
-    ctx.beginPath();
-    for (let j = 0; j <= rows; j++) { const x = X(i, j), y = Y(i, j); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-    ctx.globalAlpha = .06 + .20 * (i / cols);
-    ctx.stroke();
-  }
+  const top = h * .14, base = h - 26;
+  const n = 140;
+  const depth = (i) => {
+    const x = i / n;
+    let v = .18 + .10 * Math.sin(x * 9 + t * .3);
+    v += .55 * Math.exp(-Math.pow((x - .18) / .05, 2));
+    v += .92 * Math.exp(-Math.pow((x - .42) / .035, 2));
+    v += .48 * Math.exp(-Math.pow((x - .63) / .06, 2));
+    v += .70 * Math.exp(-Math.pow((x - .81) / .03, 2));
+    return Math.min(1, v);
+  };
 
-  [[6, 4, data], [19, 9, cool], [24, 13, accent], [3, 11, data]].forEach(([i, j, col], k) => {
-    const x = X(i, j), y = Y(i, j);
-    ctx.globalAlpha = .95; ctx.fillStyle = col;
-    ctx.beginPath(); ctx.arc(x, y, 2.3, 0, TAU); ctx.fill();
-    ctx.globalAlpha = .30; ctx.strokeStyle = col;
-    ctx.beginPath(); ctx.arc(x, y, 6 + (k % 2) * 2, 0, TAU); ctx.stroke();
-  });
+  ctx.save();
+  /* area */
+  const grad = ctx.createLinearGradient(0, top, 0, base);
+  grad.addColorStop(0, accent + '55');
+  grad.addColorStop(1, accent + '05');
+  ctx.beginPath(); ctx.moveTo(0, base);
+  for (let i = 0; i <= n; i++) ctx.lineTo((i / n) * w, base - depth(i) * (base - top));
+  ctx.lineTo(w, base); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.strokeStyle = accent; ctx.globalAlpha = .85; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const x = (i / n) * w, y = base - depth(i) * (base - top);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.stroke();
+
+  /* threshold line + labels */
+  ctx.globalAlpha = .25; ctx.strokeStyle = data; ctx.setLineDash([3, 4]);
+  const y30 = base - .62 * (base - top);
+  ctx.beginPath(); ctx.moveTo(0, y30); ctx.lineTo(w, y30); ctx.stroke(); ctx.setLineDash([]);
+  ctx.globalAlpha = .55; ctx.fillStyle = data; ctx.font = '6.5px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('30×', 4, y30 - 3);
+
+  /* scrub cursor */
+  const cx = ((t * .04) % 1) * w;
+  ctx.globalAlpha = .5; ctx.strokeStyle = cool;
+  ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx, base); ctx.stroke();
+  ctx.globalAlpha = .9; ctx.fillStyle = cool;
+  ctx.beginPath(); ctx.arc(cx, base - depth(Math.round(cx / w * n)) * (base - top), 2.4, 0, TAU); ctx.fill();
+
+  /* axis */
+  ctx.globalAlpha = .45; ctx.fillStyle = dim; ctx.font = '6.5px ' + mono;
+  ctx.textAlign = 'left'; ctx.fillText('0 Mb', 4, base + 12);
+  ctx.textAlign = 'right'; ctx.fillText('48 Mb', w - 4, base + 12);
+  ctx.textAlign = 'center'; ctx.fillText('POSITION', w / 2, base + 12);
   ctx.restore();
 }, { fps: 12 });
 
-/* ---------------------------------------------------------------- route map */
-const ROUTE = [
-  [.09, .66, 'MOD_CONV'], [.21, .34, 'BYPASS'], [.39, .27, 'SYS_892'],
-  [.56, .39, 'MOD_1007'], [.70, .60, 'MOD_RGM'], [.50, .80, 'AUX-2'], [.83, .85, 'OBS-9']
+/* ---------------------------------------------------------------- sample pipeline */
+const STAGES = [
+  ['LYSIS', 'done'], ['EXTRACT', 'done'], ['LIBRARY', 'done'], ['PCR', 'done'],
+  ['QC', 'hold'], ['SEQ', 'queued'], ['ANALYSE', 'queued']
 ];
-U.canvas('#route', (ctx, w, h, t) => {
+U.canvas('#pipeline', (ctx, w, h, t) => {
   const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const dim = U.css('--dim'), alarm = U.css('--alarm'), text = U.css('--text');
   const mono = MONO();
-  U.draw.grid(ctx, w, h, cool, 34, .05);
-  const pts = ROUTE.map(([x, y]) => [x * w, y * h]);
+  U.draw.grid(ctx, w, h, cool, 32, .045);
 
+  const y = h * .46, pad = 26;
+  const step = (w - pad * 2) / (STAGES.length - 1);
   ctx.save();
-  ctx.strokeStyle = accent; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.globalAlpha = .5;
-  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
-  for (let i = 1; i < pts.length; i++) {
-    const p = pts[i - 1], q = pts[i];
-    ctx.quadraticCurveTo((p[0] + q[0]) / 2, Math.min(p[1], q[1]) - Math.abs(q[0] - p[0]) * .30, q[0], q[1]);
+
+  /* connectors */
+  ctx.lineWidth = 1;
+  for (let i = 0; i < STAGES.length - 1; i++) {
+    const x1 = pad + i * step, x2 = pad + (i + 1) * step;
+    const done = STAGES[i][1] === 'done';
+    ctx.globalAlpha = done ? .55 : .18;
+    ctx.strokeStyle = done ? accent : dim;
+    ctx.beginPath(); ctx.moveTo(x1 + 10, y); ctx.lineTo(x2 - 12, y); ctx.stroke();
+    ctx.globalAlpha = done ? .8 : .3; ctx.fillStyle = done ? accent : dim;
+    ctx.beginPath(); ctx.moveTo(x2 - 12, y); ctx.lineTo(x2 - 17, y - 3); ctx.lineTo(x2 - 17, y + 3); ctx.closePath(); ctx.fill();
   }
-  ctx.stroke(); ctx.setLineDash([]);
 
-  /* link stubs */
-  ctx.globalAlpha = .45; ctx.strokeStyle = data;
-  [[.21, .34, .38, .22], [.56, .39, .64, .28], [.70, .60, .78, .70]].forEach(([x1, y1, x2, y2]) => {
-    ctx.beginPath(); ctx.moveTo(x1 * w, y1 * h); ctx.lineTo(x2 * w, y2 * h); ctx.stroke();
+  /* stage markers */
+  STAGES.forEach(([label, state], i) => {
+    const x = pad + i * step;
+    const col = state === 'done' ? accent : state === 'hold' ? alarm : state === 'queued' ? dim : cool;
+    if (state === 'hold') {
+      const pulse = .25 + .25 * (1 + Math.sin(t * 2.4));
+      ctx.globalAlpha = pulse; ctx.strokeStyle = alarm; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x, y, 13, 0, TAU); ctx.stroke();
+    }
+    ctx.globalAlpha = state === 'queued' ? .45 : .95;
+    ctx.strokeStyle = col; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.stroke();
+    if (state === 'done') { ctx.beginPath(); ctx.arc(x, y, 2.4, 0, TAU); ctx.fill(); }
+    if (state === 'hold') {
+      ctx.globalAlpha = 1; ctx.font = '600 8px ' + mono; ctx.textAlign = 'center';
+      ctx.fillText('!', x, y + 3);
+    }
+    ctx.globalAlpha = state === 'queued' ? .5 : .95;
+    ctx.font = '7px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = state === 'queued' ? dim : text;
+    ctx.fillText(label, x, y + 22);
+    ctx.globalAlpha = .6; ctx.font = '6px ' + mono;
+    ctx.fillStyle = state === 'hold' ? alarm : state === 'done' ? data : dim;
+    ctx.fillText(state.toUpperCase(), x, y + 32);
   });
 
-  /* travelling pulse */
-  const seg = (t * .18) % (pts.length - 1), si = Math.floor(seg), sf = seg - si;
-  const p = pts[si], q = pts[si + 1] || pts[si];
-  ctx.globalAlpha = .95; ctx.fillStyle = data;
-  ctx.beginPath(); ctx.arc(p[0] + (q[0] - p[0]) * sf, p[1] + (q[1] - p[1]) * sf, 2.6, 0, TAU); ctx.fill();
-
-  /* nodes + labels */
-  ctx.font = '7px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ROUTE.forEach(([x, y, label], i) => {
-    const px = x * w, py = y * h;
-    const active = i === 4;
-    const col = active ? cool : accent;
-    ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(4,20,26,.85)';
-    const tw = ctx.measureText(label).width + 8;
-    ctx.fillRect(px - tw / 2, py - 15, tw, 11);
-    ctx.globalAlpha = active ? .95 : .45; ctx.strokeStyle = col; ctx.lineWidth = 1;
-    ctx.strokeRect(px - tw / 2, py - 15, tw, 11);
-    ctx.globalAlpha = active ? 1 : .9; ctx.fillStyle = active ? cool : accent;
-    ctx.fillText(label, px, py - 9.5);
-    ctx.globalAlpha = active ? .95 : .55; ctx.fillStyle = col;
-    ctx.beginPath(); ctx.arc(px, py, active ? 3 : 2, 0, TAU); ctx.fill();
-    if (active) { ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(px, py, 8, 0, TAU); ctx.stroke(); }
-  });
-
-  /* origin tag */
   ctx.restore();
 }, { fps: 20 });
 
-/* ---------------------------------------------------------------- prism gauges */
-U.canvas('#prism', (ctx, w, h, t) => {
-  const accent = U.css('--accent'), cool = U.css('--cool'), dim = U.css('--dim');
+/* ---------------------------------------------------------------- spectrophotometer
+   two purity gauges with their pass bands: A260/280 1.7–1.9, A260/230 1.8–2.2 */
+U.canvas('#spectro', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const dim = U.css('--dim'), text = U.css('--text');
   const mono = MONO();
-  const draw = (cx, val, label, sub) => {
-    const top = h * .26, bot = h * .68, half = Math.min(w * .085, (bot - top) * .52);
+
+  const gauge = (cx, val, min, max, label, sub) => {
+    const top = h * .30, bot = h * .70, half = Math.min(w * .085, (bot - top) * .55);
     ctx.save();
-    ctx.strokeStyle = cool; ctx.globalAlpha = .8; ctx.lineWidth = 1;
+    const px = (v) => cx - half + ((v - min) / (max - min)) * half * 2;
+
+    /* pass band */
+    ctx.globalAlpha = .10; ctx.fillStyle = data;
+    ctx.beginPath(); ctx.moveTo(px(min + (max - min) * .25), bot); ctx.lineTo(px(min + (max - min) * .75), bot);
+    ctx.lineTo(cx, top); ctx.closePath(); ctx.fill();
+
+    ctx.globalAlpha = .8; ctx.strokeStyle = cool; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx - half, bot); ctx.lineTo(cx + half, bot); ctx.closePath(); ctx.stroke();
 
-    ctx.globalAlpha = .22; ctx.setLineDash([2, 3]);
-    [-.5, 0, .5].forEach((f) => {
-      ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx + half * f, bot); ctx.stroke();
-    });
-    ctx.beginPath(); ctx.moveTo(cx - half, bot - (bot - top) * .38); ctx.lineTo(cx + half, bot - (bot - top) * .38); ctx.stroke();
-    ctx.setLineDash([]);
+    /* scale ticks */
+    ctx.globalAlpha = .35; ctx.strokeStyle = dim;
+    for (let i = 0; i <= 4; i++) {
+      const x = cx - half + (i / 4) * half * 2;
+      ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, bot + (i % 2 ? 3 : 5)); ctx.stroke();
+    }
 
-    const nx = cx - half + val * half * 2;
+    /* needle */
+    const nx = px(val);
     ctx.globalAlpha = 1; ctx.strokeStyle = accent;
     ctx.beginPath(); ctx.moveTo(cx, top + 1); ctx.lineTo(nx, bot); ctx.stroke();
-    ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(nx, bot, 2.4, 0, TAU); ctx.fill();
+    ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(nx, bot, 2.6, 0, TAU); ctx.fill();
     ctx.globalAlpha = .28; ctx.beginPath(); ctx.arc(nx, bot, 7, 0, TAU); ctx.stroke();
 
-    ctx.globalAlpha = .95; ctx.font = '600 13px ' + mono; ctx.textAlign = 'center';
-    ctx.fillStyle = U.css('--text'); ctx.fillText(label, cx, bot + 20);
-    ctx.globalAlpha = .62; ctx.font = '6.5px ' + mono; ctx.fillStyle = dim;
-    ctx.fillText(sub, cx, bot + 32);
-    ctx.globalAlpha = .5; ctx.font = '6px ' + mono;
-    ctx.fillText('A', cx - half, bot + 10); ctx.fillText('B', cx + half, bot + 10);
+    /* value + name */
+    ctx.globalAlpha = 1; ctx.font = '600 13px ' + mono; ctx.textAlign = 'center'; ctx.fillStyle = text;
+    ctx.fillText(val.toFixed(2), cx, bot + 20);
+    ctx.globalAlpha = .7; ctx.font = '7px ' + mono; ctx.fillStyle = data;
+    ctx.fillText(label, cx, bot + 32);
+    ctx.globalAlpha = .45; ctx.font = '6px ' + mono; ctx.fillStyle = dim;
+    ctx.fillText(sub, cx, bot + 42);
     ctx.restore();
   };
-  const a = .62 + Math.sin(t * .6) * .02, b = .38 + Math.cos(t * .5) * .02;
-  draw(w * .30, a, '54.64', 'A · SATURATION');
-  draw(w * .72, b, '61.81', 'B · MULTIPLICITY');
+
+  gauge(w * .28, 1.81 + Math.sin(t * .5) * .004, 1.4, 2.2, 'A260 / A280', 'PASS 1.7–1.9');
+  gauge(w * .72, 2.10 + Math.cos(t * .45) * .004, 1.4, 2.6, 'A260 / A230', 'PASS 1.8–2.2');
 }, { fps: 10 });
 
-/* ---------------------------------------------------------------- spool (torus of loops) */
-U.canvas('#spool', (ctx, w, h, t) => {
-  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+/* ---------------------------------------------------------------- centrifuge rotor */
+U.canvas('#rotor', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
   const cx = w * .5, cy = h * .5, R = Math.min(w * .40, h * .42);
   ctx.save();
-  for (let i = 0; i < 72; i++) {
-    const f = i / 72, a = f * Math.PI;
-    const rx = R * Math.max(.10, Math.abs(Math.cos(a + t * .05)));
-    const ry = R * (.94 + .05 * Math.sin(a * 2));
-    const col = i % 9 === 0 ? data : i % 5 === 0 ? cool : accent;
-    ctx.globalAlpha = .12 + .42 * Math.abs(Math.cos(a));
-    ctx.strokeStyle = col; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, Math.sin(a) * .38, 0, TAU);
-    ctx.stroke();
-  }
-  /* spindle */
-  ctx.globalAlpha = .30; ctx.strokeStyle = cool; ctx.setLineDash([2, 4]);
-  ctx.beginPath(); ctx.moveTo(cx, cy - R * .98); ctx.lineTo(cx, cy + R * .98); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.globalAlpha = .55; ctx.fillStyle = data;
-  [[cx, cy - R * .98], [cx, cy + R * .98]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 2, 0, TAU); ctx.fill(); });
-  ctx.restore();
-}, { fps: 12 });
 
-/* ---------------------------------------------------------------- assay: donut + bars */
-U.canvas('#assay', (ctx, w, h, t) => {
-  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), text = U.css('--text'), dim = U.css('--dim');
-  const mono = MONO();
-  const r = Math.min(w * .19, h * .30, 52);
-  const cx = w * .24, cy = h * .42;
+  /* chamber */
+  ctx.globalAlpha = .18; ctx.strokeStyle = cool;
+  ctx.beginPath(); ctx.arc(cx, cy, R * 1.02, 0, TAU); ctx.stroke();
+
+  /* 24 rotor slots */
+  const spin = t * .6;
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * TAU + spin;
+    const x1 = cx + Math.cos(a) * R * .30, y1 = cy + Math.sin(a) * R * .30;
+    const x2 = cx + Math.cos(a) * R * .86, y2 = cy + Math.sin(a) * R * .86;
+    ctx.globalAlpha = .35 + .45 * (i % 2);
+    ctx.strokeStyle = i % 6 === 0 ? data : i % 4 === 0 ? cool : accent;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    /* tube */
+    ctx.globalAlpha = .75; ctx.fillStyle = i % 6 === 0 ? data : accent;
+    ctx.beginPath(); ctx.arc(x2, y2, 2.4, 0, TAU); ctx.fill();
+  }
+
+  /* rings */
+  [.44, .62, .86].forEach((f, i) => {
+    ctx.globalAlpha = .10 + i * .05; ctx.strokeStyle = accent;
+    ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, TAU); ctx.stroke();
+  });
+
+  /* hub + speed arc */
+  ctx.globalAlpha = .9; ctx.fillStyle = cool;
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, TAU); ctx.fill();
+  ctx.globalAlpha = .55; ctx.strokeStyle = data; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, R * .96, -Math.PI / 2, -Math.PI / 2 + TAU * .78); ctx.stroke();
+
+  ctx.globalAlpha = .5; ctx.fillStyle = dim; ctx.font = '6.5px ' + MONO(); ctx.textAlign = 'center';
+  ctx.fillText('24 × 1.5 mL', cx, cy + R * 1.02 + 6);
+  ctx.restore();
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- qPCR amplification */
+U.canvas('#qpcr', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const dim = U.css('--dim'), mono = MONO();
+  const CT = [18.4, 21.1, 23.8, 26.5, 29.2];
+  const left = 24, right = w - 8, top = 10, base = h - 22;
 
   ctx.save();
-  ctx.lineWidth = 6; ctx.strokeStyle = accent;
-  ctx.globalAlpha = .9;
-  ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + TAU * .5464); ctx.stroke();
-  ctx.globalAlpha = .16;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
-
-  ctx.globalAlpha = .35; ctx.fillStyle = cool;
-  for (let i = 0; i < 48; i++) {
-    const a = -Math.PI / 2 + (i / 48) * TAU;
-    const rr = r + 8;
-    ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, .9, 0, TAU); ctx.fill();
+  ctx.globalAlpha = .12; ctx.strokeStyle = cool; ctx.lineWidth = 1;
+  for (let c = 0; c <= 40; c += 10) {
+    const x = left + (c / 40) * (right - left);
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, base); ctx.stroke();
   }
+  ctx.globalAlpha = .4; ctx.strokeStyle = dim;
+  ctx.beginPath(); ctx.moveTo(left, base + .5); ctx.lineTo(right, base + .5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(left + .5, top); ctx.lineTo(left + .5, base); ctx.stroke();
 
-  ctx.globalAlpha = 1; ctx.fillStyle = text; ctx.font = '600 15px ' + mono;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('54.64', cx, cy + 1);
-  ctx.globalAlpha = .55; ctx.font = '6.5px ' + mono; ctx.fillStyle = dim;
-  ctx.fillText('ASSAY 04', cx, cy + r + 16);
+  const colors = [accent, cool, data, accent, cool];
+  CT.forEach((ct, k) => {
+    const col = colors[k];
+    ctx.globalAlpha = .9; ctx.strokeStyle = col; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let c = 0; c <= 40; c++) {
+      const x = left + (c / 40) * (right - left);
+      const f = .04 + .86 / (1 + Math.exp(-(c - ct) / 1.15));
+      const y = base - f * (base - top);
+      c ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
 
-  /* bar chart on the right */
-  const n = 10, base = h - 24, top = h * .18;
-  const availW = w * .60, x0 = w * .44, bw = Math.min(11, availW / n * .46), step = availW / n;
-  ctx.globalAlpha = .30; ctx.strokeStyle = dim; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(x0 - 8, base + .5); ctx.lineTo(w - 4, base + .5); ctx.stroke();
-  for (let i = 0; i < n; i++) {
-    const v = .28 + .62 * Math.abs(Math.sin(i * 1.73 + .4));
-    const bh = (base - top) * v;
-    const x = x0 + i * step;
-    const col = i % 5 === 0 ? data : i % 3 === 0 ? cool : text;
-    ctx.globalAlpha = .9; ctx.fillStyle = col;
-    ctx.fillRect(x, base - bh, bw, bh);
-    ctx.globalAlpha = .55; ctx.fillStyle = dim; ctx.font = '6px ' + mono; ctx.textAlign = 'center';
-    ctx.fillText(String(i + 1), x + bw / 2, base + 8);
-  }
-  ctx.globalAlpha = .38; ctx.fillStyle = dim; ctx.font = '6px ' + mono; ctx.textAlign = 'left';
-  ctx.fillText('CH 01–10 · REL. FLUORESCENCE', 2, h - 3);
+    /* Ct marker */
+    const xc = left + (ct / 40) * (right - left);
+    const yc = base - .16 * (base - top);
+    ctx.globalAlpha = .8; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(xc, yc, 2, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .55; ctx.font = '6px ' + mono; ctx.textAlign = 'center';
+    ctx.fillText(ct.toFixed(1), xc, yc - 5);
+  });
+
+  ctx.globalAlpha = .45; ctx.fillStyle = dim; ctx.font = '6px ' + mono;
+  ctx.textAlign = 'left'; ctx.fillText('0', left - 2, base + 9);
+  ctx.textAlign = 'center'; ctx.fillText('CYCLE', (left + right) / 2, base + 9);
+  ctx.textAlign = 'right'; ctx.fillText('40', right, base + 9);
+  ctx.save(); ctx.translate(8, (top + base) / 2); ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center'; ctx.fillText('ΔRn', 0, 0); ctx.restore();
   ctx.restore();
 }, { fps: 2 });
 
-/* ---------------------------------------------------------------- FAST matrix */
-U.canvas('#matrix', (ctx, w, h) => {
-  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
+/* ---------------------------------------------------------------- 96-well plate */
+U.canvas('#plate', (ctx, w, h) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const dim = U.css('--dim'), alarm = U.css('--alarm');
   const mono = MONO();
-  const cols = 8, rows = 6, cw = w / cols, ch = h / rows;
-  const r = U.rnd(77);
-  const codes = ['F0', 'G4', 'A2', 'C7', 'V1', 'R8', 'M3', 'S5'];
-  const palette = [accent, accent, 'transparent', cool, data, accent, 'transparent', accent];
+  const rows = 8, cols = 12;
+  const padX = 14, padY = 10;
+  const cw = (w - padX * 2) / cols, ch = (h - padY * 2) / rows;
+  const rnd = U.rnd(44);
+  const AZ = 'ABCDEFGH';
+
   ctx.save();
-  for (let j = 0; j < rows; j++) {
-    for (let i = 0; i < cols; i++) {
-      const k = Math.floor(r() * palette.length);
-      const col = palette[k];
-      const x = i * cw, y = j * ch;
-      if (col !== 'transparent') {
-        ctx.globalAlpha = .82; ctx.fillStyle = col;
-        ctx.fillRect(x + 1.5, y + 1.5, cw - 3, ch - 3);
-        ctx.globalAlpha = .9; ctx.fillStyle = 'rgba(4,20,26,.92)';
-        ctx.font = '6.5px ' + mono; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        ctx.fillText(codes[(i * 3 + j) % codes.length], x + 3.5, y + 3);
-        ctx.globalAlpha = .5; ctx.fillStyle = col;
-        ctx.fillText(((i * 7 + j * 3) % 100).toString().padStart(2, '0'), x + cw - 10, y + ch - 9);
+  ctx.font = '6px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let c = 0; c < cols; c++) {
+    ctx.globalAlpha = .45; ctx.fillStyle = dim;
+    ctx.fillText(String(c + 1).padStart(2, '0'), padX + cw * (c + .5), padY * .5);
+  }
+  for (let r = 0; r < rows; r++) {
+    ctx.globalAlpha = .45; ctx.fillStyle = dim;
+    ctx.textAlign = 'right';
+    ctx.fillText(AZ[r], padX * .45, padY + ch * (r + .5));
+    ctx.textAlign = 'center';
+
+    for (let c = 0; c < cols; c++) {
+      const x = padX + cw * c, y = padY + ch * r;
+      const v = rnd();
+      let fill = null, mark = null;
+      if (v > .90) { fill = alarm; mark = 'F'; }
+      else if (v > .78) { fill = data; mark = 'C'; }
+      else if (v > .50) { fill = accent; mark = 'S'; }
+      else if (v > .30) { fill = cool; mark = 'I'; }
+
+      if (fill) {
+        ctx.globalAlpha = .82; ctx.fillStyle = fill;
+        ctx.beginPath(); ctx.arc(x + cw * .5, y + ch * .5, Math.min(cw, ch) * .34, 0, TAU); ctx.fill();
+        ctx.globalAlpha = .9; ctx.fillStyle = 'rgba(4,20,26,.9)'; ctx.font = '5px ' + mono;
+        ctx.fillText(mark, x + cw * .5, y + ch * .52);
       } else {
-        ctx.globalAlpha = .16; ctx.strokeStyle = dim;
-        ctx.strokeRect(x + 1.5, y + 1.5, cw - 3, ch - 3);
-        ctx.globalAlpha = .3; ctx.fillStyle = dim;
-        ctx.fillRect(x + cw * .38, y + ch * .42, cw * .24, ch * .16);
+        ctx.globalAlpha = .25; ctx.strokeStyle = dim;
+        ctx.beginPath(); ctx.arc(x + cw * .5, y + ch * .5, Math.min(cw, ch) * .30, 0, TAU); ctx.stroke();
       }
     }
   }
-  /* dashed route + target */
-  ctx.globalAlpha = .9; ctx.strokeStyle = cool; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-  ctx.beginPath();
-  ctx.moveTo(w * .12, h * .24); ctx.lineTo(w * .38, h * .48); ctx.lineTo(w * .58, h * .40); ctx.lineTo(w * .74, h * .64);
-  ctx.stroke(); ctx.setLineDash([]);
-  ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(w * .74, h * .64, 4.5, 0, TAU); ctx.strokeStyle = cool; ctx.stroke();
-  ctx.beginPath(); ctx.arc(w * .74, h * .64, 1.6, 0, TAU); ctx.fillStyle = cool; ctx.fill();
   ctx.restore();
 }, { fps: 1 });
 
-/* ---------------------------------------------------------------- DOM: ops, meters, levels, tiles */
+/* ---------------------------------------------------------------- DOM: meters, levels, tiles */
 (function () {
-  const ops = ['F_GEN', 'FL_NCH', 'GLOV_R', 'CORE-A', 'CORE-B', 'PURGE', 'TRIM', 'MAINT', 'SHIM', 'VENT'];
-  document.getElementById('ops').innerHTML = ops.map((o, i) => '<span' + (i === 0 || i === 3 ? ' class="on"' : '') + '>' + o + '</span>').join('');
-
   const meters = [
-    ['OXY', 98, '', '%'], ['CAR', 74, 'u-c', '%'], ['PSI', 56, '', 'psi'], ['TEMP', 42, 'u-d', '°C'],
-    ['VOL', 63, '', '%'], ['PH', 73, 'u-c', ''], ['CO₂', 12, 'u-a', '%'], ['N₂', 78, '', '%'],
-    ['PRT', 55, '', '%'], ['BUF', 31, 'u-d', '%']
+    ['CO₂', 5.0, 50, '', '%'], ['O₂', 19.0, 95, '', '%'], ['TEMP', 37.0, 74, 'u-d', '°C'],
+    ['RH', 95, 95, 'u-c', '%'], ['pH', 7.24, 72, '', ''], ['PRESS', 101.3, 100, '', 'kPa'],
+    ['VOL', 2.4, 48, '', 'mL'], ['BUF', 31, 62, '', 'mL'], ['DO', 6.8, 68, 'u-c', 'mg/L'],
+    ['GLU', 4.2, 42, 'u-d', 'mM']
   ];
-  document.getElementById('meters').innerHTML = meters.map(([k, v, cls, unit]) =>
+  document.getElementById('meters').innerHTML = meters.map(([k, val, v, cls, unit]) =>
     '<div class="h-meter"><span>' + k + '</span>' +
     '<div class="h-track ' + cls + '"><i style="--v:' + v + '%"></i></div>' +
-    '<b>' + (k === 'PH' ? '7.34' : v) + '<i>' + (unit || '') + '</i></b></div>'
+    '<b>' + (k === 'pH' ? '7.24' : val) + '<i>' + (unit || '') + '</i></b></div>'
   ).join('');
 
-  const levels = [['Lv 2', '+0.4', 'up'], ['Lv 3', '−0.2', 'dn'], ['Lv 4', '94%', ''], ['Lv 5', 'OK', ''],
-    ['Lv 6', '0.61', ''], ['Lv 7', '54.64', 'up']];
+  const levels = [['SET 37.0', '±0.2', 'ok'], ['CO₂ 5.0', '±0.1', 'ok'], ['RH 95', '±1', 'ok'],
+    ['DO 6.8', 'LOW', 'warn'], ['pH 7.24', '±0.02', 'ok'], ['ALARM', '01', 'warn']];
   document.getElementById('levels').innerHTML = levels.map(([k, v, cls]) =>
     '<div class="r"><span>' + k + '</span><b class="' + cls + '">' + v + '</b></div>'
   ).join('');
 
   const icons = [
-    ['FLUSH', '<path d="M5 18h20M8 18l5-7 4 4 5-8"/>'],
-    ['TRANSFER', '<rect x="6" y="9" width="18" height="12"/><path d="M6 15h18"/>'],
-    ['SPECTRUM', '<path d="M6 20V10M12 20V6M18 20V13M24 20V9"/>'],
-    ['ALIGN', '<path d="M15 5l9 10-9 10L6 15z"/>'],
-    ['CYCLE', '<circle cx="15" cy="15" r="7"/><path d="M15 8v7l5 3"/>'],
-    ['TRACE', '<path d="M5 15h6l3-7 3 14 3-7h5"/>'],
-    ['INJECT', '<path d="M15 6v18M6 15h18"/>'],
-    ['CALIBRATE', '<rect x="7" y="7" width="16" height="16"/><path d="M11 3v6M19 3v6M3 11h6M3 19h6"/>'],
-    ['BIND', '<circle cx="9" cy="9" r="2.5"/><circle cx="21" cy="9" r="2.5"/><circle cx="15" cy="21" r="2.5"/>']
+    ['LYSIS', '<path d="M15 5v10M10 20h10M11 15l4 5 4-5"/>'],
+    ['WASH', '<path d="M6 10h18M8 10v9h14v-9"/><path d="M11 6v4M15 6v4M19 6v4"/>'],
+    ['ELUTE', '<path d="M15 5v12M10 20h10"/><circle cx="15" cy="23" r="1.6"/>'],
+    ['SPIN', '<circle cx="15" cy="15" r="8"/><path d="M15 7v8l5 3"/>'],
+    ['HEAT', '<path d="M11 20V9a4 4 0 118 0v11"/><path d="M9 20h12"/>'],
+    ['COOL', '<path d="M15 5v20M6 10l18 10M24 10L6 20"/>'],
+    ['SEAL', '<rect x="7" y="9" width="16" height="14"/><path d="M10 9V6h10v3"/>'],
+    ['SCAN', '<path d="M5 15h20M8 15V9h14v12H8z"/>'],
+    ['RUN', '<path d="M9 6l14 9-14 9z"/>']
   ];
   document.getElementById('tiles').innerHTML = icons.map(([label, d], i) =>
-    '<button class="h-tile' + (i === 3 ? ' u-c' : i === 6 ? ' u-d' : '') + '" aria-label="' + label + '" title="' + label + '">' +
+    '<button class="h-tile' + (i === 3 ? ' u-c' : i === 8 ? ' u-d' : '') + '" aria-label="' + label + '" title="' + label + '">' +
     '<svg viewBox="0 0 30 30" aria-hidden="true">' + d + '</svg>' +
     '<span class="cap">' + label + '</span></button>'
   ).join('');
@@ -572,7 +636,7 @@ const setSrc = (id, state, live, degraded) => {
   if (el) U.setSrc(el, state, state === 'live' ? live : state === 'degraded' ? degraded : 'SIM');
 };
 
-/* intake air — Open-Meteo Air Quality */
+/* environment — Open-Meteo Air Quality */
 (function () {
   U.api.airQuality(51.5, -0.12).then(({ data, state }) => {
     const put = (k, v) => { const el = document.querySelector('[data-aq="' + k + '"]'); if (el) el.textContent = v; };
@@ -581,8 +645,8 @@ const setSrc = (id, state, live, degraded) => {
     put('o3', U.fmt(data.o3, 0));
     put('no2', U.fmt(data.no2, 0));
     put('aqi', data.aqi == null ? '—' : U.fmt(data.aqi, 0));
-    setSrc('aq-badge', state, 'LIVE', 'DEGRADED');
-    const b = document.getElementById('aq-badge');
+    setSrc('env-badge', state, 'LIVE', 'DEGRADED');
+    const b = document.getElementById('env-badge');
     if (b) b.title = 'Open-Meteo Air Quality · 51.50N 0.12W · current hour';
   });
 })();
@@ -609,7 +673,7 @@ const setSrc = (id, state, live, degraded) => {
   });
 })();
 
-/* assay reference — RCSB PDB entry */
+/* structure reference — RCSB PDB entry */
 (function () {
   const badge = document.getElementById('pdb-badge');
   U.fetchJSON('https://data.rcsb.org/rest/v1/core/entry/4HHB').then((p) => {
