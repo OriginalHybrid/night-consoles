@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCOPE-OMEGA — Synchrotron-Ω Particle Scope · uispace</title>
+<meta name="description" content="Clean-room recreation of a synchrotron particle scope with beam and event-display panels.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .o-ev { display: grid; grid-template-columns: 52px 1fr auto; gap: 5px; font-family: var(--mono); font-size: var(--fs-body); padding: 3px 0; border-bottom: 1px solid var(--rule2); }
+  .o-ev:last-child { border-bottom: 0; }
+  .o-ev .u-e { color: var(--accent); }
+  .o-ev .u-dim2 { color: var(--dim); font-size: 8px; }
+  .o-scope { position: absolute; inset: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'scope-omega', brand:'SCOPE-OMEGA', brandSub:'SYNCHROTRON-Ω',
+  subtitle:'SYNCHROTRON-Ω PARTICLE SCOPE', subtitleSub:'BEAM LINE 4 · 13.6 TeV · EVENT DISPLAY',
+  meta:[{r2:'BEAM',r1:'<b class="u-data">13.6</b> TeV'},{r2:'LUMI',r1:'2.1e34 cm⁻²s⁻¹'},{r2:'FILL',r1:'2,412 bunches',hide:true}],
+  status:'COLLIDING', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'BEAM STATUS', tag:'LINE 4', body:'<dl class="u-kv"><dt>Energy</dt><dd class="u-data">13.6 TeV</dd><dt>Current</dt><dd>0.58 A</dd><dt>Bunches</dt><dd>2,412</dd><dt>Emittance</dt><dd>2.4 µm</dd><dt>β*</dt><dd>0.30 m</dd><dt>Luminosity</dt><dd class="u-accent">2.1e34</dd><dt>Polarisation</dt><dd>+62%</dd></dl>' },
+      { title:'MAGNETS', tag:'CRYO', fill:false, body:'<div class="u-bars">' +
+        [['Q1',98],['Q2',97],['D1',96],['Q3',99],['D2',95],['Q4',94]].map(([n,v])=>'<div class="u-brow"><span>'+n+'</span><div class="u-bar '+(v<96?'u-alarm':'')+'"><i style="--v:'+v+'%"></i></div><span class="u-n">'+v+'</span></div>').join('') +
+        '</div>' }
+    ]},
+    { panels:[
+      { title:'EVENT DISPLAY', tag:'RUN 41182', hot:true, canvas:'scope', canvasOpts:{freq:3.4},
+        overlay:'<div class="u-corner tl">RUN 41182 · EVENT 04</div><div class="u-corner tr">√s 13.6 TeV</div><div class="u-corner bl">TRACKS 214</div><div class="u-corner br">μ 42</div>' },
+      { title:'TRACK FIT', tag:'RESIDUAL', canvas:'particles', canvasOpts:{n:70,seed:16} }
+    ]},
+    { panels:[
+      { title:'EVENT LIST', tag:'STREAM', scroll:true, body:['04 14:12:04.118','03 14:12:03.904','02 14:12:03.771','01 14:12:03.502','00 14:12:03.221'].map((x,i)=>'<div class="o-ev"'+(i===0?' style="background:color-mix(in srgb,var(--accent) 9%,transparent)"':'')+'><span class="u-e">'+x.split(' ')[0]+'</span><span>'+x.split(' ')[1]+'</span><span class="u-dim2">'+(i===0?'NEW':'OK')+'</span></div>').join('') },
+      { title:'DETECTOR', tag:'CHANNELS', canvas:'bars', canvasOpts:{n:40,seed:12,speed:2} },
+      { title:'CONTROL LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('14:11','EVT ','stable beams declared') +
+        U.logLine('14:12','NOTE','luminosity 2.1e34 achieved') +
+        U.logLine('14:13','EVT ','event 41182-04 recorded') +
+        U.logLine('14:14','WARN','Q4 magnet at 94% cryo margin') +
+        U.logLine('14:15','EVT ','fill 2,412 bunches nominal') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'STABLE BEAMS'},{text:'√s 13.6 TeV'},{text:'LUMI 2.1e34'},{text:'SCOPE-OMEGA · beam line 4'}],
+  sign:'SCOPE-OMEGA · synchrotron scope'
+});
+</script>
+</body>
+</html>
