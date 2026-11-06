@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAFEHOUSE — Covert-Ops Surveillance Terminal · uispace</title>
+<meta name="description" content="Clean-room recreation of a covert-ops surveillance terminal with a map tracking board.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .x-tgt { display: grid; grid-template-columns: 42px 1fr auto; gap: 5px 8px; font-family: var(--mono); font-size: var(--fs-body); padding: 5px 0; border-bottom: 1px solid var(--rule2); align-items: center; }
+  .x-tgt:last-child { border-bottom: 0; }
+  .x-tgt .u-id { color: var(--accent); font-size: 8px; }
+  .x-tgt .u-sub { color: var(--dim); font-size: 8px; }
+  .x-tgt .u-sig { font-size: 8px; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'safehouse', brand:'SAFEHOUSE', brandSub:'OPS',
+  subtitle:'COVERT-OPS SURVEILLANCE TERMINAL', subtitleSub:'NODE 7 · 6 TARGETS · CHANNEL C',
+  meta:[{r2:'TARGETS',r1:'06 TRACKED'},{r2:'UPLINK',r1:'<b class="u-ok">SECURE</b>'},{r2:'CELL',r1:'07 · 4H',hide:true}],
+  status:'COVERT', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'TARGET BOARD', tag:'NODE 7', body:'<div style="display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--dim);padding-bottom:4px;border-bottom:1px solid var(--rule)"><span>TARGET</span><span>CELL</span><span>SIG</span></div>' +
+        [['T-01','safehouse 7','STRONG'],['T-02','runner 9',"WEAK"],['T-03','courier','STRONG'],['T-04','handler','DEAD'],['T-05','asset 12','FAINT'],['T-06','unknown','FAINT']].map(([id,n,s],i)=>'<div class="x-tgt'+(s==='DEAD'?' style="opacity:.5"':'')+'"><span class="u-id">'+id+'</span><span><span>'+n+'</span><br><span class="u-sub">last heard '+(2+i*7)+'m</span></span><span class="u-pill '+(s==='STRONG'?'u-ok':s==='WEAK'?'u-warn':s==='DEAD'?'u-alarm':'')+'">'+s+'</span></div>').join('') +
+        '</div>' },
+      { title:'CELL STATUS', tag:'07', fill:false, body:'<dl class="u-kv"><dt>Cover</dt><dd class="u-ok">intact</dd><dt>Uplink</dt><dd>secure · 41 ms</dd><dt>Burn</dt><dd>T− 4h 12m</dd><dt>Extraction</dt><dd class="u-accent">READY</dd><dt>Cleaners</dt><dd>none detected</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'SURVEILLANCE MAP', tag:'SECTOR 7', hot:true, canvas:'map', canvasOpts:{seed:37,pins:14,tracks:6},
+        overlay:'<div class="u-corner tl">SECTOR 7 · GRID 4C</div><div class="u-corner tr">◉ TRACKING</div><div class="u-corner bl">6 TARGETS</div><div class="u-corner br">CHANNEL C</div>' },
+      { title:'SIGNAL WATERFALL', tag:'RADIO', canvas:'wave', canvasOpts:{lanes:3,amp:.2} }
+    ]},
+    { panels:[
+      { title:'IMAGE FEED', tag:'CAM 04', canvas:'scan', canvasOpts:{seed:12}, overlay:'<div class="u-corner tl">CAM 04 · SUBLEVEL</div><div class="u-corner tr">▮ REC</div><div class="u-corner br">NO MOTION</div>' },
+      { title:'INTERCEPTS', tag:'DECRYPTED', fill:false, body:'<div class="u-log">' +
+        U.logLine('21:04','RX ','"package moves at 23:00"') +
+        U.logLine('21:12','RX ','"confirm the courier alone"') +
+        U.logLine('21:19','TX ','"acknowledged, hold pattern"') +
+        U.logLine('21:26','RX ','"cell 07 goes dark after"') +
+        '</div>' },
+      { title:'OPS LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('21:02','EVT ','node 7 uplink established') +
+        U.logLine('21:11','NOTE','target T-04 signal lost') +
+        U.logLine('21:24','WARN','unidentified sweep on channel C') +
+        U.logLine('21:31','EVT ','extraction window confirmed') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'COVERT'},{text:'6 TARGETS'},{text:'BURN T− 4h 12m',cls:'u-accent'},{text:'SAFEHOUSE · node 7'}],
+  sign:'SAFEHOUSE · covert-ops terminal'
+});
+</script>
+</body>
+</html>
