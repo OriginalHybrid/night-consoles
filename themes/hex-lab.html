@@ -88,29 +88,6 @@
   .h-levels .r .ok { color: var(--data); }
   .h-levels .r .warn { color: var(--accent); }
 
-  /* protocol tiles */
-  .h-tiles { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(0, 1fr);
-    gap: 4px; flex: 1 1 auto; }
-  .h-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    min-height: 0; padding: 3px 4px; text-align: center; overflow: hidden;
-    border: 1px solid var(--rule2); background: color-mix(in srgb, var(--panel) 52%, transparent);
-    color: var(--accent); cursor: pointer; transition: background .15s, border-color .15s; }
-  .h-tile:hover, .h-tile:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent);
-    border-color: color-mix(in srgb, var(--accent) 60%, transparent); outline: none; }
-  .h-tile svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.1; opacity: .85; }
-  .h-tile .cap { font-family: var(--mono); font-size: 7px; line-height: 1.15; letter-spacing: .12em;
-    color: color-mix(in srgb, var(--dim) 78%, var(--text)); }
-  .h-tile:hover .cap, .h-tile:focus-visible .cap { color: var(--accent); }
-  .h-tile.u-c { color: var(--cool); } .h-tile.u-c .cap { color: color-mix(in srgb, var(--cool) 65%, var(--dim)); }
-  .h-tile.u-d { color: var(--data); } .h-tile.u-d .cap { color: color-mix(in srgb, var(--data) 65%, var(--dim)); }
-
-  /* specimen reference */
-  .h-spec { border-top: 1px solid var(--rule2); margin-top: 4px; padding-top: 4px;
-    font-family: var(--mono); font-size: 7px; letter-spacing: .06em; color: var(--dim); line-height: 1.5; }
-  .h-spec b { display: block; font-weight: 500; font-size: 8px; letter-spacing: .03em;
-    color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .h-spec .num { color: var(--data); font-variant-numeric: tabular-nums; }
-
   /* qPCR table */
   .h-ct { display: grid; grid-template-columns: 1fr auto; gap: 0 6px;
     font-family: var(--mono); font-size: 8px; line-height: 1.8; color: var(--dim); }
@@ -151,7 +128,10 @@
             <div class="r cool"><span>DUP</span><b>3.2<i>%</i></b></div>
           </div>
         </div>
-        <div class="h-strip"><span>ALIGNED 98.7 % · MISMATCH 0.42 %</span><span>CHR 07 · 0–48 Mb</span></div>
+        <div class="h-strip">
+          <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SPECIMEN <b id="gbif-name">Arabidopsis thaliana</b></span>
+          <span style="display:flex;align-items:center;gap:6px"><b><span id="gbif-count">318,951</span> GBIF</b><span id="gbif-rank">SPECIES</span><span class="u-src sim" id="gbif-badge"><i></i>SIM</span></span>
+        </div>
       </div>
     </section>
 
@@ -248,7 +228,7 @@
     </section>
 
     <!-- row 3 · incubator -->
-    <section class="u-plate u-notch h-plate" style="grid-area:3/1/4/3">
+    <section class="u-plate u-notch h-plate" style="grid-area:3/1/4/4">
       <div class="u-head"><b>INCUBATOR</b> <span class="u-dim">/ ATMOSPHERE · 37.0 °C</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
       <div class="u-body" style="display:grid;grid-template-columns:minmax(0,1fr) 118px;gap:6px">
         <div class="h-meters" id="meters"></div>
@@ -256,18 +236,6 @@
       </div>
     </section>
 
-    <!-- row 3 · protocol + specimen reference -->
-    <section class="u-plate u-notch h-plate" style="grid-area:3/3">
-      <div class="u-head"><b>PROTOCOL</b> <span class="u-dim">/ ACTIONS</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
-      <div class="u-body" style="display:flex;flex-direction:column;gap:4px">
-        <div class="h-tiles" id="tiles"></div>
-        <div class="h-spec">
-          <b id="gbif-name">Arabidopsis thaliana</b>
-          <span><span class="num" id="gbif-count">318,951</span> GBIF RECORDS · <span id="gbif-rank">SPECIES</span></span>
-          <span class="u-src sim" id="gbif-badge" style="margin-top:2px"><i></i>SIM</span>
-        </div>
-      </div>
-    </section>
   </main>
 
   <!-- ───────────────────────────────────────────────────────── footer -->
@@ -294,61 +262,116 @@ U.page('hex-lab', { scan: false });
 const MONO = () => getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
 const TAU = Math.PI * 2;
 
-/* ---------------------------------------------------------------- sequencing coverage
-   depth-of-coverage track across a 48 Mb window; y is read depth in × */
+/* ---------------------------------------------------------------- coverage surface
+   3D depth surface: 12 sequencing lanes across a 48 Mb window.
+   height = read depth (×), colour = depth. */
 U.canvas('#coverage', (ctx, w, h, t) => {
   const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
   const mono = MONO();
-  U.draw.grid(ctx, w, h, cool, 30, .05);
+  const NX = 30, NZ = 12;
+  const sx = Math.min(w * .026, 13), sy = Math.min(h * .018, 9);
+  const sz = h * .26;
+  const cx = w * .50, cy = h * .50;
 
-  const top = h * .14, base = h - 26;
-  const n = 140;
-  const depth = (i) => {
-    const x = i / n;
-    let v = .18 + .10 * Math.sin(x * 9 + t * .3);
-    v += .55 * Math.exp(-Math.pow((x - .18) / .05, 2));
-    v += .92 * Math.exp(-Math.pow((x - .42) / .035, 2));
-    v += .48 * Math.exp(-Math.pow((x - .63) / .06, 2));
-    v += .70 * Math.exp(-Math.pow((x - .81) / .03, 2));
-    return Math.min(1, v);
+  const profile = (u) => {
+    let v = .16 + .05 * Math.sin(u * 15 + .5);
+    v += .58 * Math.exp(-Math.pow((u - .20) / .048, 2));
+    v += 1.00 * Math.exp(-Math.pow((u - .43) / .032, 2));
+    v += .46 * Math.exp(-Math.pow((u - .64) / .055, 2));
+    v += .76 * Math.exp(-Math.pow((u - .83) / .030, 2));
+    return Math.min(1.04, v);
+  };
+  const H = (i, j) => profile(i / (NX - 1)) * (.68 + .32 * Math.cos((j / (NZ - 1)) * Math.PI * 1.35));
+  const X = (i, j) => cx + (i - NX / 2) * sx - (j - NZ / 2) * sx * .64;
+  const Y = (i, j) => cy + (j - NZ / 2) * sy - H(i, j) * sz;
+
+  const rgb = (s) => { const n = parseInt(s.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const A = rgb(accent), D = rgb(data);
+  const shade = (v) => {
+    const k = Math.max(0, Math.min(1, v));
+    return 'rgb(' + Math.round(A[0] + (D[0] - A[0]) * k) + ',' +
+      Math.round(A[1] + (D[1] - A[1]) * k) + ',' + Math.round(A[2] + (D[2] - A[2]) * k) + ')';
   };
 
+  U.draw.grid(ctx, w, h, cool, 34, .04);
   ctx.save();
-  /* area */
-  const grad = ctx.createLinearGradient(0, top, 0, base);
-  grad.addColorStop(0, accent + '55');
-  grad.addColorStop(1, accent + '05');
-  ctx.beginPath(); ctx.moveTo(0, base);
-  for (let i = 0; i <= n; i++) ctx.lineTo((i / n) * w, base - depth(i) * (base - top));
-  ctx.lineTo(w, base); ctx.closePath();
-  ctx.fillStyle = grad; ctx.fill();
-  ctx.strokeStyle = accent; ctx.globalAlpha = .85; ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let i = 0; i <= n; i++) {
-    const x = (i / n) * w, y = base - depth(i) * (base - top);
-    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+
+  /* base plane */
+  ctx.globalAlpha = .09; ctx.strokeStyle = cool; ctx.lineWidth = 1;
+  for (let j = 0; j < NZ; j += 2) {
+    ctx.beginPath();
+    for (let i = 0; i < NX; i++) {
+      const x = X(i, j), y = cy + (j - NZ / 2) * sy;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
   }
+  for (let i = 0; i < NX; i += 4) {
+    ctx.beginPath();
+    for (let j = 0; j < NZ; j++) {
+      const x = X(i, j), y = cy + (j - NZ / 2) * sy;
+      j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  /* filled quads, far lane first */
+  for (let j = 0; j < NZ - 1; j++) {
+    for (let i = 0; i < NX - 1; i++) {
+      const hv = (H(i, j) + H(i + 1, j) + H(i + 1, j + 1) + H(i, j + 1)) / 4;
+      ctx.beginPath();
+      ctx.moveTo(X(i, j), Y(i, j));
+      ctx.lineTo(X(i + 1, j), Y(i + 1, j));
+      ctx.lineTo(X(i + 1, j + 1), Y(i + 1, j + 1));
+      ctx.lineTo(X(i, j + 1), Y(i, j + 1));
+      ctx.closePath();
+      ctx.globalAlpha = .34 + .34 * hv;
+      ctx.fillStyle = shade(hv);
+      ctx.fill();
+    }
+  }
+
+  /* wireframe on top */
+  for (let j = 0; j < NZ; j++) {
+    ctx.beginPath();
+    for (let i = 0; i < NX; i++) { const x = X(i, j), y = Y(i, j); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.globalAlpha = .12 + .26 * (j / NZ); ctx.strokeStyle = accent; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (let i = 0; i < NX; i += 2) {
+    ctx.beginPath();
+    for (let j = 0; j < NZ; j++) { const x = X(i, j), y = Y(i, j); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.globalAlpha = .10; ctx.strokeStyle = cool; ctx.stroke();
+  }
+
+  /* moving slice cursor */
+  const ci = Math.round(((t * .05) % 1) * (NX - 1));
+  ctx.globalAlpha = .92; ctx.strokeStyle = cool; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let j = 0; j < NZ; j++) { const x = X(ci, j), y = Y(ci, j); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
   ctx.stroke();
+  ctx.fillStyle = cool;
+  for (let j = 0; j < NZ; j++) { ctx.beginPath(); ctx.arc(X(ci, j), Y(ci, j), 1.2, 0, TAU); ctx.fill(); }
 
-  /* threshold line + labels */
-  ctx.globalAlpha = .25; ctx.strokeStyle = data; ctx.setLineDash([3, 4]);
-  const y30 = base - .62 * (base - top);
-  ctx.beginPath(); ctx.moveTo(0, y30); ctx.lineTo(w, y30); ctx.stroke(); ctx.setLineDash([]);
-  ctx.globalAlpha = .55; ctx.fillStyle = data; ctx.font = '6.5px ' + mono; ctx.textAlign = 'left';
-  ctx.fillText('30×', 4, y30 - 3);
+  /* peak marker */
+  let bi = 0, bj = 0, bh = 0;
+  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) if (H(i, j) > bh) { bh = H(i, j); bi = i; bj = j; }
+  const px = X(bi, bj), py = Y(bi, bj);
+  ctx.globalAlpha = .95; ctx.fillStyle = data;
+  ctx.beginPath(); ctx.arc(px, py, 2.2, 0, TAU); ctx.fill();
+  ctx.globalAlpha = .30; ctx.strokeStyle = data;
+  ctx.beginPath(); ctx.arc(px, py, 6, 0, TAU); ctx.stroke();
+  ctx.globalAlpha = .85; ctx.font = '6.5px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('96×', px + 8, py - 4);
 
-  /* scrub cursor */
-  const cx = ((t * .04) % 1) * w;
-  ctx.globalAlpha = .5; ctx.strokeStyle = cool;
-  ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx, base); ctx.stroke();
-  ctx.globalAlpha = .9; ctx.fillStyle = cool;
-  ctx.beginPath(); ctx.arc(cx, base - depth(Math.round(cx / w * n)) * (base - top), 2.4, 0, TAU); ctx.fill();
-
-  /* axis */
-  ctx.globalAlpha = .45; ctx.fillStyle = dim; ctx.font = '6.5px ' + mono;
-  ctx.textAlign = 'left'; ctx.fillText('0 Mb', 4, base + 12);
-  ctx.textAlign = 'right'; ctx.fillText('48 Mb', w - 4, base + 12);
-  ctx.textAlign = 'center'; ctx.fillText('POSITION', w / 2, base + 12);
+  /* axes */
+  ctx.globalAlpha = .45; ctx.fillStyle = dim; ctx.font = '6.5px ' + mono; ctx.textAlign = 'center';
+  const fy = cy + (NZ / 2) * sy + 13;
+  ctx.fillText('0 Mb', X(0, NZ - 1), fy);
+  ctx.fillText('48 Mb', X(NX - 1, NZ - 1), fy);
+  ctx.textAlign = 'left';
+  ctx.fillText('LANE 1', X(0, 0) - 2, cy - (NZ / 2) * sy - 7);
+  ctx.fillText('LANE 12', X(0, NZ - 1) - 2, fy + 11);
+  ctx.textAlign = 'right'; ctx.fillText('DEPTH ×', w - 4, 13);
   ctx.restore();
 }, { fps: 12 });
 
@@ -612,22 +635,6 @@ U.canvas('#plate', (ctx, w, h) => {
     '<div class="r"><span>' + k + '</span><b class="' + cls + '">' + v + '</b></div>'
   ).join('');
 
-  const icons = [
-    ['LYSIS', '<path d="M15 5v10M10 20h10M11 15l4 5 4-5"/>'],
-    ['WASH', '<path d="M6 10h18M8 10v9h14v-9"/><path d="M11 6v4M15 6v4M19 6v4"/>'],
-    ['ELUTE', '<path d="M15 5v12M10 20h10"/><circle cx="15" cy="23" r="1.6"/>'],
-    ['SPIN', '<circle cx="15" cy="15" r="8"/><path d="M15 7v8l5 3"/>'],
-    ['HEAT', '<path d="M11 20V9a4 4 0 118 0v11"/><path d="M9 20h12"/>'],
-    ['COOL', '<path d="M15 5v20M6 10l18 10M24 10L6 20"/>'],
-    ['SEAL', '<rect x="7" y="9" width="16" height="14"/><path d="M10 9V6h10v3"/>'],
-    ['SCAN', '<path d="M5 15h20M8 15V9h14v12H8z"/>'],
-    ['RUN', '<path d="M9 6l14 9-14 9z"/>']
-  ];
-  document.getElementById('tiles').innerHTML = icons.map(([label, d], i) =>
-    '<button class="h-tile' + (i === 3 ? ' u-c' : i === 8 ? ' u-d' : '') + '" aria-label="' + label + '" title="' + label + '">' +
-    '<svg viewBox="0 0 30 30" aria-hidden="true">' + d + '</svg>' +
-    '<span class="cap">' + label + '</span></button>'
-  ).join('');
 })();
 
 /* ---------------------------------------------------------------- live feeds */
