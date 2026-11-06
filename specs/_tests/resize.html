@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>pending</title>
+<style>html,body{margin:0;background:#111;color:#ddd;font:12px monospace}iframe{width:1920px;height:1080px;border:0}#out{position:fixed;z-index:9;left:0;top:0;right:0;margin:0;padding:8px 10px;background:#000;color:#8f8;font:600 15px monospace;white-space:pre-wrap}</style>
+</head><body>
+<pre id="out">pending</pre>
+<iframe id="f" src="/themes/terra-7.html"></iframe>
+<script>
+const f = document.getElementById('f');
+f.addEventListener('load', () => setTimeout(() => {
+  try {
+    const d = f.contentDocument, w = f.contentWindow;
+    d.defaultView.localStorage.clear();
+    const earth = d.querySelector('.t-earth');
+    const rails = earth.querySelectorAll('.t-rail');
+    const grips = earth.querySelectorAll('.t-grip');
+    const main = d.querySelector('main.u-main');
+    const cols = [...main.children].filter(n => n.tagName === 'SECTION');
+    const mgrips = main.querySelectorAll(':scope > .u-grip');
+
+    const fire = (el, type, x, y) => el.dispatchEvent(new w.PointerEvent(type, {
+      bubbles: true, cancelable: true, clientX: x, clientY: y,
+      pointerId: 1, pointerType: 'mouse', button: 0, buttons: type === 'pointerup' ? 0 : 1
+    }));
+
+    const diag = 'tgrips=' + d.querySelectorAll('.t-grip').length +
+      ' ugrips=' + d.querySelectorAll('.u-grip').length +
+      ' rails=' + rails.length + ' cols=' + cols.length;
+    document.getElementById('out').textContent = diag;
+    if (!grips.length || !mgrips.length) throw new Error(diag);
+
+    const railBefore = rails[0].getBoundingClientRect().width;
+    let r = grips[0].getBoundingClientRect();
+    fire(grips[0], 'pointerdown', r.left + 4, r.top + 100);
+    fire(grips[0], 'pointermove', r.left + 84, r.top + 100);
+    fire(grips[0], 'pointerup', r.left + 84, r.top + 100);
+    const railAfter = rails[0].getBoundingClientRect().width;
+
+    const colBefore = cols[0].getBoundingClientRect().width;
+    r = mgrips[0].getBoundingClientRect();
+    fire(mgrips[0], 'pointerdown', r.left + 4, r.top + 100);
+    fire(mgrips[0], 'pointermove', r.left + 54, r.top + 100);
+    fire(mgrips[0], 'pointerup', r.left + 54, r.top + 100);
+    const colAfter = cols[0].getBoundingClientRect().width;
+
+    const msg = 'RAIL ' + Math.round(railBefore) + '>' + Math.round(railAfter) +
+      ' | COL ' + Math.round(colBefore) + '>' + Math.round(colAfter) +
+      ' | railStyle ' + earth.style.gridTemplateColumns +
+      ' | colStyle ' + main.style.gridTemplateColumns;
+    document.title = msg;
+    document.getElementById('out').textContent = msg;
+    d.defaultView.localStorage.clear();
+  } catch (e) {
+    document.title = 'ERR ' + e.message;
+    document.getElementById('out').textContent = 'ERR ' + e.message;
+  }
+}, 1200));
+</script>
+</body></html>

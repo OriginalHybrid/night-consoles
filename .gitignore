@@ -1,0 +1,15 @@
+# Reference harvest of uispace.org — kept locally for comparison only.
+specs/_raw/
+specs/_index_raw.html
+specs/_terra7_raw.html
+specs/_extracted.json
+specs/_palettes.json
+
+# Verification output
+specs/_shots/
+specs/_tests/*.png
+
+# OS / tooling
+Thumbs.db
+.DS_Store
+node_modules/
