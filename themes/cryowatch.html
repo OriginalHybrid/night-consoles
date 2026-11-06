@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRYOWATCH — Cryosleep Medbay Terminal · uispace</title>
+<meta name="description" content="Clean-room recreation of a cryosleep medbay terminal with pod vitals and cooling telemetry.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .c-vital { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .c-vital .u-stat .u-v { font-size: var(--fs-mid); }
+  .c-pods { display: grid; grid-template-columns: repeat(6,1fr); gap: 4px; }
+  .c-pod { border: 1px solid var(--rule2); padding: 4px 3px; text-align: center; font-family: var(--mono); font-size: 8px; color: var(--dim); }
+  .c-pod.on { border-color: color-mix(in srgb, var(--data) 50%, transparent); color: var(--data); }
+  .c-pod.warn { border-color: color-mix(in srgb, var(--alarm) 55%, transparent); color: var(--alarm); }
+  .c-pod b { display: block; color: inherit; font-size: 9px; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+const PODS = [
+  ['C-01','A. Reyes','-172.0','STABLE'],['C-02','M. Okafor','-171.8','STABLE'],['C-03','J. Vance','-170.2','WATCH'],
+  ['C-04','S. Ito','-172.1','STABLE'],['C-05','P. Clarke','-168.9','WATCH'],['C-06','A. Mensah','-171.4','STABLE'],
+  ['C-07','K. Brandt','-172.3','STABLE'],['C-08','R. Nakamura','-167.5','ALARM'],['C-09','D. Larsen','-171.1','STABLE'],
+  ['C-10','T. Mbeki','-172.0','STABLE'],['C-11','L. Chen','-170.6','STABLE'],['C-12','VACANT','—','OFF']
+];
+U.shell({
+  name:'cryowatch', brand:'CRYOWATCH', brandSub:'MEDBAY',
+  subtitle:'CRYOSLEEP MEDBAY TERMINAL', subtitleSub:'RING B · 12 PODS · 6 ATTENDED',
+  meta:[{r2:'PODS',r1:'<b>11</b> OCCUPIED / 12'},{r2:'SYSTEM',r1:'COOLANT LOOP A'},{r2:'UPTIME',r1:'4,102 d',hide:true}],
+  status:'STABLE', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'POD ROSTER', tag:'RING B', body:'<table class="u-tbl"><thead><tr><th>Pod</th><th>Occupant</th><th class="u-r">°C</th><th>State</th></tr></thead><tbody>' +
+        PODS.map(([p,n,t,s],i)=>'<tr'+(s==='ALARM'?' class="u-hot"':'')+'><td class="u-k">'+p+'</td><td>'+n+'</td><td class="u-n">'+t+'</td><td><span class="u-pill '+(s==='STABLE'?'u-ok':s==='ALARM'?'u-alarm':s==='WATCH'?'u-warn':'')+'">'+s+'</span></td></tr>').join('')+'</tbody></table>' },
+      { title:'POD MATRIX', tag:'FLOORPLAN', fill:false, body:'<div class="c-pods">' + PODS.map(([p,,,s])=>'<div class="c-pod '+(s==='STABLE'?'on':s==='ALARM'?'warn':'')+'"><b>'+p+'</b>'+(s==='OFF'?'—':'●')+'</div>').join('') + '</div>' }
+    ]},
+    { panels:[
+      { title:'PATIENT VITALS', tag:'C-08 · R. NAKAMURA', hot:true, canvas:'ecg', canvasOpts:{seed:8,color:'--alarm'},
+        overlay:'<div class="u-corner tl">HR 41 bpm ↓</div><div class="u-corner tr">SpO₂ 96.2%</div><div class="u-corner bl">TEMP −167.5 °C</div><div class="u-corner br">PRESS 88/54</div>' },
+      { title:'METABOLIC PANEL', tag:'C-08', fill:false, body:'<div class="c-vital">' +
+        '<div class="u-stat"><span class="u-v u-data">41</span><span class="u-k">HR bpm</span></div><div class="u-stat"><span class="u-v">96.2</span><span class="u-k">SpO₂ %</span></div><div class="u-stat"><span class="u-v u-accent">−167.5</span><span class="u-k">Core °C</span></div><div class="u-stat"><span class="u-v u-alarm">0.8</span><span class="u-k">Δ/hr</span></div></div>' }
+    ]},
+    { panels:[
+      { title:'CRYO LOOP', tag:'LOOP A', src:'sim', canvas:'contour', canvasOpts:{seed:9,sx:1.2}, overlay:'<div class="u-corner tl">FLOW 12.4 L/s</div><div class="u-corner br">ΔP 0.42 MPa</div>' },
+      { title:'TISSUE SAMPLER', tag:'OPTICAL', canvas:'cells', canvasOpts:{seed:14,n:34} },
+      { title:'MEDBAY LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('04:12','EVT ','loop A pressure stable') +
+        U.logLine('04:31','NOTE','pod C-08 rewarm cycle deferred') +
+        U.logLine('04:44','ALRM','C-08 core drift +0.8 °C/hr') +
+        U.logLine('04:52','EVT ','attending physician notified') +
+        U.logLine('05:06','EVT ','sedation top-off complete') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'11 / 12 OCCUPIED'},{text:'LOOP A NOMINAL'},{text:'C-08 ATTENDED',cls:'u-alarm'},{text:'CRYOWATCH · ring B'}],
+  sign:'CRYOWATCH · cryosleep medbay'
+});
+</script>
+</body>
+</html>
