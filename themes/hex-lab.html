@@ -1,56 +1,615 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HEX-LAB — Multi-Instrument Biolab Rig · uispace</title>
-<meta name="description" content="Clean-room recreation of a multi-instrument biolab rig with six assay channels.">
+<meta name="description" content="Clean-room recreation of a multi-instrument biolab rig: six assay channels, a wireframe surface scan, sample routing and a live intake feed. Part of the uispace gallery.">
+<!-- Data: rig telemetry is deterministic SIM. Reference blocks are live public feeds —
+     Open-Meteo Air Quality (intake), GBIF (specimen taxon), RCSB PDB (assay reference). -->
 <link rel="stylesheet" href="../shared/u-base.css">
 <style>
-  .h-instr { display: grid; grid-template-columns: 46px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--rule2); font-family: var(--mono); font-size: var(--fs-body); }
-  .h-instr:last-child { border-bottom: 0; }
-  .h-instr .u-id { color: var(--accent); }
-  .h-instr .u-sub { color: var(--dim); font-size: 8px; }
-  .h-instr.u-off { opacity: .45; }
+  :root { --gap: 5px; --pad: 8px; --rule2: color-mix(in srgb, var(--dim) 26%, transparent); }
+
+  main.h-main {
+    display: grid; gap: 5px; padding: 5px; min-height: 0; background: var(--bg);
+    grid-template-columns: minmax(0,1fr) minmax(0,1.04fr) minmax(0,1fr);
+    grid-template-rows: 1.12fr .9fr .62fr;
+  }
+  .h-main .u-plate > .u-head { min-height: 20px; padding: 3px 8px; letter-spacing: .16em; }
+  .h-main .u-plate > .u-head b { letter-spacing: .18em; }
+  .h-main > .u-plate > .u-body { padding: 6px 7px; }
+  .h-body-canvas { display: flex; flex-direction: column; gap: 4px; padding: 0 !important; }
+  .h-fill { flex: 1 1 auto; min-height: 0; position: relative; }
+  .h-corners-txt { font-family: var(--mono); font-size: 7px; letter-spacing: .12em; color: var(--dim); }
+
+  /* value ladder beside the surface scan */
+  .h-ladder { display: flex; flex-direction: column; justify-content: center; gap: 1px;
+    padding-left: 8px; border-left: 1px solid var(--rule2); font-family: var(--mono); font-size: 8px; }
+  .h-ladder .r { display: flex; justify-content: space-between; gap: 6px; color: var(--dim); line-height: 1.65; }
+  .h-ladder .r b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .h-ladder .r.hot b { color: var(--data); }
+  .h-ladder .r.cool b { color: var(--cool); }
+
+  /* experiment log floating over the route map */
+  .h-logbox { position: absolute; right: 6px; top: 6px; width: 176px; padding: 5px 6px;
+    border: 1px solid var(--rule2); background: color-mix(in srgb, var(--bg) 84%, transparent); }
+  .h-logbox h4 { margin: 0 0 3px; font: 400 7px var(--mono); letter-spacing: .16em;
+    text-transform: uppercase; color: var(--accent); }
+  .h-logbox p { margin: 0; font: 7px/1.55 var(--mono); color: var(--ink3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-logbox time { color: var(--dim); margin-right: 5px; }
+  .h-logbox .hot { color: var(--cool); }
+
+  /* compact key/value table used by intake + specimen */
+  .h-kv { display: grid; grid-template-columns: 1fr auto; gap: 0 8px;
+    font-family: var(--mono); font-size: 8px; line-height: 1.7; color: var(--dim); }
+  .h-kv b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .h-kv .unit { color: var(--ink3); font-size: 7px; margin-left: 2px; }
+
+  .h-intake-wrap { position: relative; z-index: 2; padding-top: 2px; }
+  .h-intake { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 10px; }
+  .h-intake > div { display: block; min-width: 0;
+    font-family: var(--mono); font-size: 8px; line-height: 1.5; letter-spacing: .09em; color: var(--dim); }
+  .h-intake > div > span { display: block; }
+  .h-intake b { display: block; font-weight: 500; font-size: 11px; line-height: 1.2; color: var(--text);
+    font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .h-intake i { font-style: normal; font-size: 6.5px; color: var(--ink3); margin-left: 2px; }
+
+  .h-strip { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border-top: 1px solid var(--rule2); padding-top: 4px; margin-top: 4px;
+    font-family: var(--mono); font-size: 7px; letter-spacing: .1em; color: var(--dim); }
+
+  /* ops chips above the matrix */
+  .h-ops { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 5px; margin-bottom: 4px; }
+  .h-ops span { font: 7px/1.55 var(--mono); letter-spacing: .1em; text-align: center;
+    color: var(--ink3); border: 1px solid var(--rule2); padding: 0 3px; }
+  .h-ops span.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+
+  /* horizontal meters */
+  .h-meters { display: flex; flex-direction: column; justify-content: space-between; }
+  .h-meter { display: grid; grid-template-columns: 38px minmax(0,1fr) 46px; gap: 6px;
+    align-items: center; font-family: var(--mono); font-size: 8px; }
+  .h-meter > span { color: var(--dim); letter-spacing: .08em; }
+  .h-meter > b { text-align: right; color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .h-track { position: relative; height: 8px; background: var(--rule2); overflow: hidden; }
+  .h-track i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--v, 50%); background: var(--accent); }
+  .h-track.u-d i { background: var(--data); }
+  .h-track.u-c i { background: var(--cool); }
+  .h-track.u-a i { background: var(--alarm); }
+  .h-levels { display: flex; flex-direction: column; justify-content: center; gap: 3px;
+    border-left: 1px solid var(--rule2); padding-left: 9px; font-family: var(--mono); font-size: 7.5px; }
+  .h-levels .r { display: flex; justify-content: space-between; gap: 6px; color: var(--dim); }
+  .h-levels .r b { color: var(--text); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .h-levels .r .up { color: var(--cool); }
+  .h-levels .r .dn { color: var(--accent); }
+
+  /* control tiles */
+  .h-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; flex: 1 1 auto; }
+  .h-tile { display: flex; align-items: center; justify-content: center; min-height: 0;
+    border: 1px solid var(--rule2); background: color-mix(in srgb, var(--panel) 52%, transparent);
+    color: var(--accent); cursor: pointer; transition: background .15s, border-color .15s; }
+  .h-tile:hover, .h-tile:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent); outline: none; }
+  .h-tile svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.1; opacity: .85; }
+  .h-tile.u-c { color: var(--cool); } .h-tile.u-d { color: var(--data); }
+
+  /* specimen reference strip */
+  .h-spec { border-top: 1px solid var(--rule2); margin-top: 5px; padding-top: 4px;
+    font-family: var(--mono); font-size: 7px; letter-spacing: .07em; color: var(--dim); line-height: 1.5; }
+  .h-spec b { display: block; font-weight: 500; font-size: 8px; letter-spacing: .04em;
+    color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-spec .num { color: var(--data); font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
+<div class="u-app">
+  <!-- ───────────────────────────────────────────────────────── top chrome -->
+  <header class="u-top u-rule-pattern">
+    <div class="u-brand"><i></i>HEX-LAB<small>LAB-7</small></div>
+    <div class="u-cell"><span class="u-r1"><b>BIO-CYBERNETIC</b> RIG</span><span class="u-r2">TEC-9 · HEX BAY · RUN 12A</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r1">RIG <span class="u-pill u-ok"><span class="u-dot"></span>ONLINE</span></span><span class="u-r2">5 / 6 CHANNELS</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">OXY / PSI</span><span class="u-r1 u-mono">98.0 % · 11.0</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">SAMPLE</span><span class="u-r1 u-mono u-accent">HEX-44-C</span></div>
+    <div class="u-cell u-grow"></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">ALARM</span><span class="u-r1"><span class="u-pill u-alarm"><span class="u-dot"></span>01</span></span></div>
+    <div class="u-cell"><span class="u-r2">LOCAL</span><span class="u-r1 u-mono" data-clock="local">--:--:--</span></div>
+  </header>
+
+  <!-- ───────────────────────────────────────────────────────── instruments -->
+  <main class="h-main">
+    <!-- row 1 · surface -->
+    <section class="u-plate u-notch h-plate" style="grid-area:1/1">
+      <div class="u-head"><b>SURFACE</b> <span class="u-dim">/ CH 01</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-body h-body-canvas">
+        <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 92px">
+          <div class="u-canvas-wrap" id="surface"></div>
+          <div class="h-ladder">
+            <div class="r hot"><span>PEAK</span><b>93.25</b></div>
+            <div class="r"><span>PH1</span><b>93.25</b></div>
+            <div class="r"><span>PH2</span><b>23.62</b></div>
+            <div class="r"><span>PH3</span><b>10.40</b></div>
+            <div class="r hot"><span>PHS</span><b>23.62</b></div>
+            <div class="r"><span>AGE</span><b>10.40</b></div>
+            <div class="r cool"><span>CON</span><b>−0.61</b></div>
+            <div class="r"><span>±</span><b>1.62</b></div>
+          </div>
+        </div>
+        <div class="h-strip"><span>RT 3.4 s · MESH 26×16</span><span>Z 0–96</span></div>
+      </div>
+    </section>
+
+    <!-- row 1 · route -->
+    <section class="u-plate u-notch h-plate" style="grid-area:1/2">
+      <div class="u-head"><b>ROUTE</b> <span class="u-dim">/ TR1 SM311</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-body h-body-canvas" style="position:relative">
+        <div class="u-canvas-wrap h-fill" id="route"></div>
+        <div class="h-logbox">
+          <h4>Experiment log</h4>
+          <p><time>12:38</time>AUX +0.02</p>
+          <p><time>12:39</time>MOD-RGM sync</p>
+          <p><time>12:41</time><span class="hot">BYPASS</span> engaged</p>
+          <p><time>12:44</time>TR1 pack sealed</p>
+        </div>
+        <div class="h-strip" style="border-top:0;padding-top:0;margin-top:0"><span>CARRIER 12A · 7 NODES</span><span>Δ 0.38 s</span></div>
+      </div>
+    </section>
+
+    <!-- row 1 · prism + intake -->
+    <section class="u-plate u-notch h-plate" style="grid-area:1/3">
+      <div class="u-head"><b>PRISM</b> <span class="u-dim">/ GAUGE PAIR</span><span style="margin-left:auto" class="u-src sim" id="aq-badge"><i></i>SIM</span></div>
+      <div class="u-body h-body-canvas">
+        <div class="u-canvas-wrap" id="prism" style="flex:1 1 auto;min-height:70px"></div>
+        <div class="h-intake-wrap">
+          <div class="h-intake">
+            <div><span>PM 2.5</span><b><span data-aq="pm25">11.0</span><i>µg/m³</i></b></div>
+            <div><span>PM 10</span><b><span data-aq="pm10">21.0</span><i>µg/m³</i></b></div>
+            <div><span>OZONE</span><b><span data-aq="o3">44</span><i>µg/m³</i></b></div>
+            <div><span>NO₂</span><b><span data-aq="no2">18</span><i>µg/m³</i></b></div>
+          </div>
+          <div class="h-strip"><span>INTAKE · 51.50N 0.12W</span><span>AQI <span data-aq="aqi">38</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- row 2 · spool -->
+    <section class="u-plate u-notch h-plate" style="grid-area:2/1">
+      <div class="u-head"><b>SPOOL</b> <span class="u-dim">/ DR 128</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-body h-body-canvas">
+        <div class="h-fill" style="display:grid;grid-template-columns:minmax(0,1fr) 88px">
+          <div class="u-canvas-wrap" id="spool"></div>
+          <div class="h-ladder">
+            <div class="r hot"><span>SR</span><b>3</b></div>
+            <div class="r"><span>DR</span><b>128</b></div>
+            <div class="r"><span>ROT</span><b>15.2</b></div>
+            <div class="r"><span>ERA</span><b>3.4</b></div>
+            <div class="r cool"><span>AGE</span><b>0.41</b></div>
+            <div class="r"><span>DRF</span><b>0.021</b></div>
+            <div class="r"><span>ENT</span><b>2.84</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- row 2 · assay -->
+    <section class="u-plate u-notch h-plate" style="grid-area:2/2">
+      <div class="u-head"><b>ASSAY</b> <span class="u-dim">/ HEX-44-C</span><span style="margin-left:auto" class="u-src sim" id="pdb-badge"><i></i>SIM</span></div>
+      <div class="u-body h-body-canvas">
+        <div class="h-fill" style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:8px">
+          <div class="h-kv" style="align-content:center">
+            <span>ABS 260</span><b>0.61</b>
+            <span>A260/280</span><b>1.81</b>
+            <span>RATIO</span><b>1.94</b>
+            <span>CYCLES</span><b>38</b>
+            <span>YIELD</span><b>31.62</b>
+            <span>PURITY</span><b>0.842</b>
+            <span>GLOV</span><b>0.000</b>
+            <span>VAR</span><b>0.18</b>
+          </div>
+          <div class="u-canvas-wrap" id="assay"></div>
+        </div>
+        <div class="h-strip">
+          <span>REF <b class="u-mono" id="pdb-id">4HHB</b> · <span id="pdb-method">X-RAY</span> · <span id="pdb-res">1.74 Å</span></span>
+          <span id="pdb-year">1984 · RCSB PDB</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- row 2 · fast matrix -->
+    <section class="u-plate u-notch h-plate" style="grid-area:2/3">
+      <div class="u-head"><b>FAST</b> <span class="u-dim">/ GRID 8×6</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-body h-body-canvas">
+        <div class="h-ops" id="ops"></div>
+        <div class="u-canvas-wrap h-fill" id="matrix"></div>
+      </div>
+    </section>
+
+    <!-- row 3 · meters -->
+    <section class="u-plate u-notch h-plate" style="grid-area:3/1/4/3">
+      <div class="u-head"><b>METERS</b> <span class="u-dim">/ LIVE TRAIN</span><span style="margin-left:auto" class="u-src sim"><i></i>SIM</span></div>
+      <div class="u-body" style="display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:6px">
+        <div class="h-meters" id="meters"></div>
+        <div class="h-levels" id="levels"></div>
+      </div>
+    </section>
+
+    <!-- row 3 · control tiles + specimen reference -->
+    <section class="u-plate u-notch h-plate" style="grid-area:3/3">
+      <div class="u-head"><b>CONTROL</b> <span class="u-dim">/ 12A</span><span style="margin-left:auto" class="u-src sim" id="gbif-badge"><i></i>SIM</span></div>
+      <div class="u-body" style="display:flex;flex-direction:column;gap:4px">
+        <div class="h-tiles" id="tiles"></div>
+        <div class="h-spec">
+          <b id="gbif-name">Arabidopsis thaliana</b>
+          <span><span class="num" id="gbif-count">318,951</span> RECORDS · <span id="gbif-rank">SPECIES</span></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ───────────────────────────────────────────────────────── footer -->
+  <footer class="u-bot">
+    <div class="u-cell"><span class="u-r2">FRQ 442.2 Hz</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">AMP 0.74</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">PXA 14.2°</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">TMP −150 °C</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">DRF 0.018</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">OXY 94%</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">PSI 11.1</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">CO₂ 0.42</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">PH 7.34</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">CON 0.87</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2">HUM 38%</span></div>
+    <div class="u-cell u-grow"><span class="u-r2 u-dim">HEX-LAB V3.2 · bio-cybernetic rig · TEC-9 / LAB-7 · EXP IN PROGRESS</span></div>
+    <div class="u-cell"><span class="u-r2 u-accent">MEN_FHW / 12A</span></div>
+  </footer>
+</div>
+
 <script src="../shared/palettes.js"></script>
 <script src="../shared/u-core.js"></script>
-<script src="../shared/u-shell.js"></script>
 <script src="../shared/u-live.js"></script>
 <script>
-U.shell({
-  name:'hex-lab', brand:'HEX-LAB', brandSub:'BIOLAB',
-  subtitle:'MULTI-INSTRUMENT BIOLAB RIG', subtitleSub:'HEX BAY · SIX ASSAY CHANNELS · RUN 882',
-  meta:[{r2:'CHANNELS',r1:'5 / 6 ACTIVE'},{r2:'SAMPLE',r1:'<b>HEX-44-C</b>'},{r2:'TEMP',r1:'−4.2 °C',hide:true}],
-  status:'ASSAY', statusCls:'u-ok',
-  cols:[
-    { panels:[
-      { title:'INSTRUMENTS', tag:'HEX BAY', body:'<div>' +
-        [['CH-1','Spectrometer','UV-Vis · 210–900 nm','READ'],['CH-2','Centrifuge','14,000 rpm · 4 °C','RUN'],['CH-3','PCR','38 cycles · 92 °C','RUN'],['CH-4','Microscope','400× · fluorescence','READ'],['CH-5','Chromatograph','HPLC · C18','RUN'],['CH-6','Cryo hatch','−4.2 °C','IDLE']].map(([id,n,s,st],i)=>'<div class="h-instr'+(st==='IDLE'?' u-off':'')+'"><span class="u-id">'+id+'</span><span><span>'+n+'</span><br><span class="u-sub">'+s+'</span></span><span class="u-pill '+(st==='RUN'?'u-ok':st==='READ'?'u-warn':'')+'">'+st+'</span></div>').join('') +
-        '</div>' },
-      { title:'SAMPLE', tag:'HEX-44-C', fill:false, body:'<dl class="u-kv"><dt>Origin</dt><dd>BASIN 3</dd><dt>State</dt><dd class="u-accent">viable</dd><dt>Volume</dt><dd>2.4 mL</dd><dt>Assays</dt><dd>5 / 6</dd><dt>Chain</dt><dd class="u-data">intact</dd></dl>' }
-    ]},
-    { panels:[
-      { title:'ASSAY CHAMBER', tag:'LIVE OPTICS', hot:true, canvas:'cells', canvasOpts:{seed:9,n:54},
-        overlay:'<div class="u-corner tl">400× · FLUORESCENCE</div><div class="u-corner tr">SAMPLE HEX-44-C</div><div class="u-corner bl">FITC / TRITC</div><div class="u-corner br">EX 488 nm</div>' },
-      { title:'SIGNAL', tag:'CHANNELS', canvas:'hex', canvasOpts:{size:14,flow:true} }
-    ]},
-    { panels:[
-      { title:'READOUT', tag:'ASSAY', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="u-stat"><span class="u-v u-accent">0.842</span><span class="u-k">Abs 260</span></div><div class="u-stat"><span class="u-v u-data">1.94</span><span class="u-k">A260/280</span></div><div class="u-stat"><span class="u-v">38</span><span class="u-k">PCR cycles</span></div><div class="u-stat"><span class="u-v u-alarm">CH-6</span><span class="u-k">Offline</span></div></div>' },
-      { title:'CHROMATOGRAM', tag:'HPLC', canvas:'wave', canvasOpts:{lanes:2,amp:.16} },
-      { title:'LAB LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="9">' +
-        U.logLine('10:04','RUN ','assay 882 started') +
-        U.logLine('10:12','EVT ','CH-3 PCR cycle 12 / 38') +
-        U.logLine('10:18','NOTE','CH-6 cryo hatch offline') +
-        U.logLine('10:24','EVT ','CH-5 chromatogram peak resolved') +
-        U.logLine('10:31','WARN','CH-1 lamp hours at 88%') +
-        '</div>' }
-    ]}
-  ],
-  footer:[{text:'5 / 6 CHANNELS'},{text:'RUN 882'},{text:'CH-6 OFFLINE',cls:'u-alarm'},{text:'HEX-LAB · hex bay'}],
-  sign:'HEX-LAB · multi-instrument biolab'
-});
+U.page('hex-lab', { scan: false });
+
+const MONO = () => getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
+const TAU = Math.PI * 2;
+
+/* ---------------------------------------------------------------- surface scan
+   height field projected isometrically; rows/cols drawn as one polyline each */
+U.canvas('#surface', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  U.draw.grid(ctx, w, h, cool, 30, .05);
+  const cols = 26, rows = 16;
+  const cx = w * .52, cy = h * .46;
+  const sx = Math.min(w * .040, 26), sy = Math.min(h * .032, 19), amp = Math.min(h * .30, 74);
+  const f = (i, j) => Math.sin(i * .44 + t * .55) * .46 +
+    Math.cos(j * .52 + i * .16 + t * .4) * .33 +
+    Math.sin((i + j) * .19 - t * .7) * .21;
+  const X = (i, j) => cx + (i - cols / 2) * sx - (j - rows / 2) * sx * .55;
+  const Y = (i, j) => cy + (j - rows / 2) * sy - f(i, j) * amp;
+
+  ctx.save(); ctx.lineWidth = 1; ctx.strokeStyle = accent;
+  for (let j = 0; j <= rows; j++) {
+    ctx.beginPath();
+    for (let i = 0; i <= cols; i++) { const x = X(i, j), y = Y(i, j); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.globalAlpha = .08 + .30 * (j / rows);
+    ctx.stroke();
+  }
+  for (let i = 0; i <= cols; i++) {
+    ctx.beginPath();
+    for (let j = 0; j <= rows; j++) { const x = X(i, j), y = Y(i, j); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.globalAlpha = .06 + .20 * (i / cols);
+    ctx.stroke();
+  }
+
+  [[6, 4, data], [19, 9, cool], [24, 13, accent], [3, 11, data]].forEach(([i, j, col], k) => {
+    const x = X(i, j), y = Y(i, j);
+    ctx.globalAlpha = .95; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, 2.3, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .30; ctx.strokeStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, 6 + (k % 2) * 2, 0, TAU); ctx.stroke();
+  });
+  ctx.restore();
+}, { fps: 12 });
+
+/* ---------------------------------------------------------------- route map */
+const ROUTE = [
+  [.09, .66, 'MOD_CONV'], [.21, .34, 'BYPASS'], [.39, .27, 'SYS_892'],
+  [.56, .39, 'MOD_1007'], [.70, .60, 'MOD_RGM'], [.50, .80, 'AUX-2'], [.83, .85, 'OBS-9']
+];
+U.canvas('#route', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const mono = MONO();
+  U.draw.grid(ctx, w, h, cool, 34, .05);
+  const pts = ROUTE.map(([x, y]) => [x * w, y * h]);
+
+  ctx.save();
+  ctx.strokeStyle = accent; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.globalAlpha = .5;
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) {
+    const p = pts[i - 1], q = pts[i];
+    ctx.quadraticCurveTo((p[0] + q[0]) / 2, Math.min(p[1], q[1]) - Math.abs(q[0] - p[0]) * .30, q[0], q[1]);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  /* link stubs */
+  ctx.globalAlpha = .45; ctx.strokeStyle = data;
+  [[.21, .34, .38, .22], [.56, .39, .64, .28], [.70, .60, .78, .70]].forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath(); ctx.moveTo(x1 * w, y1 * h); ctx.lineTo(x2 * w, y2 * h); ctx.stroke();
+  });
+
+  /* travelling pulse */
+  const seg = (t * .18) % (pts.length - 1), si = Math.floor(seg), sf = seg - si;
+  const p = pts[si], q = pts[si + 1] || pts[si];
+  ctx.globalAlpha = .95; ctx.fillStyle = data;
+  ctx.beginPath(); ctx.arc(p[0] + (q[0] - p[0]) * sf, p[1] + (q[1] - p[1]) * sf, 2.6, 0, TAU); ctx.fill();
+
+  /* nodes + labels */
+  ctx.font = '7px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ROUTE.forEach(([x, y, label], i) => {
+    const px = x * w, py = y * h;
+    const active = i === 4;
+    const col = active ? cool : accent;
+    ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(4,20,26,.85)';
+    const tw = ctx.measureText(label).width + 8;
+    ctx.fillRect(px - tw / 2, py - 15, tw, 11);
+    ctx.globalAlpha = active ? .95 : .45; ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.strokeRect(px - tw / 2, py - 15, tw, 11);
+    ctx.globalAlpha = active ? 1 : .9; ctx.fillStyle = active ? cool : accent;
+    ctx.fillText(label, px, py - 9.5);
+    ctx.globalAlpha = active ? .95 : .55; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(px, py, active ? 3 : 2, 0, TAU); ctx.fill();
+    if (active) { ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(px, py, 8, 0, TAU); ctx.stroke(); }
+  });
+
+  /* origin tag */
+  ctx.restore();
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- prism gauges */
+U.canvas('#prism', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), cool = U.css('--cool'), dim = U.css('--dim');
+  const mono = MONO();
+  const draw = (cx, val, label) => {
+    const top = h * .26, bot = h * .68, half = Math.min(w * .085, (bot - top) * .52);
+    ctx.save();
+    ctx.strokeStyle = cool; ctx.globalAlpha = .8; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx - half, bot); ctx.lineTo(cx + half, bot); ctx.closePath(); ctx.stroke();
+
+    ctx.globalAlpha = .22; ctx.setLineDash([2, 3]);
+    [-.5, 0, .5].forEach((f) => {
+      ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx + half * f, bot); ctx.stroke();
+    });
+    ctx.beginPath(); ctx.moveTo(cx - half, bot - (bot - top) * .38); ctx.lineTo(cx + half, bot - (bot - top) * .38); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const nx = cx - half + val * half * 2;
+    ctx.globalAlpha = 1; ctx.strokeStyle = accent;
+    ctx.beginPath(); ctx.moveTo(cx, top + 1); ctx.lineTo(nx, bot); ctx.stroke();
+    ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(nx, bot, 2.4, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .28; ctx.beginPath(); ctx.arc(nx, bot, 7, 0, TAU); ctx.stroke();
+
+    ctx.globalAlpha = .95; ctx.font = '600 13px ' + mono; ctx.textAlign = 'center';
+    ctx.fillStyle = U.css('--text'); ctx.fillText(label, cx, bot + 20);
+    ctx.globalAlpha = .5; ctx.font = '6.5px ' + mono; ctx.fillStyle = dim;
+    ctx.fillText('SAT', cx - half, bot + 10); ctx.fillText('MULT', cx + half, bot + 10);
+    ctx.restore();
+  };
+  const a = .62 + Math.sin(t * .6) * .02, b = .38 + Math.cos(t * .5) * .02;
+  draw(w * .30, a, '54.64');
+  draw(w * .72, b, '61.81');
+}, { fps: 10 });
+
+/* ---------------------------------------------------------------- spool (torus of loops) */
+U.canvas('#spool', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const cx = w * .5, cy = h * .5, R = Math.min(w * .40, h * .42);
+  ctx.save();
+  for (let i = 0; i < 72; i++) {
+    const f = i / 72, a = f * Math.PI;
+    const rx = R * Math.max(.10, Math.abs(Math.cos(a + t * .05)));
+    const ry = R * (.94 + .05 * Math.sin(a * 2));
+    const col = i % 9 === 0 ? data : i % 5 === 0 ? cool : accent;
+    ctx.globalAlpha = .12 + .42 * Math.abs(Math.cos(a));
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, Math.sin(a) * .38, 0, TAU);
+    ctx.stroke();
+  }
+  /* spindle */
+  ctx.globalAlpha = .30; ctx.strokeStyle = cool; ctx.setLineDash([2, 4]);
+  ctx.beginPath(); ctx.moveTo(cx, cy - R * .98); ctx.lineTo(cx, cy + R * .98); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = .55; ctx.fillStyle = data;
+  [[cx, cy - R * .98], [cx, cy + R * .98]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 2, 0, TAU); ctx.fill(); });
+  ctx.restore();
+}, { fps: 12 });
+
+/* ---------------------------------------------------------------- assay: donut + bars */
+U.canvas('#assay', (ctx, w, h, t) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), text = U.css('--text'), dim = U.css('--dim');
+  const mono = MONO();
+  const r = Math.min(w * .19, h * .30, 52);
+  const cx = w * .24, cy = h * .42;
+
+  ctx.save();
+  ctx.lineWidth = 6; ctx.strokeStyle = accent;
+  ctx.globalAlpha = .9;
+  ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + TAU * .5464); ctx.stroke();
+  ctx.globalAlpha = .16;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
+
+  ctx.globalAlpha = .35; ctx.fillStyle = cool;
+  for (let i = 0; i < 48; i++) {
+    const a = -Math.PI / 2 + (i / 48) * TAU;
+    const rr = r + 8;
+    ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, .9, 0, TAU); ctx.fill();
+  }
+
+  ctx.globalAlpha = 1; ctx.fillStyle = text; ctx.font = '600 15px ' + mono;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('54.64', cx, cy + 1);
+  ctx.globalAlpha = .55; ctx.font = '6.5px ' + mono; ctx.fillStyle = dim;
+  ctx.fillText('ASSAY 04', cx, cy + r + 16);
+
+  /* bar chart on the right */
+  const n = 10, base = h - 16, top = h * .18;
+  const availW = w * .60, x0 = w * .44, bw = Math.min(11, availW / n * .46), step = availW / n;
+  ctx.globalAlpha = .30; ctx.strokeStyle = dim; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x0 - 8, base + .5); ctx.lineTo(w - 4, base + .5); ctx.stroke();
+  for (let i = 0; i < n; i++) {
+    const v = .28 + .62 * Math.abs(Math.sin(i * 1.73 + .4));
+    const bh = (base - top) * v;
+    const x = x0 + i * step;
+    const col = i % 5 === 0 ? data : i % 3 === 0 ? cool : text;
+    ctx.globalAlpha = .9; ctx.fillStyle = col;
+    ctx.fillRect(x, base - bh, bw, bh);
+    ctx.globalAlpha = .55; ctx.fillStyle = dim; ctx.font = '6px ' + mono; ctx.textAlign = 'center';
+    ctx.fillText(String(i + 1), x + bw / 2, base + 8);
+  }
+  ctx.restore();
+}, { fps: 2 });
+
+/* ---------------------------------------------------------------- FAST matrix */
+U.canvas('#matrix', (ctx, w, h) => {
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
+  const mono = MONO();
+  const cols = 8, rows = 6, cw = w / cols, ch = h / rows;
+  const r = U.rnd(77);
+  const codes = ['F0', 'G4', 'A2', 'C7', 'V1', 'R8', 'M3', 'S5'];
+  const palette = [accent, accent, 'transparent', cool, data, accent, 'transparent', accent];
+  ctx.save();
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      const k = Math.floor(r() * palette.length);
+      const col = palette[k];
+      const x = i * cw, y = j * ch;
+      if (col !== 'transparent') {
+        ctx.globalAlpha = .82; ctx.fillStyle = col;
+        ctx.fillRect(x + 1.5, y + 1.5, cw - 3, ch - 3);
+        ctx.globalAlpha = .9; ctx.fillStyle = 'rgba(4,20,26,.92)';
+        ctx.font = '6.5px ' + mono; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(codes[(i * 3 + j) % codes.length], x + 3.5, y + 3);
+        ctx.globalAlpha = .5; ctx.fillStyle = col;
+        ctx.fillText(((i * 7 + j * 3) % 100).toString().padStart(2, '0'), x + cw - 10, y + ch - 9);
+      } else {
+        ctx.globalAlpha = .16; ctx.strokeStyle = dim;
+        ctx.strokeRect(x + 1.5, y + 1.5, cw - 3, ch - 3);
+        ctx.globalAlpha = .3; ctx.fillStyle = dim;
+        ctx.fillRect(x + cw * .38, y + ch * .42, cw * .24, ch * .16);
+      }
+    }
+  }
+  /* dashed route + target */
+  ctx.globalAlpha = .9; ctx.strokeStyle = cool; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(w * .12, h * .24); ctx.lineTo(w * .38, h * .48); ctx.lineTo(w * .58, h * .40); ctx.lineTo(w * .74, h * .64);
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(w * .74, h * .64, 4.5, 0, TAU); ctx.strokeStyle = cool; ctx.stroke();
+  ctx.beginPath(); ctx.arc(w * .74, h * .64, 1.6, 0, TAU); ctx.fillStyle = cool; ctx.fill();
+  ctx.restore();
+}, { fps: 1 });
+
+/* ---------------------------------------------------------------- DOM: ops, meters, levels, tiles */
+(function () {
+  const ops = ['F_GEN', 'FL_NCH', 'GLOV_R', 'CORE-A', 'CORE-B', 'PURGE', 'TRIM', 'MAINT', 'SHIM', 'VENT'];
+  document.getElementById('ops').innerHTML = ops.map((o, i) => '<span' + (i === 0 || i === 3 ? ' class="on"' : '') + '>' + o + '</span>').join('');
+
+  const meters = [
+    ['OXY', 98, ''], ['CAR', 74, 'u-c'], ['PSI', 56, ''], ['TEMP', 42, 'u-d'],
+    ['VOL', 63, ''], ['PH', 73, 'u-c'], ['CO₂', 12, 'u-a'], ['N₂', 78, ''],
+    ['PRT', 55, ''], ['BUF', 31, 'u-d']
+  ];
+  document.getElementById('meters').innerHTML = meters.map(([k, v, cls]) =>
+    '<div class="h-meter"><span>' + k + '</span>' +
+    '<div class="h-track ' + cls + '"><i style="--v:' + v + '%"></i></div>' +
+    '<b>' + (k === 'PH' ? '7.34' : v) + '</b></div>'
+  ).join('');
+
+  const levels = [['Lv 2', '+0.4', 'up'], ['Lv 3', '−0.2', 'dn'], ['Lv 4', '94%', ''], ['Lv 5', 'OK', ''],
+    ['Lv 6', '0.61', ''], ['Lv 7', '54.64', 'up']];
+  document.getElementById('levels').innerHTML = levels.map(([k, v, cls]) =>
+    '<div class="r"><span>' + k + '</span><b class="' + cls + '">' + v + '</b></div>'
+  ).join('');
+
+  const icons = [
+    '<path d="M5 18h20M8 18l5-7 4 4 5-8"/>',
+    '<rect x="6" y="9" width="18" height="12"/><path d="M6 15h18"/>',
+    '<path d="M6 20V10M12 20V6M18 20V13M24 20V9"/>',
+    '<path d="M15 5l9 10-9 10L6 15z"/>',
+    '<circle cx="15" cy="15" r="7"/><path d="M15 8v7l5 3"/>',
+    '<path d="M5 15h6l3-7 3 14 3-7h5"/>',
+    '<path d="M15 6v18M6 15h18"/>',
+    '<rect x="7" y="7" width="16" height="16"/><path d="M11 3v6M19 3v6M3 11h6M3 19h6"/>',
+    '<circle cx="9" cy="9" r="2.5"/><circle cx="21" cy="9" r="2.5"/><circle cx="15" cy="21" r="2.5"/>'
+  ];
+  document.getElementById('tiles').innerHTML = icons.map((d, i) =>
+    '<button class="h-tile' + (i === 3 ? ' u-c' : i === 6 ? ' u-d' : '') + '" aria-label="Control ' + (i + 1) + '">' +
+    '<svg viewBox="0 0 30 30" aria-hidden="true">' + d + '</svg></button>'
+  ).join('');
+})();
+
+/* ---------------------------------------------------------------- live feeds */
+const setSrc = (id, state, live, degraded) => {
+  const el = document.getElementById(id);
+  if (el) U.setSrc(el, state, state === 'live' ? live : state === 'degraded' ? degraded : 'SIM');
+};
+
+/* intake air — Open-Meteo Air Quality */
+(function () {
+  U.api.airQuality(51.5, -0.12).then(({ data, state }) => {
+    const put = (k, v) => { const el = document.querySelector('[data-aq="' + k + '"]'); if (el) el.textContent = v; };
+    put('pm25', U.fmt(data.pm25, 1));
+    put('pm10', U.fmt(data.pm10, 1));
+    put('o3', U.fmt(data.o3, 0));
+    put('no2', U.fmt(data.no2, 0));
+    put('aqi', data.aqi == null ? '—' : U.fmt(data.aqi, 0));
+    setSrc('aq-badge', state, 'LIVE', 'DEGRADED');
+    const b = document.getElementById('aq-badge');
+    if (b) b.title = 'Open-Meteo Air Quality · 51.50N 0.12W · current hour';
+  });
+})();
+
+/* specimen reference — GBIF species match + occurrence count */
+(function () {
+  const badge = document.getElementById('gbif-badge');
+  const TAXON = 'Arabidopsis thaliana';
+  (async () => {
+    const m = await U.fetchJSON('https://api.gbif.org/v1/species/match?name=' + encodeURIComponent(TAXON));
+    if (!m || !m.usageKey) throw new Error('no match');
+    const c = await U.fetchJSON('https://api.gbif.org/v1/occurrence/search?taxonKey=' + m.usageKey + '&limit=0');
+    const name = document.getElementById('gbif-name');
+    const count = document.getElementById('gbif-count');
+    const rank = document.getElementById('gbif-rank');
+    if (name) name.textContent = (m.scientificName || TAXON);
+    if (count) count.textContent = U.fmt(c.count, 0);
+    if (rank) rank.textContent = (m.rank || 'SPECIES');
+    setSrc('gbif-badge', 'live', 'LIVE', 'DEGRADED');
+    if (badge) badge.title = 'GBIF · occurrence records for ' + (m.scientificName || TAXON);
+  })().catch(() => {
+    setSrc('gbif-badge', 'degraded', 'LIVE', 'DEGRADED');
+    if (badge) badge.title = 'GBIF unavailable';
+  });
+})();
+
+/* assay reference — RCSB PDB entry */
+(function () {
+  const badge = document.getElementById('pdb-badge');
+  U.fetchJSON('https://data.rcsb.org/rest/v1/core/entry/4HHB').then((p) => {
+    const method = (p.exptl && p.exptl[0] && p.exptl[0].method) || '—';
+    const res = p.refine && p.refine[0] && p.refine[0].ls_d_res_high;
+    const year = (p.rcsb_accession_info && p.rcsb_accession_info.initial_release_date || '').slice(0, 4);
+    const id = document.getElementById('pdb-id');
+    const mEl = document.getElementById('pdb-method');
+    const rEl = document.getElementById('pdb-res');
+    const yEl = document.getElementById('pdb-year');
+    if (id) id.textContent = p.rcsb_id || '4HHB';
+    if (mEl) mEl.textContent = method.replace(' DIFFRACTION', '');
+    if (rEl) rEl.textContent = res ? res.toFixed(2) + ' Å' : '—';
+    if (yEl) yEl.textContent = (year || '—') + ' · RCSB PDB';
+    setSrc('pdb-badge', 'live', 'LIVE', 'DEGRADED');
+    if (badge) badge.title = 'RCSB PDB · ' + (p.struct && p.struct.title || 'reference entry');
+  }).catch(() => setSrc('pdb-badge', 'degraded', 'LIVE', 'DEGRADED'));
+})();
 </script>
 </body>
 </html>
