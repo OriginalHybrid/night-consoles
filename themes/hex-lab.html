@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HEX-LAB — Multi-Instrument Biolab Rig · uispace</title>
+<meta name="description" content="Clean-room recreation of a multi-instrument biolab rig with six assay channels.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .h-instr { display: grid; grid-template-columns: 46px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--rule2); font-family: var(--mono); font-size: var(--fs-body); }
+  .h-instr:last-child { border-bottom: 0; }
+  .h-instr .u-id { color: var(--accent); }
+  .h-instr .u-sub { color: var(--dim); font-size: 8px; }
+  .h-instr.u-off { opacity: .45; }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'hex-lab', brand:'HEX-LAB', brandSub:'BIOLAB',
+  subtitle:'MULTI-INSTRUMENT BIOLAB RIG', subtitleSub:'HEX BAY · SIX ASSAY CHANNELS · RUN 882',
+  meta:[{r2:'CHANNELS',r1:'5 / 6 ACTIVE'},{r2:'SAMPLE',r1:'<b>HEX-44-C</b>'},{r2:'TEMP',r1:'−4.2 °C',hide:true}],
+  status:'ASSAY', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'INSTRUMENTS', tag:'HEX BAY', body:'<div>' +
+        [['CH-1','Spectrometer','UV-Vis · 210–900 nm','READ'],['CH-2','Centrifuge','14,000 rpm · 4 °C','RUN'],['CH-3','PCR','38 cycles · 92 °C','RUN'],['CH-4','Microscope','400× · fluorescence','READ'],['CH-5','Chromatograph','HPLC · C18','RUN'],['CH-6','Cryo hatch','−4.2 °C','IDLE']].map(([id,n,s,st],i)=>'<div class="h-instr'+(st==='IDLE'?' u-off':'')+'"><span class="u-id">'+id+'</span><span><span>'+n+'</span><br><span class="u-sub">'+s+'</span></span><span class="u-pill '+(st==='RUN'?'u-ok':st==='READ'?'u-warn':'')+'">'+st+'</span></div>').join('') +
+        '</div>' },
+      { title:'SAMPLE', tag:'HEX-44-C', fill:false, body:'<dl class="u-kv"><dt>Origin</dt><dd>BASIN 3</dd><dt>State</dt><dd class="u-accent">viable</dd><dt>Volume</dt><dd>2.4 mL</dd><dt>Assays</dt><dd>5 / 6</dd><dt>Chain</dt><dd class="u-data">intact</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'ASSAY CHAMBER', tag:'LIVE OPTICS', hot:true, canvas:'cells', canvasOpts:{seed:9,n:54},
+        overlay:'<div class="u-corner tl">400× · FLUORESCENCE</div><div class="u-corner tr">SAMPLE HEX-44-C</div><div class="u-corner bl">FITC / TRITC</div><div class="u-corner br">EX 488 nm</div>' },
+      { title:'SIGNAL', tag:'CHANNELS', canvas:'hex', canvasOpts:{size:14,flow:true} }
+    ]},
+    { panels:[
+      { title:'READOUT', tag:'ASSAY', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="u-stat"><span class="u-v u-accent">0.842</span><span class="u-k">Abs 260</span></div><div class="u-stat"><span class="u-v u-data">1.94</span><span class="u-k">A260/280</span></div><div class="u-stat"><span class="u-v">38</span><span class="u-k">PCR cycles</span></div><div class="u-stat"><span class="u-v u-alarm">CH-6</span><span class="u-k">Offline</span></div></div>' },
+      { title:'CHROMATOGRAM', tag:'HPLC', canvas:'wave', canvasOpts:{lanes:2,amp:.16} },
+      { title:'LAB LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="9">' +
+        U.logLine('10:04','RUN ','assay 882 started') +
+        U.logLine('10:12','EVT ','CH-3 PCR cycle 12 / 38') +
+        U.logLine('10:18','NOTE','CH-6 cryo hatch offline') +
+        U.logLine('10:24','EVT ','CH-5 chromatogram peak resolved') +
+        U.logLine('10:31','WARN','CH-1 lamp hours at 88%') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'5 / 6 CHANNELS'},{text:'RUN 882'},{text:'CH-6 OFFLINE',cls:'u-alarm'},{text:'HEX-LAB · hex bay'}],
+  sign:'HEX-LAB · multi-instrument biolab'
+});
+</script>
+</body>
+</html>
