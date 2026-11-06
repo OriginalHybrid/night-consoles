@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOOM-LINE — Orbital Greenhouse Console · uispace</title>
+<meta name="description" content="Clean-room recreation of an orbital greenhouse console with atmospheric and growth telemetry.">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  .b-beds { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
+  .b-bed { border: 1px solid var(--rule2); padding: 5px; font-family: var(--mono); font-size: 8px; color: var(--dim); }
+  .b-bed b { display: block; color: var(--data); font-size: 10px; }
+  .b-bed.hot { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+</style>
+</head>
+<body>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-shell.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.shell({
+  name:'bloom-line', brand:'BLOOM-LINE', brandSub:'ORBITAL',
+  subtitle:'ORBITAL GREENHOUSE CONSOLE', subtitleSub:'RING A · 48 BEDS · SPECTRUM CYCLE 12',
+  meta:[{r2:'BEDS',r1:'46 / 48 ACTIVE'},{r2:'O₂ OUT',r1:'<b class="u-data">+18.4 t/d</b>'},{r2:'CYCLE',r1:'D 412',hide:true}],
+  status:'GROWING', statusCls:'u-ok',
+  cols:[
+    { panels:[
+      { title:'GROWTH BEDS', tag:'RING A', body:'<div class="b-beds">' +
+        Array.from({length:16},(_,i)=>'<div class="b-bed'+(i===6?' hot':'')+'"><b>'+U.pad(i+1)+'</b>'+['WHEAT','SOY','LETTUCE','RICE'][i%4]+'<br>'+Math.round(28+((i*17)%60))+'%</div>').join('') +
+        '</div>' },
+      { title:'SPECTRUM', tag:'CYCLE 12', fill:false, body:'<div class="u-bars">' +
+        [['660 nm',82],['590 nm',61],['540 nm',74],['470 nm',88],['430 nm',53],['UV-B',12]].map(([n,v])=>'<div class="u-brow"><span>'+n+'</span><div class="u-bar'+(v>75?' u-data':'')+'"><i style="--v:'+v+'%"></i></div><span class="u-n">'+v+'%</span></div>').join('') +
+        '</div>' }
+    ]},
+    { panels:[
+      { title:'CANOPY', tag:'SPECTRAL', hot:true, canvas:'terrain', canvasOpts:{seed:7,layers:7,color:'--accent',pins:0},
+        overlay:'<div class="u-corner tl">NDVI 0.82</div><div class="u-corner tr">LAI 4.1</div><div class="u-corner bl">CHL 41.2 SPAD</div><div class="u-corner br">T 22.4 °C</div>' },
+      { title:'ATMOSPHERE', tag:'LIVE STATION', src:'live', srcLabel:'LIVE', id:'air', fill:false, body:'<dl class="u-kv" id="air-rows"><dt>PM₂.₅</dt><dd>—</dd><dt>PM₁₀</dt><dd>—</dd><dt>NO₂</dt><dd>—</dd><dt>O₃</dt><dd>—</dd><dt>EAQI</dt><dd>—</dd></dl>' }
+    ]},
+    { panels:[
+      { title:'WATER LOOP', tag:'RECLAIM', canvas:'wave', canvasOpts:{lanes:3,amp:.12} },
+      { title:'YIELD', tag:'FORECAST', fill:false, body:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="u-stat"><span class="u-v u-accent">18.4</span><span class="u-k">O₂ t/day</span></div><div class="u-stat"><span class="u-v u-data">2.1</span><span class="u-k">Biomass t/d</span></div><div class="u-stat"><span class="u-v">94%</span><span class="u-k">Water reclaim</span></div><div class="u-stat"><span class="u-v">12</span><span class="u-k">Cycle day</span></div></div>' },
+      { title:'GROWTH LOG', tag:'ROLLING', tight:true, scroll:true, body:'<div class="u-log" data-log data-max="8">' +
+        U.logLine('06:00','EVT ','spectrum cycle 12 begin') +
+        U.logLine('06:41','NOTE','bed 07 nutrient dosing adjusted') +
+        U.logLine('07:12','EVT ','canopy NDVI 0.82 stable') +
+        U.logLine('08:02','NOTE','water loop reclaim 94%') +
+        U.logLine('08:44','EVT ','harvest window opens in 6 d') +
+        '</div>' }
+    ]}
+  ],
+  footer:[{text:'46 / 48 BEDS'},{text:'O₂ +18.4 t/d',cls:'u-data'},{text:'NDVI 0.82'},{text:'BLOOM-LINE · ring A'}],
+  sign:'BLOOM-LINE · orbital greenhouse'
+});
+
+U.api.airQuality(51.5,-0.12).then(({data,state})=>{
+  const rows = document.getElementById('air-rows'); if (!rows) return;
+  rows.innerHTML = '<dt>PM₂.₅</dt><dd>'+U.fmt(data.pm25,1)+'</dd><dt>PM₁₀</dt><dd>'+U.fmt(data.pm10,1)+'</dd><dt>NO₂</dt><dd>'+U.fmt(data.no2,1)+'</dd><dt>O₃</dt><dd>'+U.fmt(data.o3,1)+'</dd><dt>EAQI</dt><dd>'+U.fmt(data.aqi,0)+'</dd>';
+  const badge = document.querySelector('[data-plate="air"] .u-src');
+  U.setSrc(badge, state, state === 'live' ? 'LIVE' : 'SIM');
+});
+</script>
+</body>
+</html>
