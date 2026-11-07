@@ -85,6 +85,16 @@
     color: var(--data); font-size: 7px; font-weight: 700; letter-spacing: .13em;
     display: block; }
 
+  /* live motion */
+  @keyframes m-feed { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .m-log > div.m-in { animation: m-feed .45s ease-out; }
+  .m-q.now { border-color: color-mix(in srgb, var(--data) 55%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data) 20%, transparent); }
+  .m-q.now > span:first-child { color: var(--data); }
+  .m-q.now > span:first-child::after { content: ' ●'; font-size: 6px;
+    animation: u-breathe 2s ease-in-out infinite; }
+  .m-rx { color: var(--data); font-variant-numeric: tabular-nums; }
+
   .u-bot .u-cell .u-r2 { color: var(--text); font-weight: 600; }
 
   /* panel placement */
@@ -184,6 +194,7 @@
     <div class="u-cell u-hide-sm"><span class="u-r2">HORIZON 48 H</span></div>
     <div class="u-cell u-hide-sm"><span class="u-r2">BASIS WHO 2021 AQG</span></div>
     <div class="u-cell u-hide-sm"><span class="u-r2" id="foot-obs">OBS —</span></div>
+    <div class="u-cell u-hide-sm"><span class="u-r2 m-rx" id="rx-age">RX —</span></div>
     <div class="u-cell u-grow"><span class="u-r2 u-dim">MTOX-2 · OPEN-METEO AIR-QUALITY API · EAQI / µG·M⁻³</span></div>
     <div class="u-cell"><span class="u-r2 u-accent">LIVE PUBLIC FEED</span></div>
   </footer>
@@ -273,20 +284,69 @@ const view = {
   cities: CITIES.map(simCity),
   states: Object.fromEntries(CITIES.map((c) => [c.id, 'sim'])),
   selected: 'del',
-  liveCount: 0
+  liveCount: 0,
+  lastRx: 0,
+  anim: {},
+  streamI: 0
 };
 const byId = (id) => view.cities.find((c) => c.id === id) || view.cities[0];
 const sel = () => byId(view.selected);
 
+/* ---------------------------------------------------------------- live-time helpers
+   The hourly series is anchored at the observation hour. As wall-clock time
+   advances we slide the window, so the queues and the wave field stay honest. */
+function hoursSince(iso) {
+  if (!iso) return 0;
+  const t0 = Date.parse(String(iso).length === 16 ? iso + ':00Z' : iso);
+  return isFinite(t0) ? Math.max(0, (Date.now() - t0) / 36e5) : 0;
+}
+function shifted(c, key, n) {
+  const arr = (c.hourly && c.hourly[key]) || [];
+  const off = Math.floor(hoursSince(c.obs));
+  return arr.slice(off, off + n);
+}
+function interp(arr, f) {
+  if (!arr || !arr.length) return 0;
+  const i = Math.max(0, Math.min(arr.length - 1, Math.floor(f)));
+  const j = Math.min(arr.length - 1, i + 1);
+  const k = Math.max(0, Math.min(1, f - i));
+  return num(arr[i], 0) * (1 - k) + num(arr[j], 0) * k;
+}
+const hexRGB = (s) => { const n = parseInt(String(s).slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const mix2 = (a, b, k) => {
+  const A = hexRGB(a), B = hexRGB(b);
+  return 'rgb(' + Math.round(A[0] + (B[0] - A[0]) * k) + ',' +
+    Math.round(A[1] + (B[1] - A[1]) * k) + ',' + Math.round(A[2] + (B[2] - A[2]) * k) + ')';
+};
+
+/* Live sites plot the API value. Degraded sites never pretend to be live:
+   their deterministic SIM value breathes so the demo still moves. */
+function liveVal(c, key, t) {
+  const base = num(c[key], 0);
+  if (view.states[c.id] === 'live') return base;
+  const seed = c.id.charCodeAt(0) * 3 + key.length * 11;
+  return Math.max(0, base * (1 + .045 * Math.sin(t * .8 + seed) + .018 * Math.sin(t * 2.3 + seed * 2)));
+}
+
+/* frame-rate independent easing toward a target (for bars / numbers) */
+function easeTo(c, key, target, rate) {
+  const m = view.anim[c.id] || (view.anim[c.id] = {});
+  const cur = m[key] == null ? 0 : m[key];
+  const next = cur + (target - cur) * (rate || .09);
+  m[key] = Math.abs(target - next) < .005 ? target : next;
+  return m[key];
+}
+
 /* ---------------------------------------------------------------- pollutant load
-   Horizontal bars: length = multiple of the WHO 24 h guideline,
-   numeric readout in µg/m³. */
-U.canvas('#load', (ctx, w, h) => {
+   Horizontal bars: length = multiple of the WHO 24 h guideline, numeric
+   readout in µg/m³. Readings ease to their target, a beam travels across
+   the panel and the bar tips glint, so the load track is never static. */
+U.canvas('#load', (ctx, w, h, t) => {
   const data = U.css('--data'), cool = U.css('--cool'), alarm = U.css('--alarm');
   const text = U.css('--text');
   const mono = MONO();
   const c = sel();
-  U.draw.grid(ctx, w, h, U.css('--cool'), 30, .035);
+  U.draw.grid(ctx, w, h, cool, 30, .035);
 
   const left = 10, right = w - 10, top = 12, bot = h - 8;
   const rowH = (bot - top) / POL.length;
@@ -295,10 +355,23 @@ U.canvas('#load', (ctx, w, h) => {
   const xOf = (ratio) => left + Math.min(ratio, scaleMax) / scaleMax * trackW;
   const gx = xOf(1);
 
+  /* eased display values: grow from zero on entry, then tween on refresh */
+  const disp = {};
+  POL.forEach((p) => { disp[p.k] = easeTo(c, p.k, liveVal(c, p.k, t), .085); });
+
+  /* travelling beam */
+  const sweep = (t * .17) % 1;
+  const sx = left + sweep * trackW;
+  const beam = ctx.createLinearGradient(sx - 34, 0, sx + 34, 0);
+  beam.addColorStop(0, 'rgba(255,255,255,0)');
+  beam.addColorStop(.5, 'rgba(255,255,255,.055)');
+  beam.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = beam; ctx.fillRect(sx - 34, top, 68, bot - top);
+
   ctx.save();
   POL.forEach((p, i) => {
     const y = top + i * rowH;
-    const val = num(c[p.k], 0);
+    const val = disp[p.k];
     const ratio = p.who ? val / p.who : 0;
     const col = ratio > 2 ? alarm : ratio > 1 ? data : cool;
 
@@ -328,6 +401,12 @@ U.canvas('#load', (ctx, w, h) => {
     ctx.globalAlpha = .92;
     ctx.fillRect(left, by, Math.max(1, xOf(ratio) - left), bh);
 
+    /* glint on the bar head */
+    const tip = Math.min(right - 1.5, Math.max(left, xOf(ratio) - 1));
+    ctx.globalAlpha = .45 + .35 * Math.sin(t * 2.2 + i);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(tip, by, 1.5, bh);
+
     /* 1× guideline tick */
     ctx.globalAlpha = .7;
     ctx.strokeStyle = text;
@@ -341,26 +420,41 @@ U.canvas('#load', (ctx, w, h) => {
     ctx.fillText('1×', gx + 3, by - 5);
   });
   ctx.restore();
-}, { fps: 4 });
+}, { fps: 20 });
 
 /* ---------------------------------------------------------------- profile radar
-   Six axes, one per pollutant; radius = current value ÷ WHO guideline. */
-U.canvas('#profile', (ctx, w, h) => {
+   Six axes, one per pollutant; radius = value ÷ WHO guideline. A sweep
+   rotates behind the rings and the polygon breathes so the profile reads
+   as a live instrument, not a static spider chart. */
+U.canvas('#profile', (ctx, w, h, t) => {
   const data = U.css('--data'), cool = U.css('--cool'), text = U.css('--text');
   const mono = MONO();
   const c = sel();
   const cx = w * .5, cy = h * .51;
   const R = Math.min(w * .315, h * .34);
-  const vals = POL.map((p) => Math.max(0, Math.min(2, num(c[p.k], 0) / (p.who || 1))));
+  const vals = POL.map((p) => Math.max(0, Math.min(2, liveVal(c, p.k, t) / (p.who || 1))));
 
-  U.draw.grid(ctx, w, h, U.css('--cool'), 32, .035);
+  U.draw.grid(ctx, w, h, cool, 32, .035);
   ctx.save();
 
-  /* rings at 0.5×, 1×, 2× */
-  [0.5, 1, 2].forEach((v, i) => {
+  /* rotating sweep fan behind the rings */
+  const sweepA = t * .55;
+  for (let k = 0; k < 28; k++) {
+    const a = sweepA - k * .028;
+    ctx.globalAlpha = .12 * (1 - k / 28);
+    ctx.strokeStyle = cool;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10));
+    ctx.stroke();
+  }
+
+  /* rings at 0.5×, 1×, 2× — the 1× axis breathes */
+  [0.5, 1, 2].forEach((v) => {
     const r = v / 2 * R;
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU);
-    ctx.globalAlpha = v === 1 ? .8 : .3;
+    ctx.globalAlpha = v === 1 ? .55 + .25 * Math.sin(t * 1.6) : .3;
     ctx.strokeStyle = v === 1 ? cool : U.css('--dim');
     ctx.setLineDash(v === 1 ? [3, 3] : []);
     ctx.lineWidth = v === 1 ? 1.2 : 1;
@@ -381,10 +475,11 @@ U.canvas('#profile', (ctx, w, h) => {
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke();
   });
 
-  /* data polygon */
+  /* data polygon (breathing radius) */
+  const breathe = 1 + .012 * Math.sin(t * 1.4);
   const pts = vals.map((v, i) => {
     const a = -Math.PI / 2 + i * TAU / POL.length;
-    const r = Math.max(4, v / 2 * R);
+    const r = Math.max(4, v / 2 * R * breathe);
     return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
   });
   ctx.beginPath();
@@ -393,7 +488,7 @@ U.canvas('#profile', (ctx, w, h) => {
   ctx.globalAlpha = .16; ctx.fillStyle = data; ctx.fill();
   ctx.globalAlpha = .95; ctx.strokeStyle = data; ctx.lineWidth = 1.4; ctx.stroke();
 
-  /* points + axis labels (name and µg/m³) */
+  /* points + axis labels (value in µg/m³) */
   POL.forEach((p, i) => {
     const a = -Math.PI / 2 + i * TAU / POL.length;
     const [px, py] = pts[i];
@@ -401,7 +496,7 @@ U.canvas('#profile', (ctx, w, h) => {
     const capped = vals[i] >= 2;
     ctx.globalAlpha = 1;
     ctx.fillStyle = over ? U.css('--alarm') : cool;
-    ctx.beginPath(); ctx.arc(px, py, capped ? 3.4 : 2.4, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(px, py, capped ? 3.2 : 2.4 + .5 * Math.sin(t * 2 + i), 0, TAU); ctx.fill();
     if (capped) {
       ctx.globalAlpha = .8; ctx.strokeStyle = over ? U.css('--alarm') : cool; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(px, py, 6, 0, TAU); ctx.stroke();
@@ -409,62 +504,69 @@ U.canvas('#profile', (ctx, w, h) => {
 
     const lx = cx + Math.cos(a) * (R + 15);
     const ly = cy + Math.sin(a) * (R + 15);
+    const v = liveVal(c, p.k, t);
     ctx.textAlign = Math.abs(Math.cos(a)) < .22 ? 'center' : Math.cos(a) > 0 ? 'left' : 'right';
     ctx.globalAlpha = 1;
     ctx.fillStyle = text;
     ctx.font = '700 8px ' + mono;
     ctx.fillText(p.label, lx, ly);
     ctx.fillStyle = over ? U.css('--alarm') : '#fff';
-    ctx.font = '700 8px ' + mono;
-    ctx.fillText(num(c[p.k], 0).toFixed(num(c[p.k], 0) >= 100 ? 0 : 1), lx, ly + 10);
+    ctx.fillText(v.toFixed(v >= 100 ? 0 : 1), lx, ly + 10);
   });
   ctx.restore();
-}, { fps: 4 });
+}, { fps: 20 });
 
-/* ---------------------------------------------------------------- 48 h forecast
-   Two stacked tracks with independent µg/m³ scales and WHO lines. */
-U.canvas('#forecast', (ctx, w, h) => {
+/* ---------------------------------------------------------------- 48 h wave field
+   Split-spectrum dot-column wave field: columns of dots trace the hourly
+   series, a white ribbon connects the crests and a scrub beam sweeps the
+   forecast, reading the series live in µg/m³. */
+U.canvas('#forecast', (ctx, w, h, t) => {
   const data = U.css('--data'), cool = U.css('--cool'), alarm = U.css('--alarm');
-  const text = U.css('--text'), dim = U.css('--dim');
+  const text = U.css('--text'), accent = U.css('--accent');
   const mono = MONO();
   const c = sel();
-  const hh = c.hourly || { time: [], pm25: [], no2: [] };
-  const arr25 = (hh.pm25 || []).slice(0, 48);
-  const arrNO = (hh.no2 || []).slice(0, 48);
-  const padL = 40, padR = 14, top = 15, bottom = h - 24;
-  const gap = 30;
-  const trackH = Math.max(40, (bottom - top - gap) / 2);
+  const arr25 = shifted(c, 'pm25', 48);
+  const arrNO = shifted(c, 'no2', 48);
+  const blue = mix2(accent, cool, .55);
 
-  U.draw.grid(ctx, w, h, cool, 34, .035);
+  const padL = 42, padR = 14, top = 16, bottom = h - 24, gap = 30;
+  const fieldH = Math.max(56, (bottom - top - gap) / 2);
+  const fieldW = w - padL - padR;
+  const NC = Math.max(56, Math.min(110, Math.floor(fieldW / 4)));
+  const cursor = (t * .055) % 1;
+
+  U.draw.grid(ctx, w, h, cool, 34, .03);
   ctx.save();
 
-  const track = (title, arr, guide, col, index) => {
-    const ty = top + index * (trackH + gap);
-    const base = ty + trackH;
-    const clean = arr.map((v) => num(v, 0));
+  const field = (title, arr, guide, col, y0) => {
+    const clean = (arr && arr.length ? arr : [0]).map((v) => num(v, 0));
+    const base = y0 + fieldH;
     const maxV = Math.max(guide * 1.5, ...clean) * 1.08;
-    const yOf = (v) => base - Math.min(v, maxV) / maxV * trackH;
-    const xOf = (i) => padL + i / Math.max(1, arr.length - 1) * (w - padL - padR);
+    const yOf = (v) => base - Math.min(v, maxV) / maxV * fieldH;
+    const xAt = (j) => padL + j / (NC - 1) * fieldW;
+    const at = (f) => interp(clean, f);
 
-    /* scale labels */
-    ctx.globalAlpha = .95;
-    ctx.fillStyle = text;
-    ctx.font = '700 7px ' + mono;
-    ctx.textAlign = 'right';
-    ctx.fillText(Math.round(maxV), padL - 5, ty + 7);
-    ctx.fillText('0', padL - 5, base);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = text;
-    ctx.font = '700 8.5px ' + mono;
-    ctx.fillText(title, padL, ty + 8);
-    ctx.textAlign = 'right';
-    ctx.font = '600 7px ' + mono;
-    ctx.fillStyle = text;
-    ctx.fillText('µg/m³', w - padR, ty + 8);
+    /* dot columns */
+    for (let j = 0; j < NC; j++) {
+      const v = at(j / (NC - 1) * (clean.length - 1));
+      const x = xAt(j);
+      const yTop = yOf(v);
+      const shim = .68 + .32 * Math.sin(t * 1.7 + j * .55);
+      const span = Math.max(1, base - yTop);
+      for (let y = base - 2; y >= yTop; y -= 5) {
+        const k = (base - y) / span;
+        ctx.globalAlpha = .07 + .38 * k * shim;
+        ctx.fillStyle = col;
+        ctx.fillRect(x - .9, y - .9, 1.8, 1.8);
+      }
+      ctx.globalAlpha = .5 + .45 * shim;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x - 1.1, yTop - 1.1, 2.2, 2.2);
+    }
 
-    /* WHO line */
+    /* WHO line over the dots so it stays readable */
     const gy = yOf(guide);
-    ctx.globalAlpha = .75;
+    ctx.globalAlpha = .8;
     ctx.strokeStyle = alarm;
     ctx.setLineDash([3, 4]);
     ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(w - padR, gy); ctx.stroke();
@@ -474,56 +576,75 @@ U.canvas('#forecast', (ctx, w, h) => {
     ctx.fillStyle = alarm;
     ctx.fillText('WHO ' + guide, padL + 3, gy - 4);
 
-    /* area + line */
-    if (arr.length > 1) {
-      const grad = ctx.createLinearGradient(0, ty, 0, base);
-      grad.addColorStop(0, col + '3a');
-      grad.addColorStop(1, col + '03');
-      ctx.beginPath();
-      ctx.moveTo(xOf(0), base);
-      clean.forEach((v, i) => ctx.lineTo(xOf(i), yOf(v)));
-      ctx.lineTo(xOf(clean.length - 1), base);
-      ctx.closePath();
-      ctx.globalAlpha = 1; ctx.fillStyle = grad; ctx.fill();
-
-      ctx.beginPath();
-      clean.forEach((v, i) => { const x = xOf(i), y = yOf(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-      ctx.globalAlpha = .98; ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.stroke();
-
-      /* peak marker */
-      let pi = 0;
-      clean.forEach((v, i) => { if (v > clean[pi]) pi = i; });
-      const px = xOf(pi), py = yOf(clean[pi]);
-      ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(px, py, 2.2, 0, TAU); ctx.fill();
-      ctx.font = '700 7px ' + mono;
-      ctx.textAlign = px > w * .7 ? 'right' : 'left';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(clean[pi].toFixed(1) + ' peak', px + (px > w * .7 ? -7 : 7), py - 6);
+    /* crest ribbon */
+    ctx.beginPath();
+    for (let j = 0; j < NC; j++) {
+      const x = xAt(j);
+      const y = yOf(at(j / (NC - 1) * (clean.length - 1)));
+      j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     }
+    ctx.globalAlpha = .55; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 
-    /* now marker */
-    ctx.globalAlpha = .9;
-    ctx.strokeStyle = text;
-    ctx.beginPath(); ctx.moveTo(padL, ty); ctx.lineTo(padL, base); ctx.stroke();
+    /* peak marker */
+    let pi = 0; clean.forEach((v, i) => { if (v > clean[pi]) pi = i; });
+    const px = xAt(pi / Math.max(1, clean.length - 1) * (NC - 1));
+    const py = yOf(clean[pi]);
+    ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(px, py, 2.2, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .4; ctx.strokeStyle = '#fff';
+    ctx.beginPath(); ctx.arc(px, py, 6 + 2 * Math.sin(t * 2 + pi), 0, TAU); ctx.stroke();
+    ctx.font = '700 7px ' + mono;
+    ctx.textAlign = px > w * .7 ? 'right' : 'left';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(clean[pi].toFixed(1) + ' peak', px + (px > w * .7 ? -7 : 7), py - 6);
+
+    /* scrub beam + live readout */
+    const bx = padL + cursor * fieldW;
+    const bv = at(cursor * (clean.length - 1));
+    const by = yOf(bv);
+    const bg = ctx.createLinearGradient(bx - 18, 0, bx + 18, 0);
+    bg.addColorStop(0, 'rgba(255,255,255,0)');
+    bg.addColorStop(.5, 'rgba(255,255,255,.10)');
+    bg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = bg; ctx.fillRect(bx - 18, y0, 36, fieldH);
+    ctx.globalAlpha = .8; ctx.strokeStyle = '#fff';
+    ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx, base); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(bx, by, 2.6, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .45; ctx.strokeStyle = col;
+    ctx.beginPath(); ctx.arc(bx, by, 7, 0, TAU); ctx.stroke();
+
+    /* title + unit + range + live scrub readout */
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = text;
+    ctx.font = '700 8.5px ' + mono;
+    ctx.fillText(title, padL, y0 + 8);
+    const tw = ctx.measureText(title).width;
+    ctx.font = '600 7px ' + mono;
+    ctx.fillText('µg/m³ · 0–' + Math.round(maxV), padL + tw + 8, y0 + 8);
+
+    ctx.textAlign = 'right';
+    ctx.font = '700 7.5px ' + mono;
+    ctx.fillStyle = '#fff';
+    ctx.fillText('SCRUB ' + bv.toFixed(1) + ' · +' + (cursor * (clean.length - 1)).toFixed(1) + ' H', w - padR, y0 + 8);
   };
 
-  track('PM 2.5', arr25, 15, data, 0);
-  track('NO₂', arrNO, 25, cool, 1);
+  field('PM 2.5', arr25, 15, data, top);
+  field('NO₂', arrNO, 25, blue, top + fieldH + gap);
 
   /* time axis */
   const axisY = h - 8;
   ctx.globalAlpha = .95;
   ctx.fillStyle = text;
   ctx.font = '700 7px ' + mono;
-  const marks = [0, .25, .5, .75, 1];
-  marks.forEach((f) => {
-    const x = padL + f * (w - padL - padR);
+  [0, .25, .5, .75, 1].forEach((f) => {
+    const x = padL + f * fieldW;
     ctx.textAlign = f === 0 ? 'left' : f === 1 ? 'right' : 'center';
     ctx.fillText(f === 0 ? 'NOW' : '+' + Math.round(f * 48) + ' H', x, axisY);
   });
   ctx.restore();
-}, { fps: 4 });
+}, { fps: 20 });
 
 /* ---------------------------------------------------------------- tables + queue */
 function renderRank() {
@@ -545,6 +666,8 @@ function renderRank() {
     btn.addEventListener('click', () => {
       view.selected = btn.dataset.city;
       renderAll();
+      const c = sel();
+      pushEvent('SEL', c.name + ' · EAQI ' + Math.round(c.aqi) + ' ' + band(c.aqi)[0], 'u-hot');
     });
   });
 }
@@ -552,14 +675,17 @@ function renderRank() {
 function renderQueue() {
   const c = sel();
   const h = c.hourly || { time: [], pm25: [], aqi: [] };
+  const off = Math.floor(hoursSince(c.obs));
   const el = document.getElementById('queue');
-  const n = Math.min(6, (h.time || []).length);
   let html = '';
-  for (let i = 0; i < n; i++) {
-    const aqi = Math.round(num(h.aqi[i], c.aqi));
-    const pm = num(h.pm25[i], c.pm25);
+  for (let i = 0; i < 6; i++) {
+    const idx = off + i;
+    const stamp = (h.time || [])[idx];
+    if (!stamp) break;
+    const aqi = Math.round(num(h.aqi[idx], c.aqi));
+    const pm = num(h.pm25[idx], c.pm25);
     const [label, cls] = band(aqi);
-    html += '<div class="m-q"><span>' + hhmm(h.time[i]) + '</span>' +
+    html += '<div class="m-q' + (i === 0 ? ' now' : '') + '"><span>' + hhmm(stamp) + '</span>' +
       '<b>' + aqi + '</b>' +
       '<i>PM 2.5 ' + pm.toFixed(1) + '</i>' +
       '<span class="st ' + cls + '">' + label + '</span></div>';
@@ -567,33 +693,72 @@ function renderQueue() {
   el.innerHTML = html;
 }
 
-function renderLog() {
+function logSyncHTML() {
   const c = sel();
-  const rows = view.cities.slice().sort((a, b) => b.aqi - a.aqi);
-  const lines = rows.map((x) => {
-    const [label] = band(x.aqi);
-    const tag = x.aqi > 60 ? 'WARN' : x.aqi > 40 ? 'NOTE' : 'EVT ';
-    const cls = x.aqi > 60 ? 'u-alarm' : x.aqi > 40 ? 'u-hot' : '';
-    return U.logLine(hhmm(x.obs), tag, x.name + ' · EAQI ' + Math.round(x.aqi) + ' ' + label +
-      ' · PM 2.5 ' + num(x.pm25, 0).toFixed(1) + ' µg/m³', cls);
-  });
+  return '<time>' + hhmm(c.obs) + '</time><span class="u-tag">SYNC</span><span class="u-msg">' +
+    view.liveCount + ' / ' + CITIES.length + ' SITES · OPEN-METEO AIR-QUALITY</span>';
+}
 
-  /* 48 h outlook: the forecast peak each site is heading for */
-  const peaks = rows.map((x) => {
-    const arr = (x.hourly.pm25 || []).map((v) => num(v, 0));
-    if (!arr.length) return '';
-    let pi = 0;
-    arr.forEach((v, i) => { if (v > arr[pi]) pi = i; });
-    const when = x.hourly.time[pi];
-    return U.logLine(hhmm(when), 'PEAK', x.name + ' · ' + arr[pi].toFixed(1) + ' µg/m³' +
-      (arr[pi] > 15 ? ' · over WHO 15' : ' · under WHO 15'), arr[pi] > 35 ? 'u-hot' : '');
-  });
+function updateLogSync() {
+  const el = document.getElementById('log-sync');
+  if (el) el.innerHTML = logSyncHTML();
+}
 
-  document.getElementById('log').innerHTML =
-    U.logLine(hhmm(c.obs), 'SYNC', view.liveCount + ' / ' + CITIES.length + ' SITES · OPEN-METEO AIR-QUALITY', view.liveCount ? 'u-hot' : '') +
-    lines.join('') +
-    '<div class="m-log-h">48 H OUTLOOK · FORECAST PEAK PM 2.5</div>' +
-    peaks.join('');
+function trimStream() {
+  const log = document.getElementById('log');
+  if (!log) return;
+  let items = log.querySelectorAll(':scope > .m-stream');
+  while (items.length > 13) {
+    items[items.length - 1].remove();
+    items = log.querySelectorAll(':scope > .m-stream');
+  }
+  log.scrollTop = 0;
+}
+
+function pushEvent(tag, msg, cls) {
+  const head = document.getElementById('log-live');
+  if (!head) return;
+  const now = new Date();
+  head.insertAdjacentHTML('afterend',
+    '<div class="m-in m-stream ' + (cls || '') + '"><time>' +
+    String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' +
+    String(now.getSeconds()).padStart(2, '0') + '</time><span class="u-tag">' + tag +
+    '</span><span class="u-msg">' + msg + '</span></div>');
+  trimStream();
+}
+
+/* one real forecast sample per tick, rotating through the network */
+function streamLine() {
+  const head = document.getElementById('log-live');
+  if (!head) return;
+  const c = view.cities[view.streamI % view.cities.length];
+  const arr = shifted(c, 'pm25', 48);
+  if (!arr.length) return;
+  const idx = 1 + (view.streamI * 7) % Math.max(1, arr.length - 1);
+  const val = num(arr[idx], 0);
+  const aqiArr = shifted(c, 'aqi', 48);
+  const aqi = Math.round(num(aqiArr[idx], c.aqi));
+  const [label] = band(aqi);
+  const tag = val > 35 ? 'WARN' : val > 15 ? 'NOTE' : 'EVT ';
+  const cls = val > 35 ? 'u-alarm' : val > 15 ? 'u-hot' : '';
+  const off = Math.floor(hoursSince(c.obs));
+  const stamp = (c.hourly.time || [])[off + idx] || (c.hourly.time || [])[idx];
+  const now = new Date();
+  const rt = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  head.insertAdjacentHTML('afterend',
+    '<div class="m-in m-stream ' + cls + '"><time>' + rt + '</time><span class="u-tag">' + tag +
+    '</span><span class="u-msg">' + c.name + ' · +' + idx + 'H @ ' + hhmm(stamp) + ' · PM 2.5 ' +
+    val.toFixed(1) + ' µg/m³ · ' + label + '</span></div>');
+  view.streamI++;
+  trimStream();
+}
+
+function renderLog() {
+  const log = document.getElementById('log');
+  if (!log || log.dataset.seeded) return;
+  log.dataset.seeded = '1';
+  log.innerHTML = '<div class="m-in" id="log-sync">' + logSyncHTML() + '</div>' +
+    '<div class="m-log-h" id="log-live">LIVE STREAM · FORECAST EVENTS</div>';
 }
 
 function renderStrips() {
@@ -622,6 +787,7 @@ function renderHead() {
 
   const c = sel();
   document.getElementById('foot-obs').textContent = 'OBS ' + hhmm(c.obs) + ' UTC';
+  updateLogSync();
 }
 
 const setBadge = (id, st) => {
@@ -687,6 +853,45 @@ async function loadCity(c) {
   return { id: c.id, data: r.data, state: r.state };
 }
 
+let refreshing = false;
+
+async function refreshAll() {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    const results = await Promise.all(CITIES.map(loadCity));
+    results.forEach((r) => {
+      const i = view.cities.findIndex((c) => c.id === r.id);
+      if (i < 0) return;
+      view.cities[i] = Object.assign({}, view.cities[i], r.data, { id: r.id });
+      view.states[r.id] = r.state;
+    });
+    view.liveCount = results.filter((r) => r.state === 'live').length;
+    view.lastRx = Date.now();
+    renderRank(); renderQueue(); renderStrips(); renderHead(); renderBadges();
+    pushEvent('RX', view.liveCount + ' / ' + CITIES.length + ' SITES · ' +
+      new Date().toLocaleTimeString('en-GB', { hour12: false }),
+      view.liveCount === CITIES.length ? 'u-hot' : 'u-alarm');
+  } finally {
+    refreshing = false;
+  }
+}
+
+function updateRx() {
+  const el = document.getElementById('rx-age');
+  if (!el) return;
+  if (!view.lastRx) { el.textContent = 'RX —'; return; }
+  el.textContent = 'RX ' + Math.round((Date.now() - view.lastRx) / 1000) + 's';
+}
+
+function startLive() {
+  updateRx();
+  setInterval(updateRx, 1000);        // receive-age ticker
+  setInterval(renderQueue, 60000);    // advance the hour window
+  setInterval(streamLine, 4500);      // stream a new forecast sample
+  setInterval(refreshAll, 120000);    // re-poll the network
+}
+
 (async function boot() {
   renderAll();
 
@@ -699,6 +904,7 @@ async function loadCity(c) {
     view.states[r.id] = r.state;
   });
   view.liveCount = results.filter((r) => r.state === 'live').length;
+  view.lastRx = Date.now();
 
   /* open on the worst live site so the first frame is the interesting one */
   const live = view.cities.filter((c) => view.states[c.id] === 'live');
@@ -707,6 +913,10 @@ async function loadCity(c) {
   if (worst) view.selected = worst.id;
 
   renderAll();
+  for (let i = 0; i < 10; i++) streamLine();
+  pushEvent('RX', view.liveCount + ' / ' + CITIES.length + ' SITES · OPEN-METEO AIR-QUALITY',
+    view.liveCount ? 'u-hot' : 'u-alarm');
+  startLive();
 })();
 </script>
 </body>
