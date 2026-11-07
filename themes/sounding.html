@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SOUNDING — Fishery Acoustics Station · uispace</title>
+<meta name="description" content="Clean-room recreation of a fishery acoustics station: scrolling echogram, sector sonar, CTD cast, currents and survey ledger. Echogram and sonar replay authored synthetic datasets; the CTD, surface currents and species ledger come from live public feeds.">
+<!-- Data: echogram + sector sonar replay authored synthetic datasets in shared/data/sounding.
+     CTD is a real IOOS glider cast; currents are Open-Meteo Marine; ledger is OBIS.
+     Every panel carries a LIVE / SNAPSHOT / SYNTHETIC badge. -->
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+  :root {
+    --rule: rgba(176,122,28,.34);
+    --rule2: rgba(176,122,28,.16);
+    --ink2: rgba(255,196,107,.78);
+    --ink3: rgba(255,196,107,.58);
+    --gap: 1px;
+  }
+
+  html, body { background: var(--bg); color: var(--text); height: 100%; }
+
+  /* ---------------------------------------------------------------- shell */
+  .s-app {
+    position: fixed; inset: 0; display: grid; gap: 1px;
+    grid-template-rows: 46px minmax(0,1fr) 34px;
+    background: var(--rule);
+  }
+  .s-app > * { min-width: 0; min-height: 0; }
+
+  .s-top {
+    display: flex; align-items: stretch; overflow: hidden;
+    background: linear-gradient(180deg, #120d02, #0a0701);
+    border-bottom: 0;
+  }
+  .s-top::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 3px; pointer-events: none; opacity: .55;
+    background: repeating-linear-gradient(90deg, rgba(176,122,28,.55) 0 1px, transparent 1px 12px),
+                repeating-linear-gradient(90deg, rgba(255,176,0,.8) 0 1px, transparent 1px 96px);
+  }
+  .tc { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 2px;
+    padding: 0 12px; border-right: 1px solid var(--rule2); white-space: nowrap; min-width: 0; overflow: hidden; }
+  .tc .r1 { font-size: 10px; line-height: 1.2; letter-spacing: .04em; color: var(--text); font-weight: 500; }
+  .tc .r2 { font-size: 9.5px; line-height: 1.2; letter-spacing: .06em; color: var(--ink3); }
+  .tc .lb { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink3); }
+  .tc b { font-weight: 600; color: var(--data); }
+  .s-brand { font-family: var(--disp); font-size: 14px; letter-spacing: .12em; color: var(--data);
+    display: flex; align-items: center; gap: 9px; padding-left: 14px; }
+  .s-brand i { width: 7px; height: 7px; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .s-brand small { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--ink3); }
+
+  .s-btn { flex: 0 0 auto; align-self: center; margin: 0 10px; padding: 3px 8px;
+    border: 1px solid var(--rule); background: transparent; color: var(--text);
+    font-family: var(--mono); font-size: 9px; letter-spacing: .14em; cursor: pointer; }
+  .s-btn:hover, .s-btn:focus-visible { color: var(--data); border-color: var(--accent); outline: none; }
+
+  /* ---------------------------------------------------------------- zones */
+  .s-main { display: grid; gap: 1px; background: var(--rule); min-height: 0;
+    grid-template-rows: minmax(0,660fr) minmax(0,300fr); }
+  .s-mid { display: grid; gap: 1px; background: var(--rule); min-height: 0;
+    grid-template-columns: minmax(0,1192fr) minmax(0,727fr); }
+  .s-right { display: grid; gap: 1px; background: var(--rule); min-height: 0;
+    grid-template-rows: minmax(0,58fr) minmax(0,42fr); }
+  .s-bc { display: grid; gap: 1px; background: var(--rule); min-height: 0;
+    grid-template-columns: minmax(0,397fr) minmax(0,329fr); }
+  .s-bot { display: grid; gap: 1px; background: var(--rule); min-height: 0;
+    grid-template-columns: minmax(0,531fr) minmax(0,980fr) minmax(0,407fr); }
+
+  .z { position: relative; background: var(--panel); min-width: 0; min-height: 0; overflow: hidden; }
+  .z-cv { position: absolute; inset: 0; z-index: 0; }
+  .z-cv canvas, .f-dg canvas { width: 100%; height: 100%; display: block; }
+
+  .s-hd { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 10px; padding: 7px 9px 0; pointer-events: none; }
+  .zlab { font-family: var(--mono); font-size: 9.5px; letter-spacing: .15em; color: var(--ink2);
+    white-space: nowrap; }
+  .zlab b { color: var(--text); font-weight: 600; letter-spacing: .16em; }
+  .zsub { font-family: var(--mono); font-size: 9.5px; letter-spacing: .05em; color: var(--ink3); white-space: nowrap; }
+  .zsub b { color: var(--data); font-weight: 600; }
+  .s-hd .r { text-align: right; }
+  .s-hd > div:first-child { min-width: 0; }
+  .s-hd .zlab, .s-hd .zsub { overflow: hidden; text-overflow: ellipsis; }
+  .s-ft { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; padding: 4px 9px 6px; background: linear-gradient(0deg, rgba(5,4,0,.9), transparent); }
+  .s-ft .zsub { font-size: 9.5px; }
+
+  .u-src.synth { color: var(--data); }
+  .u-src.synth i { border-radius: 0; transform: rotate(45deg) scale(.85); }
+  .u-src.snapshot { color: var(--cool); }
+
+  /* ---------------------------------------------------------------- echogram */
+  .zEcho .s-hd { align-items: flex-start; }
+  .e-tabs { position: absolute; z-index: 4; right: 9px; top: 26px; display: flex; gap: 3px; align-items: center; }
+  .e-tab { padding: 1px 5px; border: 1px solid var(--rule2); font-family: var(--mono); font-size: 9px;
+    letter-spacing: .1em; color: var(--ink3); }
+  .e-tab.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+  .e-tab.dim { opacity: .5; }
+  .e-rd { position: absolute; z-index: 4; left: 9px; top: 27px; display: grid; gap: 1px;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; color: var(--ink3); }
+  .e-rd b { color: var(--data); font-weight: 600; }
+
+  /* ---------------------------------------------------------------- sonar */
+  .b-side { position: absolute; z-index: 4; right: 9px; top: 86px; display: grid; gap: 2px; text-align: right; }
+  .b-lobes { position: absolute; z-index: 4; left: 9px; bottom: 7px; display: flex; gap: 8px;
+    font-family: var(--mono); font-size: 9px; color: var(--ink3); }
+  .b-lobes i { font-style: normal; color: var(--accent); }
+
+  /* ---------------------------------------------------------------- CTD */
+  .c-live { position: absolute; z-index: 4; left: 9px; right: 9px; bottom: 8px; display: flex;
+    justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 9.5px; color: var(--ink3); }
+  .c-live b { color: var(--data); font-weight: 600; }
+  .c-legend { position: absolute; z-index: 4; left: 9px; top: 27px; display: flex; gap: 8px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: .06em; color: var(--ink3); }
+  .c-legend .t { color: var(--accent); } .c-legend .s { color: var(--cool); } .c-legend .r { color: var(--data); }
+
+  /* ---------------------------------------------------------------- correlation */
+  .d-read { position: absolute; z-index: 4; right: 9px; top: 26px; width: 150px; display: grid; gap: 2px;
+    text-align: right; font-family: var(--mono); background: rgba(5,4,0,.86); padding: 3px 5px; }
+  .d-read .big { font-size: 22px; line-height: 1; color: var(--data); font-weight: 600; }
+  .d-read .big small { font-size: 11px; color: var(--ink3); }
+  .d-read .sm { font-size: 9px; color: var(--ink3); letter-spacing: .04em; }
+  .d-read .alm { color: var(--alarm); font-size: 9px; letter-spacing: .06em; }
+
+  /* ---------------------------------------------------------------- ledger */
+  .zLedger { padding: 0; }
+  .l-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 7px 9px 6px; gap: 5px; }
+  .l-hd { display: flex; justify-content: space-between; align-items: baseline; }
+  .l-bar { position: relative; height: 8px; background: var(--rule2); display: flex; overflow: hidden; }
+  .l-bar i { display: block; height: 100%; }
+  .l-q { display: flex; justify-content: space-between; gap: 8px; font-family: var(--mono);
+    font-size: 9px; color: var(--ink3); letter-spacing: .04em; }
+  .l-q b { color: var(--data); font-weight: 600; }
+  .l-tbl { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 9px; }
+  .l-tbl th { text-align: left; font-weight: 500; color: var(--ink3); font-size: 9px; letter-spacing: .08em;
+    border-bottom: 1px solid var(--rule); padding: 2px 3px; }
+  .l-tbl td { padding: 2.5px 3px; border-bottom: 1px solid var(--rule2); color: var(--text); }
+  .l-tbl td.n { text-align: right; color: var(--data); font-variant-numeric: tabular-nums; }
+  .l-tbl td.g { color: var(--ink3); }
+  .l-tbl td.st { color: var(--accent); }
+  .l-auth { margin-top: auto; border-top: 1px solid var(--rule2); padding-top: 4px;
+    font-family: var(--mono); font-size: 8.5px; color: var(--ink3); letter-spacing: .04em; }
+  .l-auth b { color: var(--text); font-weight: 500; }
+
+  /* ---------------------------------------------------------------- winch */
+  .f-hd { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 10px; padding: 7px 9px 0; }
+  .f-state { padding: 1px 6px; border: 1px solid var(--accent); color: var(--accent);
+    font-family: var(--mono); font-size: 9px; letter-spacing: .1em; }
+  .f-cd { text-align: right; display: grid; gap: 1px; }
+  .f-cd .hv { font-family: var(--mono); font-size: 15px; color: var(--data); letter-spacing: .04em; }
+  .f-body { position: absolute; inset: 47px 0 30px; display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 8px; padding: 0 9px; }
+  .f-rd { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 1px; background: var(--rule2); }
+  .rd { display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 3px 6px;
+    background: var(--panel); min-width: 0; }
+  .rd .lb { font-family: var(--mono); font-size: 8.5px; letter-spacing: .12em; color: var(--ink3); }
+  .rd .vl { font-family: var(--mono); font-size: 14px; color: var(--data); line-height: 1.05; }
+  .rd .vl small { font-size: 9px; color: var(--ink3); margin-left: 3px; }
+  .rd .sb { font-family: var(--mono); font-size: 8px; color: var(--ink3); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .f-dg { position: relative; min-height: 0; }
+  .f-dg canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .f-sens { position: absolute; left: 9px; right: 9px; bottom: 4px; display: flex; gap: 6px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 8.5px; color: var(--ink3); }
+  .sn { border: 1px solid var(--rule2); padding: 1px 5px; }
+  .sn.on { color: var(--text); border-color: var(--rule); }
+  .sn i { font-style: normal; color: var(--ink3); margin-right: 4px; }
+
+  /* ---------------------------------------------------------------- currents */
+  .g-hd { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; justify-content: space-between;
+    gap: 8px; padding: 7px 9px 0; }
+  .g-tabs { display: flex; gap: 4px; margin-top: 2px; }
+  .g-tab { font-family: var(--mono); font-size: 8.5px; color: var(--ink3); border: 1px solid var(--rule2); padding: 0 4px; }
+  .g-tab.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+  .g-rd { position: absolute; left: 9px; right: 9px; bottom: 7px; display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 9px; color: var(--ink3); }
+  .g-rd b { color: var(--data); font-weight: 600; }
+
+  /* ---------------------------------------------------------------- footer */
+  .s-foot { display: flex; align-items: center; gap: 10px; overflow: hidden; padding: 0 9px;
+    background: linear-gradient(180deg, #0d0a00, #070500); border-top: 0; }
+  .f-log { flex: 1 1 auto; min-width: 0; display: flex; gap: 14px; overflow: hidden;
+    font-family: var(--mono); font-size: 9px; color: var(--ink3); white-space: nowrap; }
+  .f-log b { color: var(--data); font-weight: 600; }
+  .f-log .t { color: var(--ink3); }
+  .f-pills { display: flex; gap: 6px; flex: 0 0 auto; }
+  .pl { border: 1px solid var(--rule); padding: 1px 6px; font-family: var(--mono); font-size: 8.5px;
+    letter-spacing: .08em; color: var(--text); }
+  .pl b { color: var(--data); font-weight: 600; }
+  .f-ctl { display: flex; gap: 8px; flex: 0 0 auto; }
+  .sl { display: flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 8.5px; color: var(--ink3); }
+  .sl .tr { width: 38px; height: 5px; background: var(--rule2); position: relative; }
+  .sl .tr i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--f, 50%); background: var(--accent); }
+  .sl .tr b { position: absolute; top: -2px; bottom: -2px; left: var(--tk, 50%); width: 1px; background: var(--data); }
+  .sl .v { color: var(--data); min-width: 42px; }
+  .sl.ctl { cursor: pointer; }
+  .sl.ctl:hover .v { color: #fff; }
+
+  /* ---------------------------------------------------------------- data modal */
+  .s-modal { position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center;
+    background: rgba(3,2,0,.78); padding: 40px; }
+  .s-modal.open { display: flex; }
+  .s-dialog { width: min(1000px, 100%); max-height: 100%; overflow: auto; background: var(--panel);
+    border: 1px solid var(--rule); padding: 16px 18px 14px; font-family: var(--mono); color: var(--text); }
+  .s-dialog h2 { margin: 0 0 4px; font-size: 15px; letter-spacing: .14em; color: var(--data); font-weight: 600; }
+  .s-dialog p { margin: 0 0 10px; font-size: 10px; color: var(--ink3); line-height: 1.55; }
+  .s-dialog h3 { margin: 14px 0 4px; font-size: 10px; letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
+  .s-dialog pre { margin: 0; max-height: 150px; overflow: auto; padding: 8px; background: #080600;
+    border: 1px solid var(--rule2); font-size: 9px; color: var(--ink2); line-height: 1.5; }
+  .s-dialog a { color: var(--accent); }
+  .s-dialog .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 10px; }
+  .s-close { float: right; background: transparent; border: 1px solid var(--rule); color: var(--text);
+    font-family: var(--mono); font-size: 9px; letter-spacing: .1em; padding: 2px 8px; cursor: pointer; }
+  .s-close:hover { color: var(--data); border-color: var(--accent); }
+
+  /* ---------------------------------------------------------------- narrow panes
+     The composition is a fixed 1920 dashboard; below 1180 px we drop the
+     lowest-value columns rather than letting text collide. */
+  @media (max-width: 1180px) {
+    .tc:nth-child(6) { display: none; }
+    .s-brand small { display: none; }
+    #c-cast { display: none; }
+    .c-live { flex-direction: column; gap: 1px; font-size: 8.5px; }
+    .b-side .zsub:nth-child(n+3) { display: none; }
+    .l-tbl th:nth-child(4), .l-tbl td:nth-child(4),
+    .l-tbl th:nth-child(5), .l-tbl td:nth-child(5) { display: none; }
+    .f-ctl .sl:nth-child(n+4) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="u-app s-app">
+
+  <header class="s-top">
+    <div class="s-brand"><i></i>SOUNDING<small>F/V · SURVEY 28</small></div>
+    <div class="tc"><span class="r1"><b>FISHERY ACOUSTICS</b> STATION</span><span class="r2">NORTH ATLANTIC · 29.63N 78.59W · SURVEY 28</span></div>
+    <div class="tc"><span class="lb">UTC</span><span class="r1" id="utc">--:--:--</span></div>
+    <div class="tc"><span class="lb">PING</span><span class="r1" id="hdr-ping">—</span></div>
+    <div class="tc"><span class="lb">BOTTOM</span><span class="r1" id="hdr-bottom">—</span></div>
+    <div class="tc"><span class="lb">NET</span><span class="r1" id="hdr-net">—</span></div>
+    <div style="flex:1 1 auto"></div>
+    <div class="tc"><span class="lb">STATUS</span><span class="r1"><span class="u-pill u-ok" id="hdr-state"><span class="u-dot"></span>SURVEY</span></span></div>
+    <button class="s-btn" id="data-btn" type="button">DATA</button>
+  </header>
+
+  <main class="s-main">
+    <section class="s-mid">
+      <!-- A · echogram -->
+      <div class="z zEcho">
+        <div class="z-cv" id="echo"></div>
+        <div class="s-hd">
+          <div>
+            <span class="zlab"><b>ECHOGRAM</b> · Sv</span>
+            <span class="zsub">· ES38-7 SPLIT-BEAM</span>
+            <span class="u-src synth" id="echo-badge" style="margin-left:6px"><i></i>SYNTHETIC</span>
+          </div>
+          <div class="r"><span class="zsub" id="e-ping">PING 061,284 · --:--:-- · BOTTOM ---.- m</span></div>
+        </div>
+        <div class="e-rd">
+          <span>GAIN <b id="e-gain">−12 dB</b> · TVG <b>20logR</b></span>
+          <span>PULSE <b>1.024 ms</b> · c <b id="e-c">1,492.6 m/s</b></span>
+        </div>
+        <div class="e-tabs"><span class="e-tab on">38</span><span class="e-tab dim">120</span><span class="e-tab dim">200</span><span class="zsub">kHz</span></div>
+        <div class="s-ft">
+          <span class="zsub" id="e-gate">GATE 600–700 m · Sv −55 dB</span>
+          <span class="zsub" id="e-sa">sA 1,284 m²/nmi² · ρ 0.96 kg/m³</span>
+          <span class="zsub">HIST 120 s · LIVE 14 pings/s</span>
+        </div>
+      </div>
+
+      <div class="s-right">
+        <div class="s-bc">
+          <!-- B · sector sonar -->
+          <div class="z zSonar">
+            <div class="z-cv" id="sonar"></div>
+            <div class="s-hd">
+              <div>
+                <span class="zlab"><b>SECTOR SONAR</b> · SX-26</span>
+                <span class="u-src synth" id="sonar-badge" style="margin-left:6px"><i></i>SYNTHETIC</span>
+                <div class="zsub" id="b-cfg" style="margin-top:2px">FWD 120° · 26 kHz · RANGE 8 km · TILT −2.0°</div>
+              </div>
+            </div>
+            <div class="b-side">
+              <span class="zsub" id="b-sw">SWEEP 00% · BRG 154°</span>
+              <span class="zsub" id="b-int">INTERCEPT 3.21 km</span>
+              <span class="zsub">SHELF EXTENT &gt; 8 km ALL BRG</span>
+              <span class="zsub">EDGE W · TALLOW 20.1 km 270°</span>
+              <span class="zsub">EDGE E · CAIRN 19.8 km 090°</span>
+            </div>
+            <div class="b-lobes"><span><i>●</i> CONTACTS <b id="b-n">0</b></span><span><i>◌</i> RANGE 8 km</span></div>
+          </div>
+
+          <!-- C · CTD -->
+          <div class="z zCtd">
+            <div class="z-cv" id="ctd"></div>
+            <div class="s-hd">
+              <div>
+                <span class="zlab"><b>CTD</b> · CAST <span id="c-cast">—</span></span>
+                <span class="u-src snapshot" id="ctd-badge" style="margin-left:6px"><i></i>SNAPSHOT</span>
+                <div class="zsub" id="c-yo" style="margin-top:2px">YO-YO 07 ↓</div>
+              </div>
+            </div>
+            <div class="c-legend"><span class="t">T ━</span><span class="s">S ╍</span><span class="r">ρ ┈</span></div>
+            <div class="c-live">
+              <span>ROSETTE <b id="c-depth">0000 m</b> · T <b id="c-t">— °C</b></span>
+              <span>S <b id="c-s">—</b> · ρ <b id="c-r">—</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- D · edge cross-correlation -->
+        <div class="z zCorr">
+          <div class="z-cv" id="corr"></div>
+          <div class="s-hd">
+            <div>
+              <span class="zlab"><b>EDGE CROSS-CORRELATION</b> · W ⇄ E</span>
+              <span class="u-src synth" id="corr-badge" style="margin-left:6px"><i></i>SYNTHETIC</span>
+            </div>
+            <span class="zsub" id="d-link">RELAY 0.84 / 0.91 s</span>
+          </div>
+          <div class="d-read">
+            <div class="sm">r(0) · DETRENDED · 60 s</div>
+            <div class="big"><small>r =</small> <span id="d-r">—</span></div>
+            <div class="sm" id="d-sub">n = 600</div>
+            <div class="alm">RANDOM EXPECTED r &lt; 0.3</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="s-bot">
+      <!-- E · survey ledger -->
+      <div class="z zLedger">
+        <div class="l-wrap">
+          <div class="l-hd">
+            <span class="zlab"><b>OBSERVATION LEDGER</b> · OBIS <span class="u-src snapshot" id="l-badge" style="margin-left:6px"><i></i>SNAPSHOT</span></span>
+            <span class="zsub" id="e-sync">SYNC —</span>
+          </div>
+          <div class="l-bar" id="l-bar"></div>
+          <div class="l-q">
+            <span>REGION <b id="l-total">—</b></span>
+            <span>SAMPLED <b id="l-sample">—</b></span>
+            <span>SPECIES <b id="l-species">—</b></span>
+            <span>SYNC <b id="l-sync">—</b></span>
+          </div>
+          <table class="l-tbl">
+            <thead><tr><th>SPECIES</th><th style="text-align:right">RECORDS</th><th style="text-align:right">SHARE</th><th>GROUP</th><th>STATE</th></tr></thead>
+            <tbody id="l-rows"></tbody>
+          </table>
+          <div class="l-auth"><b>OBIS · REGION 28–31N 81–77W</b> · SAMPLE FROM THE PUBLIC OCCURRENCE INDEX · TOTALS ARE REGIONAL</div>
+        </div>
+      </div>
+
+      <!-- F · winch / CTD rosette -->
+      <div class="z zWinch">
+        <div class="f-hd">
+          <div>
+            <span class="zlab"><b>WINCH / DECK</b> · CTD ROSETTE</span>
+            <span class="u-src synth" id="winch-badge" style="margin-left:6px"><i></i>SYNTHETIC</span>
+            <div class="zsub" id="f-seq" style="margin-top:2px">CAST CYCLE · WARP FOLLOWS CTD</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <span class="f-state" id="f-state">DOWNCAST</span>
+            <div class="f-cd"><span class="zsub">NEXT CAST</span><span class="hv" id="t-cd">T−00:00</span></div>
+          </div>
+        </div>
+        <div class="f-body">
+          <div class="f-rd">
+            <div class="rd"><span class="lb">WARP OUT</span><span class="vl"><span id="f-warp">0</span><small>m</small></span><span class="sb">FROM CTD DEPTH</span></div>
+            <div class="rd"><span class="lb">TENSION</span><span class="vl"><span id="f-ten">0</span><small>kN</small></span><span class="sb">LIM 96</span></div>
+            <div class="rd"><span class="lb">SPOOL RATE</span><span class="vl"><span id="f-spool">0.0</span><small>m/s</small></span><span class="sb">DRUM 7/9</span></div>
+            <div class="rd"><span class="lb">ROSETTE</span><span class="vl"><span id="f-rosette">0</span><small>m</small></span><span class="sb">12 × 10 L</span></div>
+            <div class="rd"><span class="lb">TOW · SOG</span><span class="vl"><span id="f-tow">3.4</span><small>kn</small></span><span class="sb">SET 238°</span></div>
+            <div class="rd"><span class="lb">CAST ELAPSED</span><span class="vl"><span id="f-elapsed">0:00</span></span><span class="sb">CYCLE 24 s</span></div>
+          </div>
+          <div class="f-dg" id="winch"></div>
+        </div>
+        <div class="f-sens">
+          <span class="sn on" id="sn-t"><i>TEMP</i><span id="sn-t-v">—</span></span>
+          <span class="sn on" id="sn-s"><i>SAL</i><span id="sn-s-v">—</span></span>
+          <span class="sn on" id="sn-r"><i>DENS</i><span id="sn-r-v">—</span></span>
+          <span class="sn" id="sn-bt"><i>BATT</i>91 %</span>
+          <span class="sn" id="sn-lk"><i>LINK</i>−61 dB</span>
+        </div>
+      </div>
+
+      <!-- G · surface currents -->
+      <div class="z zCur">
+        <div class="z-cv" id="cur"></div>
+        <div class="g-hd">
+          <div>
+            <span class="zlab"><b>CURRENTS</b> · SURFACE FIELD</span>
+            <span class="u-src live" id="cur-badge" style="margin-left:6px"><i></i>LIVE</span>
+            <div class="g-tabs" id="g-tabs"><span class="g-tab on">0–2</span><span class="g-tab">2–4</span><span class="g-tab">4–6</span><span class="g-tab">6–8 km</span></div>
+          </div>
+          <div class="r"><span class="zsub" id="g-ens">DRIFTERS 5</span></div>
+        </div>
+        <div class="g-rd">
+          <span>WAVE <b id="g-wave">—</b> · SST <b id="g-sst">—</b></span>
+          <span>SURFACE <b id="g-cur">—</b></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="s-foot">
+    <div class="f-log" id="f-log"></div>
+    <div class="f-pills"><span class="pl">BOTTOM LOCK <b id="p-bot">—</b></span><span class="pl">RELAY <b>W+E 2/2</b></span></div>
+    <div class="f-ctl">
+      <div class="sl ctl" id="sl-gain"><span>GAIN</span><span class="tr" style="--f:45%;--tk:25%"><i></i><b></b></span><span class="v" id="sl-gain-v">−12 dB</span></div>
+      <div class="sl"><span>TVG</span><span class="tr" style="--f:33%;--tk:33%"><i></i><b></b></span><span class="v">20logR</span></div>
+      <div class="sl"><span>RANGE</span><span class="tr" style="--f:65%;--tk:25%"><i></i><b></b></span><span class="v">1,000 m</span></div>
+      <div class="sl"><span>PULSE</span><span class="tr" style="--f:50%;--tk:25%"><i></i><b></b></span><span class="v">1.024 ms</span></div>
+      <div class="sl"><span>FREQ</span><span class="tr" style="--f:0%;--tk:50%"><i></i><b></b></span><span class="v">38 kHz</span></div>
+    </div>
+  </footer>
+</div>
+
+<div class="s-modal" id="data-modal" role="dialog" aria-modal="true" aria-labelledby="dm-title">
+  <div class="s-dialog">
+    <button class="s-close" id="data-close" type="button">CLOSE</button>
+    <h2 id="dm-title">SOUNDING · DATA SOURCES</h2>
+    <p>Echogram and sector sonar replay <b>authored synthetic datasets</b> (not measured). CTD, surface currents and the species ledger come from public feeds. Files are committed under <code>shared/data/sounding/</code> and can be opened directly.</p>
+    <h3>Synthetic · echogram</h3>
+    <p id="dm-echo-meta">—</p>
+    <pre id="dm-echo-pre">—</pre>
+    <div class="links"><a href="../shared/data/sounding/echogram.csv" target="_blank" rel="noopener">echogram.csv</a><a href="../shared/data/sounding/echogram.json" target="_blank" rel="noopener">echogram.json</a></div>
+    <h3>Synthetic · sector sonar</h3>
+    <p id="dm-sonar-meta">—</p>
+    <pre id="dm-sonar-pre">—</pre>
+    <div class="links"><a href="../shared/data/sounding/sonar.json" target="_blank" rel="noopener">sonar.json</a></div>
+    <h3>Live · CTD cast</h3>
+    <p id="dm-ctd-meta">—</p>
+    <h3>Live · currents / ledger</h3>
+    <p id="dm-live-meta">Marine: Open-Meteo Air/Sea. Ledger: OBIS occurrence API. Both keyless and CORS-open.</p>
+  </div>
+</div>
+
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script src="../shared/u-live.js"></script>
+<script>
+U.page('sounding', { scan: false });
+
+const MONO = () => getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
+const TAU = Math.PI * 2;
+const BASE = '../shared/data/sounding/';
+const VESSEL = { lat: 29.63, lon: -78.59 };
+const CTD_URL = 'https://erddap.sensors.ioos.us/erddap/tabledap/ioos-gliderdac-ng222-20210929T0000.json' +
+  '?time,depth,temperature,salinity,density&time%3E=2021-09-30T00:00:00Z&time%3C=2021-09-30T02:00:00Z';
+const MARINE = 'https://marine-api.open-meteo.com/v1/marine?latitude=' + VESSEL.lat + '&longitude=' + VESSEL.lon +
+  '&current=wave_height,wave_period,wave_direction,sea_surface_temperature,ocean_current_velocity,ocean_current_direction&timezone=UTC';
+const OBIS = 'https://api.obis.org/v3/occurrence?size=500&geometry=POLYGON((-81%2028,-77%2028,-77%2031,-81%2031,-81%2028))';
+
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const r1 = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
+const pad = (v) => String(v).padStart(2, '0');
+const fmt = (v, d = 1) => Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+const state = {
+  echo: null, sonar: null,
+  echoHead: 0, sonarFrame: 0, lastT: 0,
+  ctd: null, ctdMax: 800, ctdCursor: 0, ctdDir: 1,
+  marine: null, marinePts: [],
+  ledger: null, ledgerLive: false,
+  gain: -12
+};
+
+/* ---------------------------------------------------------------- chrome */
+function updateClock() {
+  const d = new Date();
+  document.getElementById('utc').textContent = pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds());
+}
+setInterval(updateClock, 1000); updateClock();
+
+function pushLog(tag, msg, hot) {
+  const log = document.getElementById('f-log');
+  if (!log) return;
+  const d = new Date();
+  const t = pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds());
+  const line = document.createElement('span');
+  line.innerHTML = '<span class="t">' + t + '</span> <b>' + tag + '</b> ' + msg;
+  if (hot) line.style.color = 'var(--data)';
+  log.prepend(line);
+  while (log.children.length > 6) log.lastElementChild.remove();
+}
+
+/* ---------------------------------------------------------------- boot data */
+async function loadSynthetic() {
+  const [e, s] = await Promise.all([
+    fetch(BASE + 'echogram.json').then((r) => r.json()),
+    fetch(BASE + 'sonar.json').then((r) => r.json())
+  ]);
+  state.echo = e; state.sonar = s;
+  buildEchoImage();
+  state.echoHead = 240;
+  state.sonarFrame = 0;
+  const m = e.meta;
+  document.getElementById('dm-echo-meta').textContent =
+    m.pings + ' pings × ' + m.bins + ' bins · 0–' + m.depth_max_m + ' m · ' + m.ping_interval_s + ' s/ping · ' + m.frequency_khz + ' kHz · authored ' + m.generated;
+  document.getElementById('dm-sonar-meta').textContent =
+    s.meta.frames + ' frames × ' + s.meta.hz + ' Hz · ' + s.meta.sector_deg + '° sector · ' + s.meta.range_km + ' km · authored ' + s.meta.generated;
+  const rows = [];
+  for (let p = 0; p < 6; p++) for (let k = 0; k < 4; k++) rows.push(p + ',' + (p * 0.5).toFixed(1) + ',' + e.depths[k] + ',' + e.pings[p].sv[k]);
+  document.getElementById('dm-echo-pre').textContent = 'ping,time_s,depth_m,sv_db\n' + rows.join('\n') + '\n…';
+  document.getElementById('dm-sonar-pre').textContent = JSON.stringify(s.frames.slice(0, 2), null, 1);
+  renderLedger();
+}
+
+function parseCtd(j) {
+  const cols = j.table.columnNames;
+  const iT = cols.indexOf('temperature'), iS = cols.indexOf('salinity'), iR = cols.indexOf('density'), iD = cols.indexOf('depth');
+  if (iT < 0 || iS < 0 || iD < 0) throw new Error('CTD columns missing');
+  const rows = j.table.rows.map((r) => ({ d: +r[iD], t: +r[iT], s: +r[iS], r: iR >= 0 ? +r[iR] : null }))
+    .filter((x) => isFinite(x.d) && isFinite(x.t) && isFinite(x.s));
+  rows.sort((a, b) => a.d - b.d);
+  /* bin to 6 m so the yo-yo collapses into a clean profile */
+  const bins = new Map();
+  for (const x of rows) {
+    const k = Math.round(x.d / 6) * 6;
+    const b = bins.get(k) || { d: k, t: 0, s: 0, r: 0, n: 0 };
+    b.t += x.t; b.s += x.s; b.r += (x.r || 0); b.n++; bins.set(k, b);
+  }
+  const p = [...bins.values()].map((b) => ({ d: b.d, t: b.t / b.n, s: b.s / b.n, r: b.r / b.n })).sort((a, b) => a.d - b.d);
+  const max = Math.max(100, Math.ceil(p[p.length - 1].d / 100) * 100);
+  return { profile: p, max, cast: (j.table.rows[0] && j.table.rows[0][0]) || '', rows: rows.length };
+}
+
+async function loadCtd() {
+  /* show the committed real cast immediately, then try the live endpoint */
+  try {
+    const snap = await fetch(BASE + 'ctd-snapshot.json').then((r) => r.json());
+    state.ctd = parseCtd(snap); state.ctd.source = 'snapshot';
+    setBadge('ctd-badge', 'snapshot', 'SNAPSHOT');
+    renderCtdMeta();
+  } catch (err) { /* ignore */ }
+
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 12000);
+    const live = await fetch(CTD_URL, { signal: ctrl.signal }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    clearTimeout(to);
+    const p = parseCtd(live);
+    if (p.profile.length > 10) {
+      const recent = p.cast && Date.now() - Date.parse(p.cast) < 30 * 864e5;
+      state.ctd = p; state.ctd.source = recent ? 'live' : 'snapshot';
+      setBadge('ctd-badge', recent ? 'live' : 'snapshot', recent ? 'LIVE' : 'SNAPSHOT');
+      renderCtdMeta();
+      pushLog('CTD', (recent ? 'live' : 'archived') + ' cast ' + p.rows + ' samples · ' + p.profile.length + ' depth bins', true);
+    }
+  } catch (err) {
+    pushLog('CTD', 'ERDDAP timeout · using committed cast', false);
+  }
+}
+
+function renderCtdMeta() {
+  const c = state.ctd; if (!c) return;
+  const cast = c.cast ? String(c.cast).replace('T', ' ').replace('Z', ' UTC') : 'ARCHIVE';
+  document.getElementById('c-cast').textContent = cast.slice(5, 16);
+  document.getElementById('dm-ctd-meta').textContent =
+    'IOOS Glider DAC · profile ' + c.profile.length + ' bins · 0–' + c.max + ' m · ' + c.rows + ' raw samples · cast ' + cast +
+    ' · ' + (c.source === 'live' ? 'fetched live' : 'committed snapshot') + '.';
+  state.ctdMax = c.max;
+}
+
+let marinePts = [];
+async function loadMarine() {
+  const offs = [[0, 0], [0.02, 0], [-0.02, 0], [0, 0.02], [0, -0.02]];
+  const urls = offs.map(([dy, dx]) => MARINE.replace('latitude=' + VESSEL.lat, 'latitude=' + (VESSEL.lat + dy)).replace('longitude=' + VESSEL.lon, 'longitude=' + (VESSEL.lon + dx)));
+  try {
+    const res = await Promise.allSettled(urls.map((u) => fetch(u).then((r) => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })));
+    const ok = res.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+    if (!ok.length) throw new Error('no marine points');
+    state.marinePts = ok.map((j, i) => ({
+      dy: offs[i] ? offs[i][0] : 0, dx: offs[i] ? offs[i][1] : 0,
+      v: +j.current.ocean_current_velocity, dir: +j.current.ocean_current_direction,
+      wave: +j.current.wave_height, sst: +j.current.sea_surface_temperature, period: +j.current.wave_period
+    })).filter((p) => isFinite(p.v) && isFinite(p.dir));
+    state.marine = (res.find((r) => r.status === 'fulfilled') || {}).value.current;
+    setBadge('cur-badge', 'live', 'LIVE');
+    const m = state.marine;
+    if (m) {
+      document.getElementById('g-wave').textContent = (+m.wave_height).toFixed(2) + ' m';
+      document.getElementById('g-sst').textContent = (+m.sea_surface_temperature).toFixed(1) + ' °C';
+      document.getElementById('g-cur').textContent = (+m.ocean_current_velocity).toFixed(1) + ' km/h ' + Math.round(m.ocean_current_direction) + '°';
+    }
+    pushLog('SEA', 'surface field ' + state.marinePts.length + ' drifters · ' + (+m.ocean_current_velocity).toFixed(1) + ' km/h', true);
+  } catch (err) {
+    setBadge('cur-badge', 'degraded', 'DEGRADED');
+    pushLog('SEA', 'marine feed unavailable', false);
+  }
+}
+
+function aggregateLedger(j) {
+  const map = new Map();
+  for (const r of (j.results || [])) {
+    const name = r.scientificName;
+    if (!name || !name.includes(' ') || /incertae|unclassified|sp\./i.test(name)) continue;
+    const key = name;
+    const cur = map.get(key) || { name, group: r.class || '—', count: 0 };
+    cur.count++; map.set(key, cur);
+  }
+  const rows = [...map.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+  return { total: j.total || 0, sampled: (j.results || []).length, rows };
+}
+
+async function loadLedger() {
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 12000);
+    const j = await fetch(OBIS, { signal: ctrl.signal }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    clearTimeout(to);
+    state.ledger = aggregateLedger(j); state.ledgerLive = true;
+    renderLedger(); setBadge('l-badge', 'live', 'LIVE');
+    pushLog('OBIS', state.ledger.sampled + ' records sampled · ' + state.ledger.rows.length + ' species', true);
+  } catch (err) {
+    try {
+      const j = await fetch(BASE + 'obis-ledger.json').then((r) => r.json());
+      state.ledger = { total: j.meta.total, sampled: j.meta.sampled, rows: j.rows };
+      state.ledgerLive = false; renderLedger(); setBadge('l-badge', 'snapshot', 'SNAPSHOT');
+    } catch (e) { /* leave empty */ }
+  }
+}
+
+function renderLedger() {
+  const L = state.ledger; if (!L) return;
+  document.getElementById('l-total').textContent = L.total.toLocaleString();
+  document.getElementById('l-sample').textContent = L.sampled.toLocaleString();
+  document.getElementById('l-species').textContent = L.rows.length.toLocaleString();
+  document.getElementById('l-sync').textContent = state.ledgerLive ? 'LIVE' : 'SNAPSHOT';
+  document.getElementById('e-sync').textContent = 'SYNC ' + new Date().toISOString().slice(11, 19);
+  const maxCount = Math.max(1, ...L.rows.map((r) => r.count));
+  const bar = document.getElementById('l-bar');
+  bar.innerHTML = L.rows.map((r, i) => {
+    const w = (r.count / L.sampled) * 100;
+    const alpha = .35 + .65 * (i / Math.max(1, L.rows.length - 1));
+    return '<i style="width:' + w.toFixed(2) + '%;background:' + (i === 0 ? 'var(--data)' : 'color-mix(in srgb, var(--accent) ' + Math.round(alpha * 100) + '%, #000)') + '"></i>';
+  }).join('') + '<i style="flex:1 1 auto;background:var(--rule2)"></i>';
+  document.getElementById('l-rows').innerHTML = L.rows.map((r) => {
+    const share = (r.count / L.sampled * 100).toFixed(1) + '%';
+    return '<tr><td>' + r.name + '</td><td class="n">' + r.count + '</td><td class="n">' + share +
+      '</td><td class="g">' + r.group + '</td><td class="st">' + (r.count >= maxCount * .5 ? 'PRIMARY' : 'LISTED') + '</td></tr>';
+  }).join('');
+}
+
+/* badges */
+function setBadge(id, stateName, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  U.setSrc(el, stateName, label);
+}
+
+/* ---------------------------------------------------------------- echo */
+/* ---------------------------------------------------------------- echo colour + image */
+const ECHO_STOPS = [
+  [0.00, [6, 5, 1]], [0.18, [34, 24, 5]], [0.38, [92, 66, 18]],
+  [0.58, [176, 120, 24]], [0.75, [255, 176, 0]], [0.88, [255, 225, 168]],
+  [1.00, [255, 250, 235]]
+];
+function echoRGB(v) {
+  const k = clamp((v + 92) / 76, 0, 1);
+  let a = ECHO_STOPS[0], b = ECHO_STOPS[ECHO_STOPS.length - 1];
+  for (let i = 0; i < ECHO_STOPS.length - 1; i++) {
+    if (k >= ECHO_STOPS[i][0] && k <= ECHO_STOPS[i + 1][0]) { a = ECHO_STOPS[i]; b = ECHO_STOPS[i + 1]; break; }
+  }
+  const f = (k - a[0]) / Math.max(1e-6, b[0] - a[0]);
+  return [
+    Math.round(a[1][0] + (b[1][0] - a[1][0]) * f),
+    Math.round(a[1][1] + (b[1][1] - a[1][1]) * f),
+    Math.round(a[1][2] + (b[1][2] - a[1][2]) * f)
+  ];
+}
+let echoCanvas = null;
+function buildEchoImage() {
+  const d = state.echo; if (!d) return;
+  const c = document.createElement('canvas');
+  c.width = d.meta.pings; c.height = d.meta.bins;
+  const g = c.getContext('2d');
+  const img = g.createImageData(c.width, c.height);
+  const px = img.data;
+  const N = d.meta.pings;
+  for (let p = 0; p < N; p++) {
+    const sv = d.pings[p].sv;
+    for (let k = 0; k < d.meta.bins; k++) {
+      const col = echoRGB(sv[k]);
+      const i = (k * N + p) * 4;
+      px[i] = col[0]; px[i + 1] = col[1]; px[i + 2] = col[2]; px[i + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  echoCanvas = c;
+}
+
+const E = { last: 0, speed: 12 };
+U.canvas('#echo', (ctx, w, h, t) => {
+  const mono = MONO(), text = U.css('--text'), data = U.css('--data'), accent = U.css('--accent');
+  const d = state.echo;
+  const padL = 38, padT = 46, padB = 30;
+  const cbW = 7, cbGap = 5;
+  const plotW = w - padL - cbW - cbGap - 10;
+  const plotH = h - padT - padB;
+  const dt = Math.min(.12, t - (E.last || t)); E.last = t;
+
+  if (d && echoCanvas) {
+    state.echoHead += dt * E.speed;
+    const headP = state.echoHead % d.meta.pings;
+    const offset = (headP / d.meta.pings) * plotW;
+
+    /* crisp dot-column image, tiled twice for a seamless scroll */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(echoCanvas, padL - offset, padT, plotW, plotH);
+    ctx.drawImage(echoCanvas, padL - offset + plotW, padT, plotW, plotH);
+    /* CRT scanlines */
+    ctx.fillStyle = 'rgba(0,0,0,.16)';
+    for (let y = 0; y < plotH; y += 3) ctx.fillRect(padL, padT + y, plotW, 1);
+    ctx.restore();
+
+    /* depth grid + labels */
+    ctx.save();
+    for (let m = 0; m <= 1400; m += 200) {
+      const y = padT + m / 1400 * plotH;
+      ctx.globalAlpha = .26; ctx.strokeStyle = text;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+      ctx.globalAlpha = .95; ctx.fillStyle = text; ctx.font = '700 8px ' + mono; ctx.textAlign = 'right';
+      ctx.fillText(m === 0 ? '0' : m.toLocaleString(), padL - 5, y + 3);
+    }
+    ctx.globalAlpha = .9; ctx.fillStyle = text; ctx.fillText('m', padL - 5, padT - 8);
+    ctx.restore();
+
+    /* bottom trace */
+    ctx.save(); ctx.globalAlpha = .8; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 0; x <= plotW; x += 2) {
+      const fp = (headP + x / plotW * d.meta.pings) % d.meta.pings;
+      const p = Math.floor(fp);
+      const y = padT + d.pings[p].bottom_m / 1400 * plotH;
+      x ? ctx.lineTo(padL + x, y) : ctx.moveTo(padL + x, y);
+    }
+    ctx.stroke(); ctx.restore();
+
+    /* gate bracket */
+    const gy1 = padT + 600 / 1400 * plotH, gy2 = padT + 700 / 1400 * plotH;
+    ctx.save(); ctx.strokeStyle = data; ctx.globalAlpha = .8;
+    ctx.beginPath();
+    ctx.moveTo(padL + 3, gy1); ctx.lineTo(padL + 3, gy2);
+    ctx.moveTo(padL + 3, gy1); ctx.lineTo(padL + 9, gy1);
+    ctx.moveTo(padL + 3, gy2); ctx.lineTo(padL + 9, gy2); ctx.stroke();
+    ctx.fillStyle = data; ctx.font = '700 7px ' + mono; ctx.textAlign = 'left';
+    ctx.fillText('GATE', padL + 11, (gy1 + gy2) / 2 + 3);
+    ctx.restore();
+
+    /* colour scale bar */
+    const cbX = w - cbW - 8, cbT = padT, cbH = plotH;
+    const grad = ctx.createLinearGradient(0, cbT + cbH, 0, cbT);
+    [-90, -70, -50, -34, -24, -16].forEach((v, i, a) => {
+      const c = echoRGB(v);
+      grad.addColorStop(i / (a.length - 1), 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')');
+    });
+    ctx.save();
+    ctx.fillStyle = grad; ctx.fillRect(cbX, cbT, cbW, cbH);
+    ctx.globalAlpha = .7; ctx.strokeStyle = text; ctx.strokeRect(cbX + .5, cbT + .5, cbW - 1, cbH - 1);
+    ctx.globalAlpha = .95; ctx.fillStyle = text; ctx.font = '700 6.5px ' + mono; ctx.textAlign = 'right';
+    ctx.fillText('dB', cbX - 3, cbT - 6);
+    [-80, -60, -40, -20].forEach((v) => {
+      const y = cbT + (1 - (v + 90) / 74) * cbH;
+      ctx.fillText(v, cbX - 3, y + 2);
+      ctx.beginPath(); ctx.moveTo(cbX - 2, y); ctx.lineTo(cbX, y); ctx.stroke();
+    });
+    ctx.restore();
+
+    /* callouts */
+    const callout = (x, y, title, value, tx, ty) => {
+      const bw = 122, bh = 23;
+      ctx.save();
+      ctx.fillStyle = 'rgba(5,4,0,.8)'; ctx.fillRect(x, y, bw, bh);
+      ctx.globalAlpha = .55; ctx.strokeStyle = accent; ctx.strokeRect(x + .5, y + .5, bw - 1, bh - 1);
+      ctx.globalAlpha = 1; ctx.textAlign = 'left';
+      ctx.fillStyle = U.css('--dim'); ctx.font = '700 6.5px ' + mono;
+      ctx.fillText(title, x + 5, y + 9);
+      ctx.fillStyle = '#fff'; ctx.font = '700 7.5px ' + mono;
+      ctx.fillText(value, x + 5, y + 19);
+      if (tx != null) {
+        ctx.globalAlpha = .55; ctx.strokeStyle = accent;
+        ctx.beginPath(); ctx.moveTo(x + (tx > x ? bw : 0), y + bh / 2); ctx.lineTo(tx, ty); ctx.stroke();
+      }
+      ctx.restore();
+    };
+    callout(padL + 12, padT + 12, 'SURFACE LAYER', '0–25 m · −42 dB', padL + 68, padT + 12 / 1400 * plotH);
+    const sy = padT + 630 / 1400 * plotH;
+    callout(padL + plotW - 170, sy - 30, 'SCATTER LAYER', '630 m · −55 dB', padL + plotW * .56, sy);
+    const mp = (567 - headP + d.meta.pings) % d.meta.pings;
+    const mx = padL + mp / d.meta.pings * plotW;
+    if (mx > padL + 130 && mx < padL + plotW - 60) {
+      const my = padT + 520 / 1400 * plotH;
+      callout(mx - 60, my - 34, 'BIOMASS MASS', 'rising · −32 dB', mx, my);
+    }
+    const by = padT + d.pings[Math.floor(headP) % d.meta.pings].bottom_m / 1400 * plotH;
+    callout(padL + plotW - 170, Math.min(padT + plotH - 28, by + 8), 'SEAFLOOR', d.pings[Math.floor(headP) % d.meta.pings].bottom_m.toFixed(0) + ' m · −18 dB', padL + plotW * .62, by);
+
+    /* time axis */
+    ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = text; ctx.font = '700 7px ' + mono;
+    ['−180 s', '−120 s', '−60 s', 'NOW'].forEach((s, i) => {
+      const x = padL + i / 3 * plotW;
+      ctx.textAlign = i === 0 ? 'left' : i === 3 ? 'right' : 'center';
+      ctx.fillText(s, x, h - 9);
+      ctx.fillRect(x, h - 18, 1, 4);
+    });
+    ctx.restore();
+  } else {
+    ctx.fillStyle = U.css('--text'); ctx.font = '700 11px ' + mono; ctx.textAlign = 'center';
+    ctx.fillText('LINKING SYNTHETIC ECHOGRAM…', w / 2, h / 2);
+  }
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- sonar */
+U.canvas('#sonar', (ctx, w, h, t) => {
+  const d = state.sonar;
+  const mono = MONO(), text = U.css('--text'), data = U.css('--data'), accent = U.css('--accent'), alarm = U.css('--alarm');
+  if (!d) return;
+  const cx = w * .5, cy = h - 26;
+  const half = d.meta.sector_deg / 2 * Math.PI / 180;
+  const R = Math.min(w / (2 * Math.sin(half)) * .92, h * .84);
+  const f = d.frames[Math.floor(t * d.meta.hz) % d.frames.length];
+  const sweepA = (f.sweep_deg - d.meta.centre_deg) * Math.PI / 180;
+  ctx.save();
+  /* background */
+  ctx.fillStyle = 'rgba(255,176,0,.025)';
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R + 8, -Math.PI / 2 - half, -Math.PI / 2 + half); ctx.closePath(); ctx.fill();
+  /* rings */
+  for (let km = 2; km <= d.meta.range_km; km += 2) {
+    const r = R * km / d.meta.range_km;
+    ctx.globalAlpha = km === d.meta.range_km ? .55 : .28;
+    ctx.strokeStyle = text; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2 - half, -Math.PI / 2 + half); ctx.stroke();
+    ctx.globalAlpha = .75; ctx.fillStyle = text; ctx.font = '700 7.5px ' + mono; ctx.textAlign = 'left';
+    ctx.fillText(km + ' km', cx - 24, cy - r + 2);
+  }
+  /* spokes + bearings */
+  for (let b = 154; b <= 274; b += 20) {
+    const a = (b - d.meta.centre_deg) * Math.PI / 180;
+    ctx.globalAlpha = .16; ctx.strokeStyle = text;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.sin(a) * R, cy - Math.cos(a) * R); ctx.stroke();
+    if (b % 40 === 34 || b === 154 || b === 274) {
+      ctx.globalAlpha = .7; ctx.fillStyle = text; ctx.font = '700 7px ' + mono; ctx.textAlign = 'center';
+      ctx.fillText(b + '°', cx + Math.sin(a) * (R + 13), cy - Math.cos(a) * (R + 13));
+    }
+  }
+  /* sweep afterglow */
+  for (let k = 24; k >= 0; k--) {
+    const a = sweepA - k * .028;
+    ctx.globalAlpha = .22 * (1 - k / 24);
+    ctx.strokeStyle = data; ctx.lineWidth = k === 0 ? 1.4 : 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.sin(a) * R, cy - Math.cos(a) * R); ctx.stroke();
+  }
+  /* contacts */
+  ctx.globalAlpha = 1;
+  f.contacts.forEach((c) => {
+    const a = (c.bearing_deg - d.meta.centre_deg) * Math.PI / 180;
+    const r = R * c.range_km / d.meta.range_km;
+    const x = cx + Math.sin(a) * r, y = cy - Math.cos(a) * r;
+    let delta = Math.abs(((c.bearing_deg - f.sweep_deg + 540) % 360) - 180);
+    const hot = 1 - Math.min(1, delta / 50);
+    const size = clamp(c.size_m / 38, 2, 5.5);
+    ctx.globalAlpha = .2 + .8 * hot;
+    ctx.fillStyle = hot > .6 ? alarm : data;
+    ctx.beginPath(); ctx.arc(x, y, size, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .35 + .5 * hot; ctx.strokeStyle = data;
+    ctx.beginPath(); ctx.arc(x, y, size + 4 + 3 * hot, 0, TAU); ctx.stroke();
+    if (hot > .5) {
+      ctx.globalAlpha = .8; ctx.fillStyle = text; ctx.font = '700 7px ' + mono; ctx.textAlign = 'left';
+      ctx.fillText(c.range_km.toFixed(1) + ' km', x + 7, y - 4);
+    }
+  });
+  /* ship */
+  ctx.globalAlpha = 1; ctx.fillStyle = data;
+  ctx.beginPath(); ctx.moveTo(cx, cy - 9); ctx.lineTo(cx - 5, cy + 2); ctx.lineTo(cx + 5, cy + 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = text; ctx.font = '700 7px ' + mono; ctx.textAlign = 'center';
+  ctx.fillText('SOUNDING', cx, cy + 12);
+  ctx.restore();
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- CTD */
+function ctdAt(depth) {
+  const p = state.ctd && state.ctd.profile; if (!p || !p.length) return null;
+  let a = p[0], b = p[p.length - 1];
+  for (let i = 0; i < p.length - 1; i++) if (depth >= p[i].d && depth <= p[i + 1].d) { a = p[i]; b = p[i + 1]; break; }
+  const f = clamp((depth - a.d) / Math.max(.001, b.d - a.d), 0, 1);
+  return { t: a.t + (b.t - a.t) * f, s: a.s + (b.s - a.s) * f, r: a.r + (b.r - a.r) * f };
+}
+
+U.canvas('#ctd', (ctx, w, h, t) => {
+  const c = state.ctd;
+  const mono = MONO(), text = U.css('--text'), accent = U.css('--accent'), cool = U.css('--cool'), data = U.css('--data');
+  const padL = 30, padR = 10, padT = 42, padB = 34;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  ctx.save();
+  if (!c) {
+    ctx.fillStyle = text; ctx.font = '700 10px ' + mono; ctx.textAlign = 'center';
+    ctx.fillText('LINKING CTD…', w / 2, h / 2); return;
+  }
+  const maxD = c.max || 800;
+  const yOf = (d) => padT + clamp(d, 0, maxD) / maxD * plotH;
+  /* grids */
+  ctx.globalAlpha = .2; ctx.strokeStyle = cool;
+  for (let m = 0; m <= maxD; m += 200) {
+    const y = yOf(m); ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    ctx.globalAlpha = .9; ctx.fillStyle = text; ctx.font = '700 8px ' + mono; ctx.textAlign = 'right';
+    ctx.fillText(m, padL - 4, y + 3);
+    ctx.globalAlpha = .2;
+  }
+  const xT = (v) => padL + clamp((v - 10) / 22, 0, 1) * plotW;
+  const xS = (v) => padL + clamp((v - 34) / 3.4, 0, 1) * plotW;
+  const xR = (v) => padL + clamp((v - 1021) / 7, 0, 1) * plotW;
+  /* full traces */
+  const drawTrace = (xOf, key, col, dash) => {
+    ctx.beginPath();
+    c.profile.forEach((p, i) => { const x = xOf(p[key]), y = yOf(p.d); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.setLineDash(dash); ctx.globalAlpha = .38; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+  };
+  drawTrace(xT, 't', accent, []);
+  drawTrace(xS, 's', cool, [4, 3]);
+  drawTrace(xR, 'r', data, [1, 3]);
+  /* cursor */
+  state.ctdCursor += state.ctdDir * (1 / 24) * maxD * (1 / 60) * 3;
+  if (state.ctdCursor >= maxD) { state.ctdCursor = maxD; state.ctdDir = -1; }
+  if (state.ctdCursor <= 0) { state.ctdCursor = 0; state.ctdDir = 1; }
+  const cy = yOf(state.ctdCursor);
+  ctx.globalAlpha = .9; ctx.strokeStyle = data; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(padL, cy); ctx.lineTo(w - padR, cy); ctx.stroke(); ctx.setLineDash([]);
+  const v = ctdAt(state.ctdCursor);
+  if (v) {
+    [[xT(v.t), accent], [xS(v.s), cool], [xR(v.r), data]].forEach(([x, col]) => {
+      ctx.globalAlpha = 1; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, cy, 2.4, 0, TAU); ctx.fill();
+    });
+  }
+  ctx.globalAlpha = 1; ctx.fillStyle = text; ctx.font = '700 8px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('DEPTH m', padL, padT - 6);
+  ctx.restore();
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- correlation */
+let corrWin = 0;
+U.canvas('#corr', (ctx, w, h, t) => {
+  const s = state.sonar; if (!s) return;
+  const mono = MONO(), text = U.css('--text'), data = U.css('--data'), accent = U.css('--accent');
+  const A = s.corr.seriesA, B = s.corr.seriesB;
+  const padL = 8, padR = 176, padT = 38, padB = 12;
+  const pw = Math.max(20, w - padL - padR), ph = h - padT - padB;
+  const N = A.length, win = 120;
+  corrWin = (corrWin + 1) % Math.max(1, N - win);
+  const lo = corrWin, hi = corrWin + win;
+  const xOf = (i) => padL + i / (N - 1) * pw;
+  const yOf = (v) => padT + (1 - (clamp(v, -1.6, 1.6) + 1.6) / 3.2) * ph;
+  ctx.globalAlpha = .16; ctx.strokeStyle = text;
+  ctx.beginPath(); ctx.moveTo(padL, yOf(0)); ctx.lineTo(padL + pw, yOf(0)); ctx.stroke();
+  const trace = (arr, col, dash) => {
+    ctx.beginPath();
+    arr.forEach((v, i) => { const x = xOf(i), y = yOf(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.globalAlpha = .35; ctx.strokeStyle = col; ctx.setLineDash(dash || []); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+  };
+  trace(A, data); trace(B, accent, [3, 2]);
+  /* window */
+  ctx.globalAlpha = .07; ctx.fillStyle = data;
+  ctx.fillRect(xOf(lo), padT, xOf(hi) - xOf(lo), ph);
+  ctx.globalAlpha = .8; ctx.strokeStyle = data; ctx.strokeRect(xOf(lo), padT, xOf(hi) - xOf(lo), ph);
+  ctx.globalAlpha = 1; ctx.fillStyle = text; ctx.font = '700 8px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('W ⇄ E · 60 s', padL, padT - 8);
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- winch schematic */
+U.canvas('#winch', (ctx, w, h, t) => {
+  const mono = MONO(), text = U.css('--text'), data = U.css('--data'), accent = U.css('--accent');
+  const maxD = state.ctdMax || 800;
+  const depth = state.ctdCursor;
+  ctx.save();
+  ctx.globalAlpha = .16; ctx.strokeStyle = U.css('--cool');
+  for (let x = 0; x < w; x += 26) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 26) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  const drumX = w * .18, drumY = h * .28, drumR = Math.min(w, h) * .11;
+  ctx.globalAlpha = 1; ctx.strokeStyle = text; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(drumX, drumY, drumR, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(drumX, drumY, drumR * .55, 0, TAU); ctx.stroke();
+  const sheaveX = w * .55, sheaveY = h * .18;
+  ctx.beginPath(); ctx.arc(sheaveX, sheaveY, 6, 0, TAU); ctx.stroke();
+  const topY = sheaveY + 8;
+  const bottomY = h * .82;
+  const py = topY + (bottomY - topY) * clamp(depth / maxD, 0, 1);
+  /* cable */
+  ctx.globalAlpha = .9; ctx.strokeStyle = data; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.moveTo(drumX + drumR, drumY); ctx.lineTo(sheaveX, sheaveY); ctx.lineTo(sheaveX, py); ctx.stroke();
+  /* rosette */
+  ctx.globalAlpha = 1; ctx.strokeStyle = accent; ctx.lineWidth = 1.4;
+  ctx.strokeRect(sheaveX - 12, py, 24, 20);
+  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(sheaveX - 6 + (i % 2) * 12, py + 5 + Math.floor(i / 2) * 10, 2.4, 0, TAU); ctx.stroke(); }
+  ctx.fillStyle = text; ctx.font = '700 7.5px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('CTD', sheaveX + 16, py + 11);
+  ctx.fillText(Math.round(depth) + ' m', sheaveX + 16, py + 22);
+  /* depth scale */
+  const sx = w - 34;
+  ctx.globalAlpha = .55; ctx.strokeStyle = text;
+  ctx.beginPath(); ctx.moveTo(sx, topY); ctx.lineTo(sx, bottomY); ctx.stroke();
+  for (let m = 0; m <= maxD; m += 200) {
+    const y = topY + (bottomY - topY) * (m / maxD);
+    ctx.beginPath(); ctx.moveTo(sx - 4, y); ctx.lineTo(sx + 4, y); ctx.stroke();
+    ctx.globalAlpha = .8; ctx.fillStyle = text; ctx.font = '700 7px ' + mono; ctx.textAlign = 'left';
+    ctx.fillText(m, sx + 7, y + 2); ctx.globalAlpha = .55;
+  }
+  ctx.globalAlpha = .8; ctx.fillStyle = text; ctx.font = '700 8px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('WINCH DRUM 7/9', 8, h - 8);
+  ctx.restore();
+}, { fps: 20 });
+
+/* ---------------------------------------------------------------- currents */
+let curTab = 0;
+U.canvas('#cur', (ctx, w, h, t) => {
+  const mono = MONO(), text = U.css('--text'), data = U.css('--data'), accent = U.css('--accent');
+  ctx.save();
+  if (!state.marinePts.length) {
+    ctx.fillStyle = text; ctx.font = '700 10px ' + mono; ctx.textAlign = 'center';
+    ctx.fillText('LINKING SURFACE FIELD…', w / 2, h / 2); return;
+  }
+  const cx = w * .5, cy = h * .57, R = Math.min(w * .38, h * .34);
+  for (let km = 2; km <= 8; km += 2) {
+    ctx.globalAlpha = .2; ctx.strokeStyle = text;
+    ctx.beginPath(); ctx.arc(cx, cy, R * km / 8, 0, TAU); ctx.stroke();
+  }
+  ctx.globalAlpha = .5; ctx.strokeStyle = text;
+  ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+  state.marinePts.forEach((p, i) => {
+    const x = cx + clamp(p.dx / .02, -1, 1) * R * .55;
+    const y = cy - clamp(p.dy / .02, -1, 1) * R * .55;
+    const a = p.dir * Math.PI / 180;
+    const len = 14 + clamp(p.v, 0, 8) * 5;
+    const ex = x + Math.sin(a) * len, ey = y - Math.cos(a) * len;
+    ctx.globalAlpha = .9; ctx.strokeStyle = i === 0 ? data : accent; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex - Math.sin(a - .5) * 5, ey + Math.cos(a - .5) * 5);
+    ctx.lineTo(ex - Math.sin(a + .5) * 5, ey + Math.cos(a + .5) * 5); ctx.closePath(); ctx.fillStyle = i === 0 ? data : accent; ctx.fill();
+    ctx.globalAlpha = .95; ctx.fillStyle = text; ctx.font = '700 7px ' + mono; ctx.textAlign = 'center';
+    ctx.fillText(p.v.toFixed(1), x, y + 11);
+  });
+  ctx.globalAlpha = 1; ctx.fillStyle = text; ctx.font = '700 8px ' + mono; ctx.textAlign = 'left';
+  ctx.fillText('SURFACE · km/h', 9, h - 42);
+  ctx.restore();
+}, { fps: 8 });
+
+/* ---------------------------------------------------------------- readouts */
+function updateReadouts() {
+  const d = state.echo;
+  if (d) {
+    const hi = Math.floor(state.echoHead) % d.meta.pings;
+    const p = d.pings[Math.max(0, hi)];
+    const binH = 1;
+    const bottom = p.bottom_m;
+    const g1 = Math.floor(600 / d.meta.bin_m), g2 = Math.ceil(700 / d.meta.bin_m);
+    let sum = 0, cnt = 0, peak = -999;
+    for (let k = g1; k <= g2; k++) { sum += p.sv[k]; cnt++; if (p.sv[k] > peak) peak = p.sv[k]; }
+    const sv = Math.round(peak);
+    const sA = Math.max(0, Math.round(700 + (sv + 60) * 26));
+    const t = new Date(Date.now() - (d.meta.pings - hi) * d.meta.ping_interval_s * 1000);
+    const ts = pad(t.getUTCHours()) + ':' + pad(t.getUTCMinutes()) + ':' + pad(t.getUTCSeconds());
+    document.getElementById('e-ping').textContent = 'PING ' + (61284 + hi).toLocaleString() + ' · ' + ts + ' · BOTTOM ' + bottom.toFixed(1) + ' m';
+    document.getElementById('e-gate').textContent = 'GATE 600–700 m · Sv ' + sv + ' dB';
+    document.getElementById('e-sa').textContent = 'sA ' + sA.toLocaleString() + ' m²/nmi² · ρ 0.96 kg/m³';
+    document.getElementById('hdr-ping').textContent = (61284 + hi).toLocaleString();
+    document.getElementById('hdr-bottom').textContent = bottom.toFixed(1) + ' m';
+    document.getElementById('p-bot').textContent = bottom.toFixed(1) + ' m';
+    document.getElementById('hdr-net').textContent = '800 m · 12 × 10 L';
+  }
+  const s = state.sonar;
+  if (s) {
+    const f = s.frames[Math.floor(performance.now() / 1000 * s.meta.hz) % s.frames.length];
+    const pct = clamp((f.sweep_deg - 154) / 120 * 100, 0, 100);
+    document.getElementById('b-sw').textContent = 'SWEEP ' + Math.round(pct) + '% · BRG ' + Math.round(f.sweep_deg) + '°';
+    document.getElementById('b-n').textContent = f.contacts.length;
+    const near = f.contacts.reduce((m, c) => Math.min(m, c.range_km), 99);
+    document.getElementById('b-int').textContent = 'INTERCEPT ' + (near < 99 ? near.toFixed(2) : '—') + ' km';
+  }
+  const c = state.ctd;
+  if (c) {
+    document.getElementById('c-depth').textContent = String(Math.round(state.ctdCursor)).padStart(4, '0') + ' m';
+    const v = ctdAt(state.ctdCursor);
+    if (v) {
+      document.getElementById('c-t').textContent = v.t.toFixed(2) + ' °C';
+      document.getElementById('c-s').textContent = v.s.toFixed(3);
+      document.getElementById('c-r').textContent = v.r ? v.r.toFixed(2) : '—';
+      document.getElementById('sn-t-v').textContent = v.t.toFixed(2) + ' °C';
+      document.getElementById('sn-s-v').textContent = v.s.toFixed(3);
+      document.getElementById('sn-r-v').textContent = v.r ? v.r.toFixed(1) : '—';
+    }
+    document.getElementById('c-yo').textContent = state.ctdDir > 0 ? 'DOWNCAST ↓' : 'UPCAST ↑';
+    document.getElementById('f-state').textContent = state.ctdDir > 0 ? 'DOWNCAST' : 'UPCAST';
+    document.getElementById('f-warp').textContent = Math.round(state.ctdCursor);
+    document.getElementById('f-rosette').textContent = Math.round(state.ctdCursor);
+    document.getElementById('f-ten').textContent = (18 + state.ctdCursor * .035 + Math.sin(performance.now() / 900) * 1.4).toFixed(1);
+    document.getElementById('f-spool').textContent = (state.ctdDir > 0 ? 1.4 : -1.4).toFixed(1);
+    document.getElementById('f-tow').textContent = '3.4';
+    document.getElementById('f-elapsed').textContent = '0:' + pad(Math.floor(performance.now() / 1000) % 60);
+    const [cv] = [state.ctdCursor];
+    document.getElementById('hdr-bottom').textContent = (state.echo ? state.echo.pings[Math.floor(state.echoHead) % state.echo.meta.pings].bottom_m : 0).toFixed(1) + ' m';
+    const now = new Date();
+    const next = new Date(now); next.setUTCMinutes(Math.ceil((now.getUTCMinutes() + 1) / 10) * 10, 0, 0);
+    const sec = Math.max(0, Math.floor((next - now) / 1000));
+    document.getElementById('t-cd').textContent = 'T−' + pad(Math.floor(sec / 60)) + ':' + pad(sec % 60);
+  }
+  const corr = state.sonar && state.sonar.meta.correlation;
+  if (corr) {
+    document.getElementById('d-r').textContent = corr.r.toFixed(3);
+    document.getElementById('d-sub').textContent = 'LAG ' + corr.lag_s.toFixed(1) + ' s · n ' + corr.n + ' · n_eff ' + corr.n_eff;
+  }
+  if (state.ledger) document.getElementById('e-sync').textContent = 'SYNC ' + new Date().toISOString().slice(11, 19);
+}
+setInterval(updateReadouts, 300);
+
+/* ---------------------------------------------------------------- gain control */
+const GAINS = [-18, -12, -6];
+document.getElementById('sl-gain').addEventListener('click', () => {
+  const i = GAINS.indexOf(state.gain);
+  state.gain = GAINS[(i + 1) % GAINS.length];
+  document.getElementById('sl-gain-v').textContent = state.gain + ' dB';
+  document.getElementById('e-gain').textContent = state.gain + ' dB';
+  document.getElementById('sl-gain').querySelector('.tr').style.setProperty('--f', (25 + (i + 1) * 25) + '%');
+});
+
+/* ---------------------------------------------------------------- modal */
+const modal = document.getElementById('data-modal');
+document.getElementById('data-btn').addEventListener('click', () => modal.classList.add('open'));
+document.getElementById('data-close').addEventListener('click', () => modal.classList.remove('open'));
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+/* ---------------------------------------------------------------- logs */
+let logI = 0;
+function streamLog() {
+  if (!state.echo || !state.sonar) return;
+  const d = state.echo, p = d.pings[Math.floor(state.echoHead) % d.meta.pings];
+  const f = state.sonar.frames[Math.floor(performance.now() / 1000 * 10) % state.sonar.frames.length];
+  const c = f.contacts[0];
+  const msgs = [
+    ['PING', 'bottom ' + p.bottom_m.toFixed(1) + ' m · ' + (p.sv.reduce((a, b) => a + b, 0) / p.sv.length).toFixed(1) + ' dB mean', true],
+    ['SONAR', c ? 'contact ' + c.range_km.toFixed(1) + ' km ' + Math.round(c.bearing_deg) + '° · ' + c.strength_db.toFixed(0) + ' dB' : 'sector clear', false],
+    ['CTD', 'rosette ' + Math.round(state.ctdCursor) + ' m · ' + (ctdAt(state.ctdCursor) || { t: 0 }).t.toFixed(2) + ' °C', true],
+    ['SEA', state.marine ? Math.round(state.marine.ocean_current_velocity * 10) / 10 + ' km/h ' + Math.round(state.marine.ocean_current_direction) + '° · wave ' + (+state.marine.wave_height).toFixed(2) + ' m' : 'marine link', false],
+    ['OBIS', state.ledger ? state.ledger.sampled + ' records · ' + state.ledger.rows.length + ' species' : 'ledger link', false]
+  ];
+  const m = msgs[logI++ % msgs.length];
+  pushLog(m[0], m[1], m[2]);
+}
+setInterval(streamLog, 4200);
+
+/* ---------------------------------------------------------------- boot */
+loadSynthetic().then(() => {
+  updateReadouts();
+  pushLog('ECHO', 'synthetic echogram ' + state.echo.meta.pings + ' pings · 120 s', true);
+  pushLog('SONAR', 'synthetic sector ' + state.sonar.meta.sector_deg + '° · ' + state.sonar.meta.frames + ' frames', true);
+});
+loadCtd();
+loadMarine();
+loadLedger();
+setTimeout(() => pushLog('SYS', 'SOUNDING station online', true), 800);
+
+/* tabs */
+document.getElementById('g-tabs').addEventListener('click', (e) => {
+  const t = e.target.closest('.g-tab'); if (!t) return;
+  [...e.currentTarget.children].forEach((x) => x.classList.remove('on'));
+  t.classList.add('on'); curTab = [...e.currentTarget.children].indexOf(t);
+});
+</script>
+</body>
+</html>
