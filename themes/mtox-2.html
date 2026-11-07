@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -86,6 +86,32 @@
     display: block; }
 
   .u-bot .u-cell .u-r2 { color: var(--text); font-weight: 600; }
+
+  /* panel placement */
+  .m-load     { grid-area: 1/1; }
+  .m-profile  { grid-area: 2/1; }
+  .m-forecast { grid-area: 1/2/3/3; }
+  .m-cityrank { grid-area: 1/3; }
+  .m-eventlog { grid-area: 2/3; }
+
+  /* thin scrollbars where tables/logs can overflow */
+  .m-rank, .m-log { scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--accent) 60%, transparent) transparent; }
+  .m-rank::-webkit-scrollbar, .m-log::-webkit-scrollbar { width: 5px; }
+  .m-rank::-webkit-scrollbar-thumb, .m-log::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--accent) 60%, transparent); }
+
+  /* narrow panes: two columns, forecast still spanning */
+  @media (max-width: 1180px) {
+    main.m-main { grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+      grid-template-rows: minmax(0,1fr) minmax(0,1fr) minmax(0,.95fr); }
+    .m-load     { grid-area: 1/1; }
+    .m-profile  { grid-area: 2/1; }
+    .m-forecast { grid-area: 1/2/3/3; }
+    .m-cityrank { grid-area: 3/1; }
+    .m-eventlog { grid-area: 3/2; }
+    .m-log { font-size: 8px; line-height: 1.8; }
+  }
 </style>
 </head>
 <body>
@@ -103,7 +129,7 @@
 
   <main class="m-main">
     <!-- row 1 · pollutant load vs WHO -->
-    <section class="u-plate u-notch" style="grid-area:1/1">
+    <section class="u-plate u-notch m-load">
       <div class="u-head"><b>LOAD</b> <span class="u-dim">/ µg·m⁻³ vs WHO 24 H</span><span style="margin-left:auto" class="u-src sim" id="load-badge"><i></i>SIM</span></div>
       <div class="u-body m-body-canvas">
         <div class="u-canvas-wrap m-fill" id="load"></div>
@@ -112,7 +138,7 @@
     </section>
 
     <!-- row 2 · pollutant profile radar -->
-    <section class="u-plate u-notch" style="grid-area:2/1">
+    <section class="u-plate u-notch m-profile">
       <div class="u-head"><b>PROFILE</b> <span class="u-dim">/ × WHO · 6 AXES</span><span style="margin-left:auto" class="u-src sim" id="profile-badge"><i></i>SIM</span></div>
       <div class="u-body m-body-canvas">
         <div class="u-canvas-wrap m-fill" id="profile"></div>
@@ -121,7 +147,7 @@
     </section>
 
     <!-- centre · 48 h forecast + next-hours queue -->
-    <section class="u-plate u-notch u-hot" style="grid-area:1/2/3/3">
+    <section class="u-plate u-notch u-hot m-forecast">
       <div class="u-head"><b>FORECAST</b> <span class="u-dim">/ 48 H · PM 2.5 + NO₂</span><span style="margin-left:auto" class="u-src sim" id="forecast-badge"><i></i>SIM</span></div>
       <div class="u-body m-body-canvas">
         <div class="u-canvas-wrap m-fill" id="forecast"></div>
@@ -134,7 +160,7 @@
     </section>
 
     <!-- row 1 · city ranking -->
-    <section class="u-plate u-notch" style="grid-area:1/3">
+    <section class="u-plate u-notch m-cityrank">
       <div class="u-head"><b>CITY RANK</b> <span class="u-dim">/ EAQI DESC · 8 SITES</span><span style="margin-left:auto" class="u-src sim" id="rank-badge"><i></i>SIM</span></div>
       <div class="u-body m-body-canvas">
         <div class="m-rank" id="rank"></div>
@@ -142,7 +168,7 @@
     </section>
 
     <!-- row 2 · threshold log -->
-    <section class="u-plate u-notch" style="grid-area:2/3">
+    <section class="u-plate u-notch m-eventlog">
       <div class="u-head"><b>EVENT LOG</b> <span class="u-dim">/ THRESHOLD CROSSINGS</span><span style="margin-left:auto" class="u-src sim" id="log-badge"><i></i>SIM</span></div>
       <div class="u-body m-body-canvas">
         <div class="u-log m-log" id="log" style="flex:1 1 auto;min-height:0;overflow:auto"></div>
@@ -650,12 +676,14 @@ async function loadCity(c) {
     '&longitude=' + c.lon +
     '&current=pm10,pm2_5,nitrogen_dioxide,ozone,sulphur_dioxide,carbon_monoxide,european_aqi,us_aqi' +
     '&hourly=pm2_5,nitrogen_dioxide,european_aqi&forecast_days=3&timezone=UTC';
-  const r = await U.live({
+  const once = () => U.live({
     source: 'Open-Meteo Air',
     url,
     parse: parseCity,
     fallback: () => simCity(c)
   });
+  let r = await once();
+  if (r.state !== 'live') r = await once();   // one retry before accepting the SIM fallback
   return { id: c.id, data: r.data, state: r.state };
 }
 
@@ -672,8 +700,10 @@ async function loadCity(c) {
   });
   view.liveCount = results.filter((r) => r.state === 'live').length;
 
-  /* open on the worst site so the first frame is the interesting one */
-  const worst = view.cities.slice().sort((a, b) => b.aqi - a.aqi)[0];
+  /* open on the worst live site so the first frame is the interesting one */
+  const live = view.cities.filter((c) => view.states[c.id] === 'live');
+  const pool = live.length ? live : view.cities;
+  const worst = pool.slice().sort((a, b) => b.aqi - a.aqi)[0];
   if (worst) view.selected = worst.id;
 
   renderAll();
