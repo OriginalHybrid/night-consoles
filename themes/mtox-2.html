@@ -94,6 +94,9 @@
   .m-q.now > span:first-child::after { content: ' ●'; font-size: 6px;
     animation: u-breathe 2s ease-in-out infinite; }
   .m-rx { color: var(--data); font-variant-numeric: tabular-nums; }
+  .m-speed { cursor: pointer; border-bottom: 1px dotted color-mix(in srgb, var(--text) 40%, transparent);
+    padding-bottom: 1px; }
+  .m-speed:hover, .m-speed:focus-visible { color: var(--data); outline: none; }
 
   .u-bot .u-cell .u-r2 { color: var(--text); font-weight: 600; }
 
@@ -158,13 +161,13 @@
 
     <!-- centre · 48 h forecast + next-hours queue -->
     <section class="u-plate u-notch u-hot m-forecast">
-      <div class="u-head"><b>FORECAST</b> <span class="u-dim">/ 48 H · PM 2.5 + NO₂</span><span style="margin-left:auto" class="u-src sim" id="forecast-badge"><i></i>SIM</span></div>
+      <div class="u-head"><b>FORECAST</b> <span class="u-dim m-speed" id="fc-tag" role="button" tabindex="0" title="Playback speed — click to cycle ×600 → ×60 → LIVE → ×3600">/ 48 H · PLAYBACK ×600</span><span style="margin-left:auto" class="u-src sim" id="forecast-badge"><i></i>SIM</span></div>
       <div class="u-body m-body-canvas">
         <div class="u-canvas-wrap m-fill" id="forecast"></div>
         <div class="m-queue" id="queue"></div>
         <div class="m-strip">
-          <span><b id="fc-city">—</b> · <span id="fc-obs">OBS —</span></span>
-          <span>PEAK PM 2.5 <b id="fc-peak">—</b> µg/m³ · <span id="fc-aqi">EAQI —</span></span>
+          <span><b id="fc-city">—</b> · <span id="fc-aqi">EAQI —</span></span>
+          <span id="fc-window">WINDOW — → —</span>
         </div>
       </div>
     </section>
@@ -234,6 +237,17 @@ const POL = [
 const rnd1 = (v, d) => Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
 const num = (v, fb) => (typeof v === 'number' && isFinite(v) ? v : fb);
 const hhmm = (iso) => (iso ? String(iso).slice(11, 16) : '—');
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+function stampUTC(ms) {
+  const d = new Date(ms);
+  return MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0') + ' ' +
+    String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+}
+function hourStampUTC(ms) {
+  const d = new Date(ms);
+  return MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0') + ' ' +
+    String(d.getUTCHours()).padStart(2, '0') + ':00';
+}
 
 /* EAQI band → label + palette slot */
 function band(aqi) {
@@ -261,7 +275,7 @@ function simCity(c) {
 
   const now = new Date(); now.setUTCMinutes(0, 0, 0);
   const time = [], pm = [], no = [], aq = [];
-  for (let i = 0; i < 48; i++) {
+  for (let i = 0; i < 120; i++) {
     const d = new Date(now.getTime() + i * 36e5);
     time.push(d.toISOString().slice(0, 16));
     const wave = 1 + .26 * Math.sin(i / 6.2 + seed * .13) + .11 * Math.sin(i / 2.3);
@@ -287,7 +301,8 @@ const view = {
   liveCount: 0,
   lastRx: 0,
   anim: {},
-  streamI: 0
+  streamI: 0,
+  play: { rate: 600, t0: Date.now(), base: 0 }
 };
 const byId = (id) => view.cities.find((c) => c.id === id) || view.cities[0];
 const sel = () => byId(view.selected);
@@ -311,6 +326,44 @@ function interp(arr, f) {
   const j = Math.min(arr.length - 1, i + 1);
   const k = Math.max(0, Math.min(1, f - i));
   return num(arr[i], 0) * (1 - k) + num(arr[j], 0) * k;
+}
+
+/* ---------------------------------------------------------------- playback
+   The forecast window slides through the six-day series. It is a time-lapse,
+   not wall-clock time: the rate is shown in the panel head and can be cycled
+   down to LIVE (×1) by clicking the tag. */
+const PLAY_RATES = [600, 60, 1, 3600];
+function playOffset(c) {
+  const arr = (c.hourly && c.hourly.pm25) || [];
+  const max = Math.max(0, arr.length - 48);
+  if (!max) return 0;
+  const p = view.play;
+  let off = p.base + (Date.now() - p.t0) / 36e5 * p.rate;
+  if (off > max) { p.base = 0; p.t0 = Date.now(); off = 0; }
+  return off;
+}
+function speedLabel() { return view.play.rate === 1 ? 'LIVE' : 'PLAYBACK ×' + view.play.rate; }
+function updateSpeedTag() {
+  const el = document.getElementById('fc-tag');
+  if (el) el.textContent = '/ 48 H · ' + speedLabel();
+}
+function cycleSpeed() {
+  const i = PLAY_RATES.indexOf(view.play.rate);
+  const next = PLAY_RATES[(i + 1) % PLAY_RATES.length];
+  view.play.base = playOffset(sel());
+  view.play.t0 = Date.now();
+  view.play.rate = next;
+  updateSpeedTag();
+  pushEvent('SPD', speedLabel() + ' · 48 H WINDOW', 'u-hot');
+}
+function updateWindowStrip() {
+  const el = document.getElementById('fc-window');
+  if (!el) return;
+  const c = sel();
+  const off = playOffset(c);
+  const baseMs = Date.parse(String(c.obs).length === 16 ? c.obs + ':00Z' : c.obs);
+  el.textContent = 'WINDOW ' + stampUTC(baseMs + off * 36e5) + ' → ' +
+    stampUTC(baseMs + (off + 48) * 36e5) + ' UTC';
 }
 const hexRGB = (s) => { const n = parseInt(String(s).slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 const mix2 = (a, b, k) => {
@@ -517,38 +570,68 @@ U.canvas('#profile', (ctx, w, h, t) => {
 }, { fps: 20 });
 
 /* ---------------------------------------------------------------- 48 h wave field
-   Split-spectrum dot-column wave field: columns of dots trace the hourly
-   series, a white ribbon connects the crests and a scrub beam sweeps the
-   forecast, reading the series live in µg/m³. */
+   Split-spectrum dot-column wave field. The window slides through the
+   six-day hourly series at the selected playback rate, so the field advances
+   with time; the clock axis prints the real UTC stamps at both window edges. */
 U.canvas('#forecast', (ctx, w, h, t) => {
   const data = U.css('--data'), cool = U.css('--cool'), alarm = U.css('--alarm');
   const text = U.css('--text'), accent = U.css('--accent');
   const mono = MONO();
   const c = sel();
-  const arr25 = shifted(c, 'pm25', 48);
-  const arrNO = shifted(c, 'no2', 48);
+  const arr25 = (c.hourly && c.hourly.pm25) || [];
+  const arrNO = (c.hourly && c.hourly.no2) || [];
   const blue = mix2(accent, cool, .55);
+  const off = playOffset(c);
+  const baseMs = Date.parse(String(c.obs).length === 16 ? c.obs + ':00Z' : c.obs);
+  const WIN = 48;
 
-  const padL = 42, padR = 14, top = 16, bottom = h - 24, gap = 30;
+  const padL = 44, padR = 14, top = 30, bottom = h - 28, gap = 28;
   const fieldH = Math.max(56, (bottom - top - gap) / 2);
   const fieldW = w - padL - padR;
   const NC = Math.max(56, Math.min(110, Math.floor(fieldW / 4)));
-  const cursor = (t * .055) % 1;
+  const cursorF = .62;
+
+  const atMs = (f) => baseMs + (off + f * WIN) * 36e5;
 
   U.draw.grid(ctx, w, h, cool, 34, .03);
   ctx.save();
 
+  /* time grid — ticks land on real UTC hours, not arbitrary fractions */
+  const startMs = baseMs + off * 36e5;
+  const endMs = startMs + WIN * 36e5;
+  const majorStep = (fieldW > 620 ? 6 : 12) * 36e5;
+  const firstMajor = Math.ceil(startMs / majorStep) * majorStep;
+  const majors = [];
+  for (let m = firstMajor; m <= endMs; m += majorStep) majors.push(m);
+  const xOfMs = (m) => padL + ((m - startMs) / (WIN * 36e5)) * fieldW;
+
+  majors.forEach((m) => {
+    const x = xOfMs(m);
+    ctx.globalAlpha = .075; ctx.strokeStyle = cool; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, top - 4); ctx.lineTo(x, bottom); ctx.stroke();
+  });
+
+  /* minor ticks every 3 h */
+  const minorStep = 3 * 36e5;
+  const firstMinor = Math.ceil(startMs / minorStep) * minorStep;
+  for (let m = firstMinor; m <= endMs; m += minorStep) {
+    const x = xOfMs(m);
+    ctx.globalAlpha = .2; ctx.strokeStyle = cool;
+    ctx.beginPath(); ctx.moveTo(x, bottom - 3); ctx.lineTo(x, bottom + 1); ctx.stroke();
+  }
+
   const field = (title, arr, guide, col, y0) => {
-    const clean = (arr && arr.length ? arr : [0]).map((v) => num(v, 0));
+    const win = [];
+    for (let i = 0; i <= WIN; i++) win.push(num(interp(arr, off + i), 0));
     const base = y0 + fieldH;
-    const maxV = Math.max(guide * 1.5, ...clean) * 1.08;
+    const maxV = Math.max(guide * 1.5, ...win) * 1.08;
     const yOf = (v) => base - Math.min(v, maxV) / maxV * fieldH;
     const xAt = (j) => padL + j / (NC - 1) * fieldW;
-    const at = (f) => interp(clean, f);
+    const valAt = (f) => interp(arr, off + f * WIN);
 
     /* dot columns */
     for (let j = 0; j < NC; j++) {
-      const v = at(j / (NC - 1) * (clean.length - 1));
+      const v = valAt(j / (NC - 1));
       const x = xAt(j);
       const yTop = yOf(v);
       const shim = .68 + .32 * Math.sin(t * 1.7 + j * .55);
@@ -580,15 +663,15 @@ U.canvas('#forecast', (ctx, w, h, t) => {
     ctx.beginPath();
     for (let j = 0; j < NC; j++) {
       const x = xAt(j);
-      const y = yOf(at(j / (NC - 1) * (clean.length - 1)));
+      const y = yOf(valAt(j / (NC - 1)));
       j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     }
-    ctx.globalAlpha = .55; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = .6; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 
-    /* peak marker */
-    let pi = 0; clean.forEach((v, i) => { if (v > clean[pi]) pi = i; });
-    const px = xAt(pi / Math.max(1, clean.length - 1) * (NC - 1));
-    const py = yOf(clean[pi]);
+    /* window peak */
+    let pi = 0; win.forEach((v, i) => { if (v > win[pi]) pi = i; });
+    const px = padL + (pi / WIN) * fieldW;
+    const py = yOf(win[pi]);
     ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(px, py, 2.2, 0, TAU); ctx.fill();
     ctx.globalAlpha = .4; ctx.strokeStyle = '#fff';
@@ -596,25 +679,25 @@ U.canvas('#forecast', (ctx, w, h, t) => {
     ctx.font = '700 7px ' + mono;
     ctx.textAlign = px > w * .7 ? 'right' : 'left';
     ctx.fillStyle = '#fff';
-    ctx.fillText(clean[pi].toFixed(1) + ' peak', px + (px > w * .7 ? -7 : 7), py - 6);
+    ctx.fillText(win[pi].toFixed(1) + ' peak', px + (px > w * .7 ? -7 : 7), py - 6);
 
-    /* scrub beam + live readout */
-    const bx = padL + cursor * fieldW;
-    const bv = at(cursor * (clean.length - 1));
+    /* fixed cursor beam reading the moving series */
+    const bx = padL + cursorF * fieldW;
+    const bv = valAt(cursorF);
     const by = yOf(bv);
     const bg = ctx.createLinearGradient(bx - 18, 0, bx + 18, 0);
     bg.addColorStop(0, 'rgba(255,255,255,0)');
     bg.addColorStop(.5, 'rgba(255,255,255,.10)');
     bg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = bg; ctx.fillRect(bx - 18, y0, 36, fieldH);
-    ctx.globalAlpha = .8; ctx.strokeStyle = '#fff';
+    ctx.globalAlpha = .75; ctx.strokeStyle = '#fff';
     ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx, base); ctx.stroke();
     ctx.globalAlpha = 1; ctx.fillStyle = col;
     ctx.beginPath(); ctx.arc(bx, by, 2.6, 0, TAU); ctx.fill();
     ctx.globalAlpha = .45; ctx.strokeStyle = col;
     ctx.beginPath(); ctx.arc(bx, by, 7, 0, TAU); ctx.stroke();
 
-    /* title + unit + range + live scrub readout */
+    /* title + range + cursor clock */
     ctx.globalAlpha = 1;
     ctx.textAlign = 'left';
     ctx.fillStyle = text;
@@ -627,22 +710,26 @@ U.canvas('#forecast', (ctx, w, h, t) => {
     ctx.textAlign = 'right';
     ctx.font = '700 7.5px ' + mono;
     ctx.fillStyle = '#fff';
-    ctx.fillText('SCRUB ' + bv.toFixed(1) + ' · +' + (cursor * (clean.length - 1)).toFixed(1) + ' H', w - padR, y0 + 8);
+    ctx.fillText(stampUTC(atMs(cursorF)) + ' · ' + bv.toFixed(1), w - padR, y0 + 8);
   };
 
   field('PM 2.5', arr25, 15, data, top);
   field('NO₂', arrNO, 25, blue, top + fieldH + gap);
 
-  /* time axis */
-  const axisY = h - 8;
+  /* clock axis on real ticks */
+  const axisY = h - 9;
   ctx.globalAlpha = .95;
   ctx.fillStyle = text;
-  ctx.font = '700 7px ' + mono;
-  [0, .25, .5, .75, 1].forEach((f) => {
-    const x = padL + f * fieldW;
-    ctx.textAlign = f === 0 ? 'left' : f === 1 ? 'right' : 'center';
-    ctx.fillText(f === 0 ? 'NOW' : '+' + Math.round(f * 48) + ' H', x, axisY);
+  ctx.font = '700 7.5px ' + mono;
+  majors.forEach((m) => {
+    const x = xOfMs(m);
+    ctx.fillRect(x, h - 19, 1, 4);
+    ctx.textAlign = x < padL + 46 ? 'left' : x > w - padR - 46 ? 'right' : 'center';
+    ctx.fillText(hourStampUTC(m), x, axisY);
   });
+  ctx.textAlign = 'right';
+  ctx.font = '600 6.5px ' + mono;
+  ctx.fillText('UTC', w - padR, h - 21);
   ctx.restore();
 }, { fps: 20 });
 
@@ -763,13 +850,12 @@ function renderLog() {
 
 function renderStrips() {
   const c = sel();
-  const peak = Math.max(...(c.hourly.pm25 || [c.pm25]).map((v) => num(v, 0)));
   document.getElementById('load-city').textContent = c.name;
   document.getElementById('fc-city').textContent = c.name + ' · ' + Math.abs(c.lat).toFixed(2) + (c.lat >= 0 ? 'N' : 'S') + ' ' + Math.abs(c.lon).toFixed(2) + (c.lon >= 0 ? 'E' : 'W');
-  document.getElementById('fc-obs').textContent = 'OBS ' + hhmm(c.obs) + ' UTC';
-  document.getElementById('fc-peak').textContent = peak.toFixed(1);
   const [label] = band(c.aqi);
   document.getElementById('fc-aqi').textContent = 'EAQI ' + Math.round(c.aqi) + ' · ' + label;
+  updateSpeedTag();
+  updateWindowStrip();
 }
 
 function renderHead() {
@@ -829,10 +915,10 @@ function parseCity(j) {
     usAqi: Math.round(num(cur.us_aqi, 0)),
     obs: ct,
     hourly: {
-      time: (h.time || []).slice(idx, idx + 48),
-      pm25: (h.pm2_5 || []).slice(idx, idx + 48),
-      no2: (h.nitrogen_dioxide || []).slice(idx, idx + 48),
-      aqi: (h.european_aqi || []).slice(idx, idx + 48)
+      time: (h.time || []).slice(idx, idx + 120),
+      pm25: (h.pm2_5 || []).slice(idx, idx + 120),
+      no2: (h.nitrogen_dioxide || []).slice(idx, idx + 120),
+      aqi: (h.european_aqi || []).slice(idx, idx + 120)
     }
   };
 }
@@ -841,7 +927,7 @@ async function loadCity(c) {
   const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + c.lat +
     '&longitude=' + c.lon +
     '&current=pm10,pm2_5,nitrogen_dioxide,ozone,sulphur_dioxide,carbon_monoxide,european_aqi,us_aqi' +
-    '&hourly=pm2_5,nitrogen_dioxide,european_aqi&forecast_days=3&timezone=UTC';
+    '&hourly=pm2_5,nitrogen_dioxide,european_aqi&forecast_days=6&timezone=UTC';
   const once = () => U.live({
     source: 'Open-Meteo Air',
     url,
@@ -886,10 +972,18 @@ function updateRx() {
 
 function startLive() {
   updateRx();
-  setInterval(updateRx, 1000);        // receive-age ticker
+  setInterval(() => { updateRx(); updateWindowStrip(); }, 1000);   // receive age + window clock
   setInterval(renderQueue, 60000);    // advance the hour window
   setInterval(streamLine, 4500);      // stream a new forecast sample
   setInterval(refreshAll, 120000);    // re-poll the network
+}
+
+const speedEl = document.getElementById('fc-tag');
+if (speedEl) {
+  speedEl.addEventListener('click', cycleSpeed);
+  speedEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycleSpeed(); }
+  });
 }
 
 (async function boot() {
