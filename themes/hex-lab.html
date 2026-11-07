@@ -93,6 +93,37 @@
     font-family: var(--mono); font-size: 8px; line-height: 1.8; color: var(--dim); }
   .h-ct b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
   .h-ct .hot { color: var(--cool); }
+
+  /* ---------------------------------------------------------------- legibility pass
+     Every legend, label and value reads as bold white; hierarchy comes from size,
+     not from dimming the text. */
+  .h-main .u-plate > .u-head { color: var(--text); font-weight: 600; }
+  .h-main .u-plate > .u-head .u-dim { color: color-mix(in srgb, var(--text) 80%, transparent); font-weight: 500; }
+  .h-kv { color: var(--text); font-weight: 600; }
+  .h-kv b { color: #fff; font-weight: 700; }
+  .h-kv b i { color: var(--text); opacity: .85; font-weight: 600; }
+  .h-ladder .r { color: var(--text); font-weight: 600; }
+  .h-ladder .r b { color: #fff; font-weight: 700; }
+  .h-ladder .r b i { color: var(--text); opacity: .85; font-weight: 600; }
+  .h-cap { color: var(--text); font-weight: 700; }
+  .h-strip { color: var(--text); font-weight: 600; }
+  .h-logbox p { color: var(--text); font-weight: 600; }
+  .h-logbox time { color: var(--text); opacity: .8; }
+  .h-env > div { color: var(--text); font-weight: 600; }
+  .h-env b { color: #fff; font-weight: 700; }
+  .h-env i { color: var(--text); opacity: .85; font-weight: 600; }
+  .h-meter > span { color: var(--text); font-weight: 600; }
+  .h-meter > b { color: #fff; font-weight: 700; }
+  .h-meter > b i { color: var(--text); opacity: .85; font-weight: 600; }
+  .h-levels .r { color: var(--text); font-weight: 600; }
+  .h-levels .r b { color: #fff; font-weight: 700; }
+  .h-levels .r .ok { color: var(--data); }
+  .h-levels .r .warn { color: var(--accent); }
+  .h-ct { color: var(--text); font-weight: 600; }
+  .h-ct b { color: #fff; font-weight: 700; }
+  .h-tri > div { color: var(--text); font-weight: 600; }
+  .h-tri b { color: #fff; font-weight: 700; }
+  .u-bot .u-cell .u-r2 { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -124,6 +155,7 @@
             <div class="r"><span>READS</span><b>4.28<i>M</i></b></div>
             <div class="r"><span>N50</span><b>12.4<i>kb</i></b></div>
             <div class="r hot"><span>Q30</span><b>94.2<i>%</i></b></div>
+            <div class="r"><span>Q MEAN</span><b>34.8</b></div>
             <div class="r"><span>GC</span><b>41.3<i>%</i></b></div>
             <div class="r cool"><span>DUP</span><b>3.2<i>%</i></b></div>
           </div>
@@ -266,7 +298,8 @@ const TAU = Math.PI * 2;
    3D depth surface: 12 sequencing lanes across a 48 Mb window.
    height = read depth (×), colour = depth. */
 U.canvas('#coverage', (ctx, w, h, t) => {
-  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const dim = U.css('--dim'), text = U.css('--text');
   const mono = MONO();
   const NX = 30, NZ = 12;
   const sx = Math.min(w * .026, 13), sy = Math.min(h * .018, 9);
@@ -286,11 +319,20 @@ U.canvas('#coverage', (ctx, w, h, t) => {
   const Y = (i, j) => cy + (j - NZ / 2) * sy - H(i, j) * sz;
 
   const rgb = (s) => { const n = parseInt(s.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-  const A = rgb(accent), D = rgb(data);
-  const shade = (v) => {
-    const k = Math.max(0, Math.min(1, v));
-    return 'rgb(' + Math.round(A[0] + (D[0] - A[0]) * k) + ',' +
-      Math.round(A[1] + (D[1] - A[1]) * k) + ',' + Math.round(A[2] + (D[2] - A[2]) * k) + ')';
+  const A = rgb(accent), D = rgb(data), C = rgb(cool);
+  const mix3 = (p, q, k) => 'rgb(' + Math.round(p[0] + (q[0] - p[0]) * k) + ',' +
+    Math.round(p[1] + (q[1] - p[1]) * k) + ',' + Math.round(p[2] + (q[2] - p[2]) * k) + ')';
+
+  /* second metric: mean base quality per cell, low at the repeat peak */
+  const Q = (i, j) => {
+    const u = i / (NX - 1);
+    let q = 38.2 - 7.6 * Math.exp(-Math.pow((u - .43) / .022, 2));
+    q -= 2.4 * Math.pow(j / (NZ - 1), 1.4);
+    return Math.max(19, Math.min(41, q));
+  };
+  const qShade = (q) => {
+    const k = Math.max(0, Math.min(1, (q - 20) / 20));      // Q20 → Q40
+    return k < .5 ? mix3(C, A, k * 2) : mix3(A, D, (k - .5) * 2);
   };
 
   U.draw.grid(ctx, w, h, cool, 34, .04);
@@ -315,18 +357,19 @@ U.canvas('#coverage', (ctx, w, h, t) => {
     ctx.stroke();
   }
 
-  /* filled quads, far lane first */
+  /* filled quads, far lane first. height = depth, colour = base quality */
   for (let j = 0; j < NZ - 1; j++) {
     for (let i = 0; i < NX - 1; i++) {
       const hv = (H(i, j) + H(i + 1, j) + H(i + 1, j + 1) + H(i, j + 1)) / 4;
+      const qv = (Q(i, j) + Q(i + 1, j) + Q(i + 1, j + 1) + Q(i, j + 1)) / 4;
       ctx.beginPath();
       ctx.moveTo(X(i, j), Y(i, j));
       ctx.lineTo(X(i + 1, j), Y(i + 1, j));
       ctx.lineTo(X(i + 1, j + 1), Y(i + 1, j + 1));
       ctx.lineTo(X(i, j + 1), Y(i, j + 1));
       ctx.closePath();
-      ctx.globalAlpha = .34 + .34 * hv;
-      ctx.fillStyle = shade(hv);
+      ctx.globalAlpha = .34 + .32 * hv;
+      ctx.fillStyle = qShade(qv);
       ctx.fill();
     }
   }
@@ -358,13 +401,27 @@ U.canvas('#coverage', (ctx, w, h, t) => {
   const px = X(bi, bj), py = Y(bi, bj);
   ctx.globalAlpha = .95; ctx.fillStyle = data;
   ctx.beginPath(); ctx.arc(px, py, 2.2, 0, TAU); ctx.fill();
-  ctx.globalAlpha = .30; ctx.strokeStyle = data;
+  ctx.globalAlpha = .40; ctx.strokeStyle = data;
   ctx.beginPath(); ctx.arc(px, py, 6, 0, TAU); ctx.stroke();
-  ctx.globalAlpha = .85; ctx.font = '6.5px ' + mono; ctx.textAlign = 'left';
+  ctx.globalAlpha = 1; ctx.font = '700 7px ' + mono; ctx.textAlign = 'left';
+  ctx.fillStyle = text;
   ctx.fillText('96×', px + 8, py - 4);
 
+  /* quality legend (colour dimension) */
+  const lw = 58, lx = w - lw - 10, ly = h - 20;
+  ctx.globalAlpha = .85; ctx.fillStyle = 'rgba(4,20,26,.86)';
+  ctx.fillRect(lx - 6, ly - 12, lw + 12, 27);
+  ctx.globalAlpha = .95; ctx.font = '700 6.5px ' + mono; ctx.fillStyle = text; ctx.textAlign = 'center';
+  ctx.fillText('BASE QUALITY', lx + lw / 2, ly - 5);
+  const lg = ctx.createLinearGradient(lx, 0, lx + lw, 0);
+  lg.addColorStop(0, cool); lg.addColorStop(.5, accent); lg.addColorStop(1, data);
+  ctx.globalAlpha = 1; ctx.fillStyle = lg; ctx.fillRect(lx, ly, lw, 4);
+  ctx.globalAlpha = .95; ctx.font = '600 6.5px ' + mono; ctx.fillStyle = text;
+  ctx.textAlign = 'left'; ctx.fillText('Q20', lx, ly + 12);
+  ctx.textAlign = 'right'; ctx.fillText('Q40', lx + lw, ly + 12);
+
   /* axes */
-  ctx.globalAlpha = .45; ctx.fillStyle = dim; ctx.font = '6.5px ' + mono; ctx.textAlign = 'center';
+  ctx.globalAlpha = .95; ctx.fillStyle = text; ctx.font = '700 7px ' + mono; ctx.textAlign = 'center';
   const fy = cy + (NZ / 2) * sy + 13;
   ctx.fillText('0 Mb', X(0, NZ - 1), fy);
   ctx.fillText('48 Mb', X(NX - 1, NZ - 1), fy);
@@ -419,12 +476,13 @@ U.canvas('#pipeline', (ctx, w, h, t) => {
       ctx.globalAlpha = 1; ctx.font = '600 8px ' + mono; ctx.textAlign = 'center';
       ctx.fillText('!', x, y + 3);
     }
-    ctx.globalAlpha = state === 'queued' ? .5 : .95;
-    ctx.font = '7px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = state === 'queued' ? dim : text;
+    ctx.globalAlpha = state === 'queued' ? .7 : 1;
+    ctx.font = '700 7px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = text;
     ctx.fillText(label, x, y + 22);
-    ctx.globalAlpha = .6; ctx.font = '6px ' + mono;
-    ctx.fillStyle = state === 'hold' ? alarm : state === 'done' ? data : dim;
+    ctx.globalAlpha = state === 'queued' ? .7 : .95;
+    ctx.font = '600 6.5px ' + mono;
+    ctx.fillStyle = state === 'hold' ? alarm : state === 'done' ? data : text;
     ctx.fillText(state.toUpperCase(), x, y + 32);
   });
 
@@ -466,11 +524,11 @@ U.canvas('#spectro', (ctx, w, h, t) => {
     ctx.globalAlpha = .28; ctx.beginPath(); ctx.arc(nx, bot, 7, 0, TAU); ctx.stroke();
 
     /* value + name */
-    ctx.globalAlpha = 1; ctx.font = '600 13px ' + mono; ctx.textAlign = 'center'; ctx.fillStyle = text;
+    ctx.globalAlpha = 1; ctx.font = '700 13px ' + mono; ctx.textAlign = 'center'; ctx.fillStyle = text;
     ctx.fillText(val.toFixed(2), cx, bot + 20);
-    ctx.globalAlpha = .7; ctx.font = '7px ' + mono; ctx.fillStyle = data;
+    ctx.globalAlpha = 1; ctx.font = '600 7px ' + mono; ctx.fillStyle = data;
     ctx.fillText(label, cx, bot + 32);
-    ctx.globalAlpha = .45; ctx.font = '6px ' + mono; ctx.fillStyle = dim;
+    ctx.globalAlpha = .9; ctx.font = '600 6.5px ' + mono; ctx.fillStyle = text;
     ctx.fillText(sub, cx, bot + 42);
     ctx.restore();
   };
@@ -481,7 +539,8 @@ U.canvas('#spectro', (ctx, w, h, t) => {
 
 /* ---------------------------------------------------------------- centrifuge rotor */
 U.canvas('#rotor', (ctx, w, h, t) => {
-  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool'), dim = U.css('--dim');
+  const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
+  const dim = U.css('--dim'), text = U.css('--text');
   const cx = w * .5, cy = h * .5, R = Math.min(w * .40, h * .42);
   ctx.save();
 
@@ -516,7 +575,7 @@ U.canvas('#rotor', (ctx, w, h, t) => {
   ctx.globalAlpha = .55; ctx.strokeStyle = data; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(cx, cy, R * .96, -Math.PI / 2, -Math.PI / 2 + TAU * .78); ctx.stroke();
 
-  ctx.globalAlpha = .5; ctx.fillStyle = dim; ctx.font = '6.5px ' + MONO(); ctx.textAlign = 'center';
+  ctx.globalAlpha = .9; ctx.fillStyle = text; ctx.font = '700 7px ' + MONO(); ctx.textAlign = 'center';
   ctx.fillText('24 × 1.5 mL', cx, cy + R * 1.02 + 6);
   ctx.restore();
 }, { fps: 20 });
@@ -524,7 +583,7 @@ U.canvas('#rotor', (ctx, w, h, t) => {
 /* ---------------------------------------------------------------- qPCR amplification */
 U.canvas('#qpcr', (ctx, w, h, t) => {
   const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
-  const dim = U.css('--dim'), mono = MONO();
+  const dim = U.css('--dim'), text = U.css('--text'), mono = MONO();
   const CT = [18.4, 21.1, 23.8, 26.5, 29.2];
   const left = 24, right = w - 8, top = 10, base = h - 22;
 
@@ -556,11 +615,11 @@ U.canvas('#qpcr', (ctx, w, h, t) => {
     const yc = base - .16 * (base - top);
     ctx.globalAlpha = .8; ctx.fillStyle = col;
     ctx.beginPath(); ctx.arc(xc, yc, 2, 0, TAU); ctx.fill();
-    ctx.globalAlpha = .55; ctx.font = '6px ' + mono; ctx.textAlign = 'center';
+    ctx.globalAlpha = .9; ctx.fillStyle = text; ctx.font = '600 6.5px ' + mono; ctx.textAlign = 'center';
     ctx.fillText(ct.toFixed(1), xc, yc - 5);
   });
 
-  ctx.globalAlpha = .45; ctx.fillStyle = dim; ctx.font = '6px ' + mono;
+  ctx.globalAlpha = .9; ctx.fillStyle = text; ctx.font = '700 6.5px ' + mono;
   ctx.textAlign = 'left'; ctx.fillText('0', left - 2, base + 9);
   ctx.textAlign = 'center'; ctx.fillText('CYCLE', (left + right) / 2, base + 9);
   ctx.textAlign = 'right'; ctx.fillText('40', right, base + 9);
@@ -572,7 +631,7 @@ U.canvas('#qpcr', (ctx, w, h, t) => {
 /* ---------------------------------------------------------------- 96-well plate */
 U.canvas('#plate', (ctx, w, h) => {
   const accent = U.css('--accent'), data = U.css('--data'), cool = U.css('--cool');
-  const dim = U.css('--dim'), alarm = U.css('--alarm');
+  const dim = U.css('--dim'), alarm = U.css('--alarm'), text = U.css('--text');
   const mono = MONO();
   const rows = 8, cols = 12;
   const padX = 14, padY = 10;
@@ -581,13 +640,13 @@ U.canvas('#plate', (ctx, w, h) => {
   const AZ = 'ABCDEFGH';
 
   ctx.save();
-  ctx.font = '6px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '700 6px ' + mono; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (let c = 0; c < cols; c++) {
-    ctx.globalAlpha = .45; ctx.fillStyle = dim;
+    ctx.globalAlpha = .9; ctx.fillStyle = text;
     ctx.fillText(String(c + 1).padStart(2, '0'), padX + cw * (c + .5), padY * .5);
   }
   for (let r = 0; r < rows; r++) {
-    ctx.globalAlpha = .45; ctx.fillStyle = dim;
+    ctx.globalAlpha = .9; ctx.fillStyle = text;
     ctx.textAlign = 'right';
     ctx.fillText(AZ[r], padX * .45, padY + ch * (r + .5));
     ctx.textAlign = 'center';
