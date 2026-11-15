@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Genome Analysis - HELIX-9</title>
+<meta name="description" content="HELIX-9: a genome analysis deck with a hybrid 3D DNA helix, live Ensembl and UCSC data when available, sequence tracks, variants, and simulated annotations.">
+<meta name="theme-color" content="#020305">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+:root{
+  --bg:#050506;--panel:#0A0908;--panel2:#0D0B09;--text:#F2E8DC;--dim:#8A7A68;--ink2:#C9B8A8;
+  --rule:#2A1D12;--rule2:#17100B;--accent:#F07800;--data:#C04800;--cool:#F2E8DC;--alarm:#FF3B30;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Inter',system-ui,sans-serif;
+  --fs-ghost:8px;--fs-lab:9px;--fs-body:10px;--fs-num:12px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+button,select,input{font:inherit;color:inherit}
+.u-vignette,.u-noise,.u-scan{display:none!important}
+.app{position:fixed;inset:0;display:grid;grid-template-rows:54px minmax(0,1fr) 310px 18px;gap:4px;padding:5px;background:var(--bg);overflow:hidden}
+.app::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.18;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px);mix-blend-mode:screen}
+.app>*{min-width:0;min-height:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dim{color:var(--dim)}.acc{color:var(--accent)}.dat{color:var(--data)}.cool{color:var(--cool)}.alm{color:var(--alarm)}
+.top{display:flex;align-items:center;gap:clamp(8px,1vw,16px);padding:0 12px;border:1px solid var(--rule);background:linear-gradient(180deg,#080C10,#020305);white-space:nowrap;overflow:hidden}
+.brand{display:flex;align-items:baseline;gap:8px;padding-right:14px;border-right:1px solid var(--rule2);flex:none}
+.brand i{width:7px;height:7px;border:1px solid var(--accent);transform:rotate(45deg);box-shadow:0 0 10px rgba(255,159,28,.65)}
+.brand b{font-family:var(--mono);font-size:16px;letter-spacing:.18em;font-weight:500;color:var(--accent)}
+.brand span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--dim)}
+.top-cell{display:flex;flex-direction:column;gap:1px;min-width:0}
+.top-cell .k{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--dim)}
+.top-cell .v{font-family:var(--mono);font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis}
+.top-spacer{flex:1 1 auto}
+.pill{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;border:1px solid var(--rule);color:var(--dim)}
+.pill::before{content:'';width:4px;height:4px;background:currentColor;border-radius:50%}
+.pill.live{color:var(--cool);border-color:rgba(92,200,240,.45)}.pill.partial{color:var(--accent);border-color:rgba(255,159,28,.45)}.pill.sim{color:var(--dim)}
+.main{display:grid;grid-template-columns:320px minmax(0,1fr) 360px;gap:4px;min-height:0}
+.col{display:grid;gap:4px;min-height:0}
+.col.left{grid-template-rows:140px 82px minmax(0,1fr) 112px}
+.col.right{grid-template-rows:248px minmax(0,1fr) 150px}
+.panel{position:relative;display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--rule);overflow:hidden}
+.ph{flex:none;height:28px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--rule2);font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--dim);white-space:nowrap;overflow:hidden}
+.ph b{color:var(--text);font-weight:500}.ph .r{margin-left:auto;color:var(--dim);font-size:8px}.ph .src{margin-left:auto;color:var(--dim);font-size:8px;letter-spacing:.08em}
+.pb{flex:1 1 auto;min-height:0;overflow:hidden;padding:8px}
+.specimen .pb{display:flex;flex-direction:column;gap:7px}
+.spec-row{display:flex;align-items:flex-start;gap:8px}
+.spec-id{font-family:var(--mono);font-size:22px;line-height:1;color:var(--text);letter-spacing:.04em}
+.spec-locus{font-family:var(--mono);font-size:8px;color:var(--dim);margin-top:5px;letter-spacing:.03em}
+.spec-tag{margin-left:auto;font-family:var(--mono);font-size:8px;color:var(--accent);border:1px solid rgba(255,159,28,.35);padding:2px 5px;white-space:nowrap}
+.spec-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-family:var(--mono);font-size:8px;color:var(--dim)}
+.spec-meta span{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--rule2);padding-top:4px}
+.spec-meta b{color:var(--ink2);font-weight:400}
+.src-line{font-family:var(--mono);font-size:7.5px;color:var(--dim);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src-line .on{color:var(--cool)}
+.ideo-body{display:flex;flex-direction:column;gap:6px}
+.ideo{position:relative;height:26px;border:1px solid var(--rule2);background:linear-gradient(90deg,#0C141B 0 7%,#26333D 7% 11%,#101820 11% 21%,#34434D 21% 24%,#0C141B 24% 38%,#202B34 38% 43%,#0C141B 43% 57%,#34434D 57% 61%,#101820 61% 74%,#26333D 74% 79%,#0C141B 79% 90%,#202B34 90% 100%)}
+.ideo::before{content:'';position:absolute;left:23%;top:-5px;bottom:-5px;width:1px;background:var(--accent);box-shadow:0 0 10px rgba(255,159,28,.8)}
+.ideo-mark{position:absolute;left:23%;top:-4px;width:5px;height:34px;border-left:1px solid var(--accent);border-right:1px solid var(--accent);background:rgba(255,159,28,.08);transform:translateX(-50%)}
+.ideo-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:var(--dim)}
+.ideo-labels span:nth-child(2){color:var(--accent)}
+.vlist{overflow-y:auto;overflow-x:hidden;padding:0;scrollbar-width:thin;scrollbar-color:var(--rule2) transparent}
+.vlist::-webkit-scrollbar{width:4px}.vlist::-webkit-scrollbar-thumb{background:var(--rule2)}
+.vrow{display:grid;grid-template-columns:1.05fr 1.35fr .55fr .5fr;gap:5px;align-items:center;width:100%;padding:6px 8px;border:0;border-bottom:1px dashed rgba(21,32,42,.85);background:transparent;text-align:left;font-family:var(--mono);font-size:8px;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.vrow:hover{background:rgba(255,159,28,.06)}.vrow.sel{background:rgba(255,159,28,.12);box-shadow:inset 2px 0 0 var(--accent)}
+.vrs{color:var(--text)}.vcons{display:flex;flex-direction:column;gap:1px;overflow:hidden}.vcons i{font-style:normal;font-size:7px;color:var(--dim);overflow:hidden;text-overflow:ellipsis}
+.vimp{text-align:right;font-size:7px;letter-spacing:.05em}.vimp.high{color:var(--data)}.vimp.moderate{color:var(--accent)}.vimp.low{color:var(--cool)}.vimp.modifier{color:var(--dim)}
+.vfreq{text-align:right;color:var(--dim)}
+.qc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:5px 6px}
+.qc-cell{border:1px solid var(--rule2);padding:4px 5px;min-width:0}
+.qc-cell span{display:block;font-family:var(--mono);font-size:6.5px;letter-spacing:.08em;color:var(--dim)}
+.qc-cell b{display:block;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text);margin-top:1px}
+.helix-panel .ph .r{margin-left:0}
+.helix-panel .ph .src{margin-left:auto}
+.stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 44%,rgba(255,159,28,.045),transparent 54%),#020305}
+#helix-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+.hud{position:absolute;display:flex;flex-direction:column;gap:3px;font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--dim);pointer-events:none;text-shadow:0 1px 4px #000}
+.hud b{font-weight:400;color:var(--text);font-size:10px;letter-spacing:.04em}.hud span{white-space:nowrap}
+.hud.tl{left:12px;top:12px}.hud.tr{right:12px;top:12px;text-align:right}.hud.bl{left:12px;bottom:48px}.hud.br{right:12px;bottom:48px;text-align:right}
+.hud.tl b{color:var(--accent)}
+.dna-labels{position:absolute;inset:0;pointer-events:none;z-index:4}
+.dna-label{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-family:var(--mono);font-size:12px;line-height:1.2;letter-spacing:.055em;color:var(--text);white-space:nowrap;padding:5px 9px;border:1px solid rgba(240,120,0,.34);border-left:2px solid rgba(240,120,0,.9);background:rgba(5,5,6,.84);opacity:0;transition:opacity .22s ease;text-shadow:0 1px 6px #000;box-shadow:0 5px 20px rgba(0,0,0,.62)}
+.dna-label.on{opacity:1}
+.dna-label b{color:var(--text);font-weight:400}
+.dna-label .dot{display:inline-block;width:6px;height:6px;margin-right:6px;background:var(--accent);border-radius:50%;vertical-align:1px;box-shadow:0 0 7px rgba(240,120,0,.85)}
+.dna-label.hot{border-color:rgba(255,59,48,.45);border-left-color:var(--alarm);color:#FFE2DC}.dna-label.hot .dot{background:var(--alarm);box-shadow:0 0 8px rgba(255,59,48,.9)}
+.label-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
+.label-lines line{stroke:rgba(240,120,0,.5);stroke-width:.9}
+.label-lines line.hot{stroke:rgba(255,59,48,.62)}
+.helix-controls{position:absolute;left:10px;right:10px;bottom:8px;display:flex;align-items:center;gap:6px;height:32px;padding:0 7px;border:1px solid var(--rule);background:rgba(2,3,5,.82);backdrop-filter:blur(5px)}
+.helix-controls button{background:transparent;border:1px solid var(--rule2);color:var(--dim);font-family:var(--mono);font-size:8px;letter-spacing:.08em;padding:3px 6px;cursor:pointer;white-space:nowrap}
+.helix-controls button:hover{color:var(--text);border-color:var(--accent)}
+.helix-controls button.on{color:var(--accent);border-color:rgba(255,159,28,.45)}
+.helix-controls select{background:#020305;border:1px solid var(--rule2);color:var(--dim);font-family:var(--mono);font-size:8px;padding:2px 3px;outline:none}
+.helix-controls input[type=range]{flex:1 1 auto;min-width:80px;accent-color:var(--accent);height:2px}
+.helix-controls #cursor-label{font-family:var(--mono);font-size:8px;color:var(--accent);white-space:nowrap;min-width:104px;text-align:right}
+.inspector-body{display:flex;flex-direction:column;gap:7px}
+.base-row{display:flex;align-items:center;gap:12px}
+.base-big{font-family:var(--mono);font-size:54px;line-height:.9;font-weight:500;color:var(--cool);text-shadow:0 0 22px currentColor}
+.base-meta{display:flex;flex-direction:column;gap:3px;min-width:0}.base-meta span{font-family:var(--mono);font-size:8px;color:var(--dim);letter-spacing:.08em}.base-meta b{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text)}
+.sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.sel-grid>div{border:1px solid var(--rule2);padding:3px 5px;min-width:0}
+.sel-grid span{display:block;font-family:var(--mono);font-size:7px;letter-spacing:.1em;color:var(--dim)}.sel-grid b{display:block;font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.impact-row{display:flex;align-items:center;gap:6px;border-top:1px solid var(--rule2);padding-top:5px;font-family:var(--mono);font-size:8px;color:var(--dim)}
+.impact{font-family:var(--mono);font-size:8px;letter-spacing:.06em;padding:1px 5px;border:1px solid var(--rule2);color:var(--dim);font-weight:400}
+.impact.high{color:var(--data);border-color:rgba(255,59,48,.45)}.impact.moderate{color:var(--accent);border-color:rgba(255,159,28,.4)}.impact.low{color:var(--cool);border-color:rgba(92,200,240,.4)}.impact.ref{color:var(--dim)}
+.sel-note{font-family:var(--mono);font-size:7.5px;line-height:1.4;color:var(--dim);border-top:1px solid var(--rule2);padding-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ann-body{display:flex;flex-direction:column;gap:6px}
+.ann-row{display:grid;grid-template-columns:62px 1fr 38px;gap:6px;align-items:center;font-family:var(--mono);font-size:8px;color:var(--dim)}
+.ann-row b{font-weight:400;text-align:right;color:var(--text)}
+.bar{position:relative;height:4px;background:var(--rule2);overflow:hidden}.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--cool);width:0}
+.ann-lab{font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;color:var(--dim);border-top:1px solid var(--rule2);padding-top:5px}
+.expr-list{display:flex;flex-direction:column;gap:3px}
+.expr-row{display:grid;grid-template-columns:58px 1fr 34px;gap:5px;align-items:center;font-family:var(--mono);font-size:7.5px;color:var(--dim)}
+.expr-row .bar{height:3px}.expr-row .bar i{background:var(--accent)}.expr-row b{text-align:right;font-weight:400;color:var(--ink2)}
+.ann-note{margin-top:auto;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:var(--dim);border-top:1px solid var(--rule2);padding-top:5px}
+.log-list{display:flex;flex-direction:column;gap:2px;padding:5px 7px;font-family:var(--mono);font-size:8px;line-height:1.35;overflow:hidden}
+.log-row{display:grid;grid-template-columns:40px 38px minmax(0,1fr);gap:5px;white-space:nowrap;overflow:hidden}
+.log-row span:first-child{color:var(--dim)}.log-row b{font-weight:400;color:var(--accent)}.log-row span:last-child{color:var(--ink2);overflow:hidden;text-overflow:ellipsis}
+.bottom-deck{display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:4px;min-height:0}.browser .ph .src{margin-left:auto}
+.browser-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}.base-cards{display:grid;grid-template-columns:1fr;grid-template-rows:repeat(4,auto) auto auto;gap:4px;padding:6px 8px;overflow:hidden}.base-card{display:grid;grid-template-columns:76px 1fr;align-items:center;gap:7px;min-width:0;min-height:0;padding:5px 8px;border:1px solid var(--rule);background:linear-gradient(180deg,rgba(240,120,0,.055),rgba(5,5,6,.3));text-align:left;font-family:var(--mono);color:var(--dim);cursor:pointer;overflow:hidden}.base-card:hover,.base-card.active{border-color:rgba(240,120,0,.6);background:rgba(240,120,0,.12)}.bc-top{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:0;padding:0;margin:0}.bc-sym{font-size:22px;line-height:1;color:var(--accent);font-weight:500}.bc-name{font-size:8.5px;color:var(--text);letter-spacing:.06em}.bc-grid{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:2px 8px;font-size:8.5px;line-height:1.3}.bc-grid span{color:var(--dim);letter-spacing:.06em}.bc-grid span::after{content:":";color:var(--dim);margin-left:1px}.bc-grid b{font-weight:400;color:var(--ink2);text-align:left;white-space:nowrap;padding-right:8px}.rna-card{grid-column:1/-1;border:1px solid rgba(240,120,0,.34);background:rgba(240,120,0,.055);padding:6px 9px;font-family:var(--mono);font-size:9px;line-height:1.35;color:var(--ink2);display:flex;flex-direction:column;gap:1px;overflow:hidden}.rna-card b{font-size:9.5px;color:var(--accent);letter-spacing:.08em}.assemble-note{grid-column:1/-1;display:flex;flex-direction:column;gap:1px;padding:4px 9px;border-top:1px solid var(--rule2);font-family:var(--mono);font-size:8px;line-height:1.35;color:var(--dim);letter-spacing:.04em;overflow:hidden}
+.track{display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px;align-items:center;height:28px;padding:0 8px;border-bottom:1px solid var(--rule2);min-height:0}
+.track.genes{height:44px}.track.tall{height:42px}
+.track .lab{font-family:var(--mono);font-size:7.5px;letter-spacing:.08em;color:var(--dim);text-align:right;white-space:nowrap}
+.track .lane{position:relative;height:100%;min-width:0;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent)}
+.track .lane canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gene{position:absolute;height:3px;background:rgba(255,159,28,.45);border-top:1px solid rgba(255,159,28,.8);border-bottom:1px solid rgba(255,159,28,.25);z-index:1}
+.gene.minus{background:rgba(255,59,48,.38);border-top-color:rgba(255,59,48,.8);border-bottom-color:rgba(255,59,48,.22)}
+.exon{position:absolute;height:7px;background:var(--accent);opacity:.82;z-index:2}.exon.minus{background:var(--data)}
+.glabel{position:absolute;font-family:var(--mono);font-size:6.5px;color:var(--ink2);white-space:nowrap;z-index:3;background:rgba(2,3,5,.72);padding:0 2px}
+.vmark{position:absolute;top:50%;width:5px;height:5px;background:var(--cool);transform:translate(-50%,-50%) rotate(45deg)}
+.vmark.high{background:var(--data);box-shadow:0 0 7px rgba(255,59,48,.7)}.vmark.moderate{background:var(--accent)}.vmark.low{background:var(--cool)}.vmark.modifier{background:var(--dim)}
+.scan{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--accent);opacity:.75;box-shadow:0 0 8px rgba(255,159,28,.65);pointer-events:none}
+.seq-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:4px 8px 0;overflow:hidden}
+.seq-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:var(--dim);padding-bottom:2px}
+.seq-meta span:last-child{color:var(--accent)}
+.seq-strip{display:flex;height:22px;align-items:center;overflow:hidden;font-family:var(--mono);font-size:9px;line-height:1;white-space:nowrap}
+.seq-strip span{width:7px;flex:0 0 7px;text-align:center;color:var(--dim)}
+.seq-strip span.var{box-shadow:inset 0 -2px 0 var(--data)}
+.seq-strip span.sel{background:var(--accent);color:#020305;box-shadow:0 0 8px rgba(255,159,28,.65)}
+.b-A{color:#FF9F1C!important}.b-T{color:#FF3B30!important}.b-G{color:#5CC8F0!important}.b-C{color:#E8EEF2!important}.b-N{color:#687784!important}
+.foot{display:flex;align-items:center;gap:12px;padding:0 6px;border-top:1px solid var(--rule2);font-family:var(--mono);font-size:7.5px;color:var(--dim);white-space:nowrap;overflow:hidden}
+.foot b{color:var(--data);font-weight:400}.foot span:last-child{margin-left:auto}
+@media(max-width:1500px){.bottom-deck{grid-template-columns:minmax(0,1fr) 500px}}
+@media(max-width:1600px){
+  .main{grid-template-columns:286px minmax(0,1fr) 326px}
+  .top-cell:nth-of-type(5){display:none}
+  .seq-strip span{width:6px;flex-basis:6px}
+}
+@media(max-width:1360px){
+  .main{grid-template-columns:260px minmax(0,1fr) 300px}
+  .brand span{display:none}
+  .top-cell:nth-of-type(4){display:none}
+  .col.left{grid-template-rows:120px 76px minmax(0,1fr) 104px}
+}
+@media(max-width:1180px){.bottom-deck{grid-template-columns:1fr}.bases{display:none}
+  .main{grid-template-columns:250px minmax(0,1fr)}
+  .col.right{display:none}
+  .app{grid-template-rows:54px minmax(0,1fr) 240px 18px}
+  .browser .track.tall{height:34px}
+}
+@media(max-height:940px){.expr-row:nth-child(n+5){display:none}.log-row:nth-child(n+6){display:none}}
+@media(prefers-reduced-motion:reduce){.app::after{display:none}}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="top">
+    <div class="brand"><i></i><b>HELIX-9</b><span>BINDER FOUNDRY</span></div>
+    <div class="top-cell"><span class="k">SAMPLE</span><span class="v" id="top-sample">HG-0427</span></div>
+    <div class="top-cell"><span class="k">LOCUS</span><span class="v" id="top-locus">chr17:43,044,295-43,044,495</span></div>
+    <div class="top-cell"><span class="k">BUILD</span><span class="v" id="top-build">GRCh38</span></div>
+    <div class="top-cell"><span class="k">ASSAY</span><span class="v" id="top-assay">WGS 30x</span></div>
+    <div class="top-cell"><span class="k">GENE</span><span class="v" id="top-gene">BRCA1 / RND2</span></div>
+    <div class="top-spacer"></div>
+    <div class="top-cell"><span class="k">DATA</span><span class="pill sim" id="top-mode">SIM</span></div>
+    <div class="top-cell"><span class="k">UTC</span><span class="v mono" id="top-clock">--:--:--</span></div>
+  </header>
+
+  <section class="main">
+    <aside class="col left">
+      <section class="panel specimen">
+        <div class="ph"><b>TARGET STRUCTURE</b><span class="r">LIVE</span></div>
+        <div class="pb">
+          <div class="spec-row">
+            <div><div class="spec-id" id="spec-id">HG-0427</div><div class="spec-locus" id="spec-locus">chr17:43,044,295-43,044,495</div></div>
+            <div class="spec-tag" id="spec-assay">WGS 30x</div>
+          </div>
+          <div class="spec-meta">
+            <span>BUILD <b id="spec-build">GRCh38</b></span>
+            <span>WINDOW <b id="spec-bp">201 BP</b></span>
+            <span>GENE <b id="spec-gene">BRCA1</b></span>
+          </div>
+          <div class="src-line" id="src-line">SEQ SIM / GENE SIM / VAR SIM / TX SIM</div>
+        </div>
+      </section>
+
+      <section class="panel ideogram">
+        <div class="ph"><b>TARGET MAP</b><span class="r">GRCh38</span></div>
+        <div class="pb ideo-body">
+          <div class="ideo"><i class="ideo-mark" id="ideo-mark"></i></div>
+          <div class="ideo-labels"><span>43.0 MB</span><span id="ideo-pos">43,044,371</span><span>43.2 MB</span></div>
+        </div>
+      </section>
+
+      <section class="panel variants">
+        <div class="ph"><b>BINDING SITES</b><span class="r" id="var-count">5 CALLS</span></div>
+        <div class="pb vlist" id="variant-list"></div>
+      </section>
+
+      <section class="panel qc">
+        <div class="ph"><b>SCORE</b><span class="r">RUN 04</span></div>
+        <div class="pb qc-grid" id="qc-grid"></div>
+      </section>
+    </aside>
+
+    <section class="panel helix-panel">
+      <div class="ph"><b>TARGET STRUCTURE</b><span class="r" id="helix-locus">chr17 / 201 BP</span><span class="src" id="helix-src">SIM</span></div>
+      <div class="stage" id="helix-stage">
+        <canvas id="helix-canvas"></canvas>
+        <svg class="label-lines" id="label-lines" aria-hidden="true"></svg>
+        <div class="dna-labels" id="dna-labels"></div>
+        <div class="hud tl"><span>5'</span><b id="hud-locus">chr17:43,044,295-43,044,495</b><span id="hud-build">GRCh38 / 201 BP</span></div>
+        <div class="hud tr"><span id="hud-mode">AUTO ORBIT</span><b id="hud-bp">BP 43,044,371</b><span id="hud-base">G:C / BRCA1</span></div>
+        <div class="hud bl"><span>BASE PAIR</span><b id="hud-pair">G:C</b><span id="hud-gene">BRCA1 / REFERENCE</span></div>
+        <div class="hud br"><span>ZOOM <b id="hud-zoom">1.00x</b></span><span>3'</span></div>
+        <div class="helix-controls">
+          <button id="btn-play" class="on">PAUSE</button>
+          <button id="btn-auto" class="on">AUTO</button>
+          <button id="btn-reset">RESET</button>
+          <select id="speed"><option value=".5">0.5x</option><option value="1" selected>1.0x</option><option value="2">2.0x</option></select>
+          <input id="cursor-range" type="range" min="0" max="200" value="132">
+          <span id="cursor-label">BP 43,044,427</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="col right">
+      <section class="panel inspector">
+        <div class="ph"><b>CONTACT INSPECTOR</b><span class="r" id="insp-pos">43,044,427</span></div>
+        <div class="pb inspector-body">
+          <div class="base-row"><div class="base-big" id="sel-base">G</div><div class="base-meta"><span id="sel-pair">G:C</span><b id="sel-gene">BRCA1</b><span id="sel-cons">reference</span></div></div>
+          <div class="sel-grid">
+            <div><span>REF</span><b id="sel-ref">G</b></div>
+            <div><span>ALT</span><b id="sel-alt">-</b></div>
+            <div><span>RSID</span><b id="sel-rsid">-</b></div>
+            <div><span>FREQ</span><b id="sel-freq">-</b></div>
+          </div>
+          <div class="impact-row"><span>IMPACT</span><b class="impact ref" id="sel-impact">REF</b></div>
+          <div class="sel-note" id="sel-note">Reference base / no alternate call</div>
+        </div>
+      </section>
+
+      <section class="panel annotation">
+        <div class="ph"><b>AFFINITY + TOXICITY</b><span class="r">BRCA1 / RND2</span></div>
+        <div class="pb ann-body">
+          <div class="ann-row"><span>PHYLOP</span><div class="bar"><i id="cons-bar"></i></div><b id="cons-val">0.00</b></div>
+          <div class="ann-row"><span>GC WINDOW</span><div class="bar"><i id="gc-bar"></i></div><b id="gc-val">41.2%</b></div>
+          <div class="ann-row"><span>AFFINITY</span><div class="bar"><i id="aff-bar" style="background:var(--accent)"></i></div><b id="aff-val">0.84</b></div>
+          <div class="ann-row"><span>TOXICITY</span><div class="bar"><i id="tox-bar" style="background:var(--data)"></i></div><b id="tox-val">0.12</b></div>
+          <div class="ann-lab">EXPRESSION / TPM</div>
+          <div id="expr-list" class="expr-list"></div>
+          <div class="ann-note">DEMO ANNOTATION / NOT CLINICAL</div>
+        </div>
+      </section>
+
+      <section class="panel log">
+        <div class="ph"><b>SYNTH LINE</b><span class="r">ROLLING</span></div>
+        <div class="pb log-list" id="log-list"></div>
+      </section>
+    </aside>
+  </section>
+
+  <section class="bottom-deck">
+    <section class="panel browser">
+      <div class="ph"><b>PLATE READER</b><span class="r" id="browser-locus">chr17:43,044,295-43,044,495</span><span class="src" id="browser-src">SIM</span></div>
+      <div class="browser-body">
+        <div class="track genes"><div class="lab">GENES</div><div class="lane" id="gene-lane"></div></div>
+        <div class="track"><div class="lab">VARIANTS</div><div class="lane" id="variant-lane"></div></div>
+        <div class="track tall"><div class="lab">COVERAGE</div><div class="lane"><canvas id="cov-cv"></canvas><i class="scan" id="cov-scan"></i></div></div>
+        <div class="track tall"><div class="lab">CONSERVATION</div><div class="lane"><canvas id="cons-cv"></canvas><i class="scan" id="cons-scan"></i></div></div>
+        <div class="seq-wrap"><div class="seq-meta"><span>BASE STRIP / 201 BP</span><span id="seq-pos">43,044,427</span></div><div class="seq-strip" id="seq-strip"></div></div>
+      </div>
+    </section>
+    <section class="panel bases">
+      <div class="ph"><b>NUCLEOTIDE REFERENCE</b><span class="r">DNA / RNA</span></div>
+      <div class="pb base-cards" id="base-cards">
+        <button class="base-card" data-base="A">
+          <div class="bc-top"><span class="bc-sym">A</span><span class="bc-name">ADENINE</span></div>
+          <div class="bc-grid"><span>CLASS</span><b>PURINE</b><span>RING</span><b>DOUBLE RING</b><span>PAIRS</span><b>THYMINE (T)</b><span>H-BONDS</span><b>2</b></div>
+        </button>
+        <button class="base-card" data-base="G">
+          <div class="bc-top"><span class="bc-sym">G</span><span class="bc-name">GUANINE</span></div>
+          <div class="bc-grid"><span>CLASS</span><b>PURINE</b><span>RING</span><b>DOUBLE RING</b><span>PAIRS</span><b>CYTOSINE (C)</b><span>H-BONDS</span><b>3</b></div>
+        </button>
+        <button class="base-card" data-base="C">
+          <div class="bc-top"><span class="bc-sym">C</span><span class="bc-name">CYTOSINE</span></div>
+          <div class="bc-grid"><span>CLASS</span><b>PYRIMIDINE</b><span>RING</span><b>SINGLE RING</b><span>PAIRS</span><b>GUANINE (G)</b><span>H-BONDS</span><b>3</b></div>
+        </button>
+        <button class="base-card" data-base="T">
+          <div class="bc-top"><span class="bc-sym">T</span><span class="bc-name">THYMINE</span></div>
+          <div class="bc-grid"><span>CLASS</span><b>PYRIMIDINE</b><span>RING</span><b>SINGLE RING</b><span>PAIRS</span><b>ADENINE (A)</b><span>H-BONDS</span><b>2</b></div>
+        </button>
+        <div class="rna-card">
+          <b>RNA / URACIL</b>
+          <span>U / PYRIMIDINE / SINGLE RING / PAIRS ADENINE (A) / 2 BONDS</span>
+          <span>RIBOSE SUGAR / SINGLE-STRANDED / U REPLACES T</span>
+        </div>
+        <div class="assemble-note">
+          <span>NUCLEOSIDE + PHOSPHATE = NUCLEOTIDE</span>
+          <span>5' TO 3' STRAND POLARITY</span>
+          <span>PURINE + PYRIMIDINE = UNIFORM WIDTH</span>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <footer class="foot"><span>HELIX-9 / BINDER FOUNDRY</span><span>ENSEMBL + UCSC LIVE WHEN AVAILABLE</span><span>RESEARCH VISUALIZATION</span><b>NOT CLINICAL</b><span id="foot-clock">--:--:-- UTC</span></footer>
+</main>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script type="importmap">
+{"imports":{"three":"../shared/vendor/three.module.min.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+(function(){
+'use strict';
+const U=window.U;
+if(U&&U.page)U.page('helix-9',{scan:false});
+const $=(id)=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const LIVE=params.get('live')!=='off';
+const MONO="'JetBrains Mono', ui-monospace, monospace";
+const BASE_COLOR={A:'#FF9F1C',T:'#FF3B30',G:'#5CC8F0',C:'#E8EEF2',N:'#687784'};
+const COMP={A:'T',T:'A',G:'C',C:'G',N:'N'};
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const fmtPos=(n)=>Number(n).toLocaleString('en-US');
+const state={genome:null,cursor:132,lastIndex:-1,auto:true,playing:true,speed:1,rot:0,userRot:0,zoom:1,dragging:false,moved:false,lastX:0,lastY:0,lastTime:0,hit:[],stripSel:null,variantRows:[],sources:{SEQ:'SIM',GENE:'SIM',VAR:'SIM',TX:'SIM'},live:LIVE};
+state.sceneStart=performance.now();
+state.freeze=params.get('t')!=null?Number(params.get('t')):null;
+state.shot='WIDE';
+let renderer=null,scene=null,camera=null,dnaGroup=null;
+let dnaData={A:[],B:[],mid:[],blobs:[],proteins:[],pulses:[],labels:[]};
+let camPos=new THREE.Vector3(0,0,15),camTarget=new THREE.Vector3(0,0,0);
+let orbit={theta:0,phi:Math.PI/2,radius:15,target:new THREE.Vector3()};
+const CAM_SHOTS=[
+  {id:'WIDE',start:0,end:5,pos:[0,0.2,15],target:[0,0,0],fov:32,labels:['target','backbone','major','minor','five','three']},
+  {id:'BACKBONE',start:5,end:9,pos:[3.8,3.2,8.5],target:[0,2.1,0],fov:33,labels:['backbone','major','five','three']},
+  {id:'TARGET',start:9,end:13,pos:[-3.4,1.2,5.5],target:[0,1.2,0],fov:35,labels:['target','contact','basepair']},
+  {id:'MACRO',start:13,end:17,pos:[1.2,0.8,2.9],target:[0,0.8,0],fov:38,labels:['basepair','backbone']},
+  {id:'BINDER',start:17,end:21,pos:[2.6,-0.5,3.8],target:[0,-0.5,0],fov:36,labels:['contact','loop','locked']},
+  {id:'BASE',start:21,end:25,pos:[0.5,0.2,2.1],target:[0,0.2,0],fov:40,labels:['basepair','five','three']},
+  {id:'WIDE',start:25,end:30,pos:[0,0.2,15],target:[0,0,0],fov:32,labels:['target','backbone','major','minor','five','three']}
+];
+
+function fit(arr,n,fill){
+  const out=(arr||[]).slice(0,n).map((v)=>Number(v));
+  while(out.length<n)out.push(fill);
+  return out;
+}
+function normalizeGenome(g){
+  const w=g.window;
+  w.bp=w.end-w.start+1;
+  w.sequence=(w.sequence||'').toUpperCase();
+  const n=w.sequence.length;
+  g.coverage=fit(g.coverage,n,10);
+  g.conservation=fit(g.conservation,n,.2);
+  g.genes=(g.genes||[]).map((x)=>({...x,segments:x.segments&&x.segments.length?x.segments:[[0,n-1]]}));
+  if(!g.transcripts||!g.transcripts.length)g.transcripts=g.genes.map((x)=>({...x}));
+  g.variants=(g.variants||[]).map((v)=>({...v,impact:String(v.impact||'MODIFIER').toUpperCase(),frequency:v.frequency==null?null:Number(v.frequency)}));
+  g.variants.forEach((v)=>{const i=clamp(Math.round(v.pos-w.start),0,n-1);v.ref=v.ref||w.sequence[i]||'N';});
+  if(!g.expression||!g.expression.length)g.expression=[{tissue:'BREAST',tpm:18.4},{tissue:'OVARY',tpm:14.1},{tissue:'PROSTATE',tpm:9.8},{tissue:'COLON',tpm:7.2},{tissue:'LUNG',tpm:5.6},{tissue:'LIVER',tpm:2.1}];
+  if(!g.log||!g.log.length)g.log=[['00:00','LOAD','reference window loaded'],['00:01','MAP','201 bp aligned'],['00:02','QC','mean depth 31.4x']];
+  g.qc=g.qc||{meanDepth:31.4,gc:.412,q30:.941,mapq:.987,duplicate:.031,insert:412};
+  return g;
+}
+function absPos(i){return state.genome.window.start+Math.round(i);}
+function variantAt(i){
+  const pos=absPos(i);
+  return state.genome.variants.find((v)=>Math.round(v.pos)===pos)||null;
+}
+function geneAt(i){
+  const pos=absPos(i);
+  return state.genome.genes.find((g)=>pos>=g.absStart&&pos<=g.absEnd)||null;
+}
+function geneFor(i,v){return v&&v.gene?v.gene:(geneAt(i)||{}).name||'INTERGENIC';}
+function modeClass(mode){return mode==='LIVE'?'live':mode==='PARTIAL'?'partial':'sim';}
+
+function setMode(){
+  const vals=Object.values(state.sources);
+  const live=vals.filter((v)=>v==='LIVE').length;
+  const mode=!state.live?'SIM':live===vals.length?'LIVE':live?'PARTIAL':'SIM';
+  const el=$('top-mode');el.textContent=mode;el.className='pill '+modeClass(mode);
+  $('helix-src').textContent=mode;$('browser-src').textContent=mode;
+  $('src-line').innerHTML=['SEQ','GENE','VAR','TX'].map((k)=>'<span class="'+(state.sources[k]==='LIVE'?'on':'')+'">'+k+' '+state.sources[k]+'</span>').join(' / ');
+}
+function tickClock(){
+  const s=new Date().toISOString().slice(11,19);
+  $('top-clock').textContent=s;$('foot-clock').textContent=s+' UTC';
+}
+
+function renderTop(){
+  const g=state.genome,s=g.sample;
+  $('top-sample').textContent=s.id;$('top-locus').textContent=s.locus;$('top-build').textContent=s.build;$('top-assay').textContent=s.assay;$('top-gene').textContent=s.gene;
+}
+function renderSpecimen(){
+  const g=state.genome,s=g.sample;
+  $('spec-id').textContent=s.id;$('spec-locus').textContent=s.locus;$('spec-assay').textContent=s.assay;
+  $('spec-build').textContent=s.build;$('spec-bp').textContent=g.window.bp+' BP';$('spec-gene').textContent=s.gene;
+}
+function renderVariants(){
+  const start=state.genome.window.start;
+  const host=$('variant-list');
+  host.innerHTML=state.genome.variants.map((v,i)=>{
+    const idx=clamp(Math.round(v.pos-start),0,state.genome.window.bp-1);
+    return '<button class="vrow" data-i="'+idx+'" data-v="'+i+'"><span class="vrs">'+v.id+'</span><span class="vcons">'+v.gene+'<i>'+v.consequence+'</i></span><span class="vimp '+v.impact.toLowerCase()+'">'+v.impact+'</span><span class="vfreq">'+(v.frequency==null?'-':(v.frequency*100).toFixed(1)+'%')+'</span></button>';
+  }).join('');
+  state.variantRows=Array.from(host.querySelectorAll('.vrow'));
+  state.variantRows.forEach((row)=>row.addEventListener('click',()=>setCursor(Number(row.dataset.i),true)));
+  $('var-count').textContent=state.genome.variants.length+' CALLS';
+}
+function renderQC(){
+  const q=state.genome.qc;
+  const cells=[['MEAN DEPTH',q.meanDepth.toFixed(1)+'x'],['GC',(q.gc*100).toFixed(1)+'%'],['Q30',(q.q30*100).toFixed(1)+'%'],['MAPQ',(q.mapq*100).toFixed(1)+'%'],['DUP',(q.duplicate*100).toFixed(1)+'%'],['INSERT',q.insert+' bp']];
+  $('qc-grid').innerHTML=cells.map(([k,v])=>'<div class="qc-cell"><span>'+k+'</span><b>'+v+'</b></div>').join('');
+}
+function renderInspector(){
+  const i=clamp(Math.round(state.cursor),0,state.genome.window.bp-1);
+  const base=state.genome.window.sequence[i]||'N';
+  const v=variantAt(i),gene=geneFor(i,v);
+  $('sel-base').textContent=base;$('sel-base').className='base-big b-'+base;
+  $('sel-pair').textContent=base+':'+COMP[base];
+  $('sel-gene').textContent=gene;
+  $('sel-cons').textContent=v?v.consequence:'reference';
+  $('sel-ref').textContent=base;
+  $('sel-alt').textContent=v?v.alt:'-';
+  $('sel-rsid').textContent=v?v.id:'-';
+  $('sel-freq').textContent=v?(v.frequency==null?'-':(v.frequency*100).toFixed(2)+'%'):'-';
+  const impact=v?v.impact:'REF';
+  $('sel-impact').textContent=impact;$('sel-impact').className='impact '+(v?v.impact.toLowerCase():'ref');
+  $('sel-note').textContent=v?(v.gene+' / '+v.consequence+' / '+(v.clinical||'NOT REPORTED')):'Reference base / no alternate call';
+  $('insp-pos').textContent=fmtPos(absPos(i));
+}
+function renderAnnotation(){
+  const i=clamp(Math.round(state.cursor),0,state.genome.window.bp-1);
+  const cons=state.genome.conservation[i]||0;
+  $('cons-bar').style.width=(cons*100).toFixed(1)+'%';$('cons-val').textContent=cons.toFixed(2);
+  const gc=state.genome.qc.gc;
+  $('gc-bar').style.width=(gc*100).toFixed(1)+'%';$('gc-val').textContent=(gc*100).toFixed(1)+'%';
+  const sc=state.genome.scores||{affinity:.84,toxicity:.12};
+  $('aff-bar').style.width=(sc.affinity*100).toFixed(1)+'%';$('aff-val').textContent=sc.affinity.toFixed(2);
+  $('tox-bar').style.width=(sc.toxicity*100).toFixed(1)+'%';$('tox-val').textContent=sc.toxicity.toFixed(2);
+  $('expr-list').innerHTML=state.genome.expression.map((e)=>'<div class="expr-row"><span>'+e.tissue+'</span><div class="bar"><i style="width:'+Math.min(100,e.tpm/20*100).toFixed(1)+'%"></i></div><b>'+e.tpm.toFixed(1)+'</b></div>').join('');
+}
+function renderLog(){
+  $('log-list').innerHTML=state.genome.log.slice(-8).map((row)=>'<div class="log-row"><span>'+row[0]+'</span><b>'+row[1]+'</b><span>'+row[2]+'</span></div>').join('');
+}
+function renderGeneTrack(){
+  const start=state.genome.window.start,n=state.genome.window.bp;
+  const list=(state.genome.genes&&state.genome.genes.length?state.genome.genes:state.genome.transcripts).slice(0,3);
+  let html='';
+  list.forEach((g,idx)=>{
+    const a=clamp((g.absStart-start)/n*100,0,100),b=clamp((g.absEnd-start+1)/n*100,0,100);
+    const left=Math.min(a,b),width=Math.max(.35,b-a),top=3+idx*13;
+    html+='<div class="gene '+(g.strand<0?'minus':'plus')+'" style="left:'+left.toFixed(3)+'%;width:'+width.toFixed(3)+'%;top:'+(top+5)+'px" title="'+g.name+'"></div>';
+    html+='<span class="glabel" style="left:'+left.toFixed(3)+'%;top:'+top+'px">'+g.name+'</span>';
+    (g.segments||[]).forEach(([s,e])=>{
+      const x=clamp(s/n*100,0,100),w=Math.max(.2,(e-s+1)/n*100);
+      html+='<i class="exon '+(g.strand<0?'minus':'')+'" style="left:'+x.toFixed(3)+'%;width:'+w.toFixed(3)+'%;top:'+(top+3)+'px"></i>';
+    });
+  });
+  $('gene-lane').innerHTML=html;
+}
+function renderVariantLane(){
+  const start=state.genome.window.start,n=state.genome.window.bp;
+  $('variant-lane').innerHTML=state.genome.variants.map((v)=>{
+    const idx=clamp(Math.round(v.pos-start),0,n-1);
+    return '<i class="vmark '+v.impact.toLowerCase()+'" style="left:'+(idx/(n-1)*100).toFixed(3)+'%" title="'+v.id+'"></i>';
+  }).join('');
+}
+function renderSeqStrip(){
+  const seq=state.genome.window.sequence;
+  const variants=new Set(state.genome.variants.map((v)=>clamp(Math.round(v.pos-state.genome.window.start),0,seq.length-1)));
+  $('seq-strip').innerHTML=seq.split('').map((b,i)=>'<span class="b-'+b+(variants.has(i)?' var':'')+'" data-i="'+i+'">'+b+'</span>').join('');
+  state.stripSel=null;
+}
+function renderBrowser(){
+  const w=state.genome.window;
+  $('browser-locus').textContent='chr'+w.chrom+':'+fmtPos(w.start)+'-'+fmtPos(w.end);
+  $('seq-meta');$('seq-pos').textContent=fmtPos(absPos(state.cursor));
+  renderGeneTrack();renderVariantLane();renderSeqStrip();
+  requestAnimationFrame(drawBrowserCanvases);
+}
+function drawTrack(id,data,color){
+  const cv=$(id);if(!cv)return;
+  const box=cv.parentElement.getBoundingClientRect();
+  if(!box.width||!box.height)return;
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const cw=Math.max(1,Math.round(box.width*dpr)),ch=Math.max(1,Math.round(box.height*dpr));
+  if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch;}
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,box.width,box.height);
+  const n=data.length,bw=box.width/n,max=Math.max(1,...data);
+  for(let i=0;i<n;i++){
+    const v=data[i],h=Math.max(1,(v/max)*(box.height-2));
+    ctx.globalAlpha=.2+.68*(v/max);ctx.fillStyle=color;ctx.fillRect(i*bw,box.height-h,Math.max(1,bw-.35),h);
+  }
+  ctx.globalAlpha=1;
+}
+function drawBrowserCanvases(){
+  if(!state.genome)return;
+  drawTrack('cov-cv',state.genome.coverage,'#FF9F1C');
+  drawTrack('cons-cv',state.genome.conservation,'#5CC8F0');
+}
+function renderAll(){
+  if(!state.genome)return;
+  state.cursor=clamp(state.cursor,0,state.genome.window.bp-1);
+  $('cursor-range').max=state.genome.window.bp-1;
+  renderTop();renderSpecimen();renderVariants();renderQC();renderInspector();renderAnnotation();renderLog();renderBrowser();
+  if(renderer)buildDNA();
+  updateCursorUI(true);setMode();
+}
+function updateCursorUI(force){
+  if(!state.genome)return;
+  const i=clamp(Math.round(state.cursor),0,state.genome.window.bp-1);
+  if(!force&&i===state.lastIndex)return;
+  state.lastIndex=i;
+  const seq=state.genome.window.sequence,base=seq[i]||'N',v=variantAt(i),gene=geneFor(i,v),pos=absPos(i);
+  const comp=COMP[base]||'N';
+  $('hud-bp').textContent='BP '+fmtPos(pos);
+  $('hud-base').textContent=base+':'+comp+' / '+gene;
+  $('hud-pair').textContent=base+':'+comp;
+  $('hud-gene').textContent=gene+' / '+(v?v.consequence:'REFERENCE');
+  $('cursor-label').textContent='BP '+fmtPos(pos);
+  $('cursor-range').value=i;
+  $('ideo-pos').textContent=fmtPos(pos);
+  $('ideo-mark').style.left=clamp((pos-43000000)/200000*100,0,100).toFixed(2)+'%';
+  $('cov-scan').style.left=(i/(state.genome.window.bp-1)*100).toFixed(3)+'%';
+  $('cons-scan').style.left=(i/(state.genome.window.bp-1)*100).toFixed(3)+'%';
+  $('seq-pos').textContent=fmtPos(pos);
+  if(state.stripSel)state.stripSel.classList.remove('sel');
+  const el=document.querySelector('.seq-strip span[data-i="'+i+'"]');
+  if(el){el.classList.add('sel');state.stripSel=el;}
+  state.variantRows.forEach((row)=>{row.classList.toggle('sel',Number(row.dataset.i)===i);});
+  document.querySelectorAll('.base-card').forEach((card)=>{card.classList.toggle('active',card.dataset.base===base);});
+  renderInspector();renderAnnotation();
+}
+function setCursor(i,pause){
+  if(!state.genome)return;
+  state.cursor=clamp(i,0,state.genome.window.bp-1);
+  if(pause){state.playing=false;updatePlayButton();}
+  updateCursorUI(true);
+}
+function updatePlayButton(){$('btn-play').textContent=state.playing?'PAUSE':'PLAY';$('btn-play').classList.toggle('on',state.playing);}
+function updateAutoButton(){$('btn-auto').classList.toggle('on',state.auto);$('btn-auto').textContent=state.auto?'CINEMA':'MANUAL';$('hud-mode').textContent=state.auto?'CINEMA':'MANUAL';}
+
+function disposeGroup(g){
+  g.traverse((o)=>{ if(o.geometry)o.geometry.dispose(); if(o.material){ if(Array.isArray(o.material))o.material.forEach((m)=>m.dispose()); else o.material.dispose(); } });
+}
+function initThree(){
+  const canvas=$('helix-canvas');
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.08;
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x050506);
+  scene.fog=null;
+  camera=new THREE.PerspectiveCamera(32,1,.05,100);
+  camera.position.copy(camPos);
+  camera.lookAt(camTarget);
+  scene.add(new THREE.AmbientLight(0x6A4A2A,1.5));
+  const key=new THREE.DirectionalLight(0xFFB060,2.8);key.position.set(4,8,7);scene.add(key);
+  const rim=new THREE.DirectionalLight(0x5C7AFF,1.4);rim.position.set(-6,-3,-6);scene.add(rim);
+  const warm=new THREE.PointLight(0xFF7A00,18,18);warm.position.set(0,2,4);scene.add(warm);
+  resize3D();
+  window.addEventListener('resize',resize3D);
+  if(window.ResizeObserver)new ResizeObserver(resize3D).observe(document.querySelector('.stage'));
+}
+function resize3D(){
+  if(!renderer||!camera)return;
+  const box=$('helix-canvas').parentElement.getBoundingClientRect();
+  if(!box.width||!box.height)return;
+  renderer.setSize(box.width,box.height,false);
+  camera.aspect=box.width/box.height;
+  camera.updateProjectionMatrix();
+}
+function organicTube(points,radius,color,seed){
+  const radial=10,n=points.length,pos=[],idx=[];
+  const up=new THREE.Vector3(0,1,0);
+  for(let i=0;i<n;i++){
+    const p=points[i];
+    const prev=points[Math.max(0,i-1)],next=points[Math.min(n-1,i+1)];
+    const tangent=next.clone().sub(prev).normalize();
+    let normal=new THREE.Vector3().crossVectors(tangent,up);
+    if(normal.lengthSq()<1e-6)normal.set(1,0,0);
+    normal.normalize();
+    const binormal=new THREE.Vector3().crossVectors(tangent,normal).normalize();
+    for(let j=0;j<radial;j++){
+      const a=j/radial*Math.PI*2;
+      const rr=radius*(1+.24*Math.sin(i*.57+seed*2.1)+.12*Math.sin(i*1.73+seed)+.06*Math.sin(i*3.1+seed));
+      const v=p.clone().addScaledVector(normal,Math.cos(a)*rr).addScaledVector(binormal,Math.sin(a)*rr);
+      pos.push(v.x,v.y,v.z);
+    }
+  }
+  for(let i=0;i<n-1;i++)for(let j=0;j<radial;j++){
+    const a=i*radial+j,b=i*radial+(j+1)%radial,c=(i+1)*radial+j,d=(i+1)*radial+(j+1)%radial;
+    idx.push(a,c,b,b,c,d);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  geo.setIndex(idx);geo.computeVertexNormals();
+  const col=new THREE.Color(color);
+  const mat=new THREE.MeshStandardMaterial({color:col,roughness:.55,metalness:.12,flatShading:true,emissive:col.clone().multiplyScalar(.08),emissiveIntensity:1});
+  return new THREE.Mesh(geo,mat);
+}
+function buildDNA(){
+  if(!scene||!state.genome)return;
+  if(dnaGroup){scene.remove(dnaGroup);disposeGroup(dnaGroup);}
+  dnaGroup=new THREE.Group();scene.add(dnaGroup);
+  dnaData={A:[],B:[],mid:[],blobs:null,proteins:[],pulses:[],labels:[]};
+  const seq=state.genome.window.sequence,N=seq.length,H=10.2,R=1.55,TURNS=5.35,start=state.genome.window.start;
+  const A=[],B=[];
+  for(let i=0;i<N;i++){
+    const p=N===1?0:i/(N-1),y=-H/2+p*H+.22*Math.sin(p*Math.PI*2*1.7+.9);
+    const ang=p*TURNS*Math.PI*2+.25*Math.sin(p*Math.PI*2*1.25+.45)+.18*Math.sin(i*.17)+.09*Math.sin(i*.61)+.04*Math.sin(i*1.7);
+    const rad=R*(1+.18*Math.sin(p*Math.PI*2*1.1+.7)+.1*Math.sin(p*Math.PI*2*2.3+1.2)+.16*Math.sin(i*.21+1.2)+.07*Math.sin(i*.83)+.03*Math.sin(i*2.1));
+    const variant=state.genome.variants.some((v)=>Math.round(v.pos-start)===i);
+    const x=Math.cos(ang)*rad*(variant?1.04:1),z=Math.sin(ang)*rad*(variant?1.04:1);
+    A.push(new THREE.Vector3(x,y+.11*Math.sin(i*.43)+.05*Math.sin(i*1.3),z));
+    const angB=ang+Math.PI+.035*Math.sin(i*.29),radB=rad*(1+.03*Math.sin(i*.37+2));
+    B.push(new THREE.Vector3(Math.cos(angB)*radB,y+.12*Math.sin(i*.51+1)+.05*Math.sin(i*1.1),Math.sin(angB)*radB));
+  }
+  dnaData.A=A;dnaData.B=B;dnaData.mid=A.map((a,i)=>a.clone().add(B[i]).multiplyScalar(.5));
+  dnaGroup.add(organicTube(A,.16,0xF07800,1));
+  dnaGroup.add(organicTube(B,.145,0xF2E8DC,2));
+
+const rodGeo=new THREE.CylinderGeometry(.006,.006,1,5,1);
+const rodMat=new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:.68,metalness:.05,emissive:0x2A1608,emissiveIntensity:.24});
+const rods=new THREE.InstancedMesh(rodGeo,rodMat,N*8);
+rods.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),tmpDir=new THREE.Vector3();
+let ri=0;
+const addRod=(p1,p2,color)=>{
+  const d=p2.clone().sub(p1);const len=Math.max(.01,d.length());
+  dummy.position.copy(p1).add(p2).multiplyScalar(.5);
+  dummy.quaternion.setFromUnitVectors(up,tmpDir.copy(d).normalize());
+  dummy.scale.set(1,len,1);dummy.updateMatrix();
+  rods.setMatrixAt(ri,dummy.matrix);
+  rods.setColorAt(ri,new THREE.Color(color));
+  ri++;
+};
+for(let i=0;i<N;i++){
+  const a=A[i],b=B[i],dir=b.clone().sub(a);
+  const n=new THREE.Vector3().crossVectors(dir,up);
+  if(n.lengthSq()<1e-6)n.set(1,0,0);
+  n.normalize();
+  for(const k of [-1.5,-.5,.5,1.5]){
+    const off=n.clone().multiplyScalar(k*.026);
+    const p1=a.clone().add(off),p2=b.clone().add(off);
+    const bend=off.clone().multiplyScalar(.7).add(new THREE.Vector3(0,Math.sin(i*.71+k)*.018,Math.cos(i*.53+k)*.014));
+    const mid=p1.clone().lerp(p2,.5).add(bend);
+    const col=k===0?0xF2E8DC:(i%7===0?0xF0A818:(i%3===0?0xE8D8C4:0xC9B8A8));
+    addRod(p1,mid,col);addRod(mid,p2,col);
+  }
+}
+rods.instanceMatrix.needsUpdate=true;if(rods.instanceColor)rods.instanceColor.needsUpdate=true;rods.frustumCulled=false;
+dnaGroup.add(rods);
+
+  const nGeo=new THREE.SphereGeometry(.055,6,6);
+  const nMat=new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:.35,metalness:.12,emissive:0x2A1208,emissiveIntensity:.45});
+  const spheres=new THREE.InstancedMesh(nGeo,nMat,N*2);
+  const baseCol={A:0xF07800,T:0xC04800,G:0xF2E8DC,C:0xC9B8A8,N:0x8A7A68};
+  for(let i=0;i<N;i++){
+    for(let s=0;s<2;s++){
+      const idx=i*2+s,p=(s?B:A)[i];
+      dummy.position.copy(p);dummy.quaternion.identity();dummy.scale.setScalar(.75+.35*Math.sin(i*.31+s));
+      dummy.updateMatrix();spheres.setMatrixAt(idx,dummy.matrix);
+      spheres.setColorAt(idx,new THREE.Color(baseCol[seq[i]]||baseCol.N));
+    }
+  }
+  spheres.instanceMatrix.needsUpdate=true;if(spheres.instanceColor)spheres.instanceColor.needsUpdate=true;
+  dnaGroup.add(spheres);
+
+  const proteins=state.genome.proteins||[
+    {index:30,color:'#5CC8F0',scale:.42,offset:[1.7,.1,.6]},
+    {index:78,color:'#FF5CA8',scale:.35,offset:[-1.5,.3,.8]},
+    {index:132,color:'#FF3B30',scale:.5,offset:[1.4,-.2,.5]},
+    {index:176,color:'#B07CFF',scale:.3,offset:[-1.6,-.1,.7]}
+  ];
+  proteins.forEach((p,pi)=>{
+    const idx=clamp(Math.round(p.index||N*.5),0,N-1);
+    const base=dnaData.mid[idx].clone().add(new THREE.Vector3(...(p.offset||[1.5,0,.6])));
+    const group=new THREE.Group();group.position.copy(base);
+    const rnd=U.rnd(910+pi*17);
+    const col=new THREE.Color(p.color||'#5CC8F0');
+    for(let j=0;j<4;j++){
+      const geo=new THREE.IcosahedronGeometry((p.scale||.38)*(.55+rnd()*.5),1);
+      const mat=new THREE.MeshStandardMaterial({color:col.clone().offsetHSL((rnd()-.5)*.04,0,(rnd()-.5)*.08),emissive:col.clone().multiplyScalar(.16),emissiveIntensity:1,roughness:.34,metalness:.08,transparent:true,opacity:.92});
+      const m=new THREE.Mesh(geo,mat);
+      m.position.set((rnd()-.5)*(p.scale||.38)*1.6,(rnd()-.5)*(p.scale||.38)*1.6,(rnd()-.5)*(p.scale||.38)*1.6);
+      group.add(m);
+    }
+    group.userData={baseY:group.position.y,phase:pi*1.7};
+    dnaGroup.add(group);dnaData.proteins.push(group);
+  });
+
+  const blobColors=[0x5CC8F0,0xFF5CA8,0xFFD166,0xB07CFF,0xF2E8DC,0xF07800,0xC04800];
+  const rnd=U.rnd(7781),count=110;
+  const blobMesh=new THREE.InstancedMesh(new THREE.SphereGeometry(.06,6,6),new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:.3,metalness:.12,emissive:0x1A0D08,emissiveIntensity:.35}),count);
+  blobMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const blobData=[];
+  for(let i=0;i<count;i++){
+    const b={angle:rnd()*Math.PI*2,radius:1.75+rnd()*2.3,y:(rnd()-.5)*10,scale:.35+rnd()*1.35,phase:rnd()*Math.PI*2,speed:.2+rnd()*.8,drift:(rnd()-.5)*.08};
+    blobData.push(b);
+    blobMesh.setColorAt(i,new THREE.Color(blobColors[i%blobColors.length]));
+  }
+  if(blobMesh.instanceColor)blobMesh.instanceColor.needsUpdate=true;
+  dnaGroup.add(blobMesh);dnaData.blobs={mesh:blobMesh,data:blobData};
+
+  for(let k=0;k<6;k++){
+    const pts=[];
+    for(let j=0;j<=8;j++){
+      const y=-5+j*1.25;
+      const ang=(k/6)*Math.PI*2+j*.55;
+      const rad=2.15+Math.sin(j*.7+k)*.42;
+      pts.push(new THREE.Vector3(Math.cos(ang)*rad,y+.12*Math.sin(j*1.3+k),Math.sin(ang)*rad));
+    }
+    const curve=new THREE.CatmullRomCurve3(pts);
+    const mat=new THREE.MeshStandardMaterial({color:k%2?0xC04800:0xF07800,emissive:0x5A1200,emissiveIntensity:.65,roughness:.5,transparent:true,opacity:.6});
+    dnaGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve,80,.018,5,false),mat));
+    const pulse=new THREE.Mesh(new THREE.SphereGeometry(.065,6,6),new THREE.MeshBasicMaterial({color:0xFFD8A0}));
+    dnaGroup.add(pulse);dnaData.pulses.push({curve,pulse,offset:k*.17});
+  }
+  buildLabels();
+}
+function buildLabels(){
+  const host=$('dna-labels'),svg=$('label-lines');
+  host.innerHTML='';svg.innerHTML='';dnaData.labels=[];
+  const N=dnaData.mid.length;
+  const v=state.genome.variants.find((x)=>x.impact==='HIGH')||state.genome.variants[0];
+  const vi=v?clamp(Math.round(v.pos-state.genome.window.start),0,N-1):Math.round(N*.66);
+  const defs=[
+    {id:'target',text:'TARGET STRUCTURE / LIVE',idx:Math.round(N*.86),anchor:'mid',offset:[118,-44],shots:['WIDE','BACKBONE','TARGET']},
+    {id:'backbone',text:'BACKBONE SCAN',idx:Math.round(N*.62),anchor:'A',offset:[-128,-26],shots:['WIDE','BACKBONE','MACRO']},
+    {id:'major',text:'MAJOR GROOVE',idx:Math.round(N*.5),anchor:'mid',offset:[108,34],shots:['WIDE','BACKBONE','MACRO']},
+    {id:'minor',text:'MINOR GROOVE',idx:Math.round(N*.36),anchor:'mid',offset:[-108,32],shots:['WIDE']},
+    {id:'basepair',text:'BASE PAIR / H-BONDS',idx:Math.round(N*.42),anchor:'mid',offset:[112,-22],shots:['TARGET','MACRO','BASE']},
+    {id:'contact',text:'BINDING SITE 06',idx:vi,anchor:'mid',offset:[-128,-40],shots:['TARGET','BINDER'],hot:true},
+    {id:'loop',text:'LOOP CLOSED',idx:Math.round(N*.72),anchor:'B',offset:[96,34],shots:['BINDER']},
+    {id:'locked',text:'SITE LOCKED',idx:Math.round(N*.28),anchor:'mid',offset:[-104,42],shots:['BINDER']},
+    {id:'five',text:"5'",idx:N-1,anchor:'A',offset:[-36,-22],shots:['WIDE','BACKBONE','BASE']},
+    {id:'three',text:"3'",idx:0,anchor:'A',offset:[-36,22],shots:['WIDE','BACKBONE','BASE']}
+  ];
+  defs.forEach((d)=>{
+    const el=document.createElement('div');el.className='dna-label'+(d.hot?' hot':'');
+    el.innerHTML='<span class="dot"></span>'+d.text;
+    host.appendChild(el);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('class',d.hot?'hot':'');
+    svg.appendChild(line);
+    const arr=d.anchor==='A'?dnaData.A:d.anchor==='B'?dnaData.B:dnaData.mid;
+    dnaData.labels.push({...d,el,line,local:arr[clamp(d.idx,0,arr.length-1)].clone()});
+  });
+}
+function updateLabels(){
+  if(!dnaData.labels.length||!camera)return;
+  const stage=$('helix-stage'),W=stage.clientWidth,H=stage.clientHeight,shot=state.shot;
+  dnaData.labels.forEach((L)=>{
+    const on=L.shots.includes(shot);
+    if(!on){L.el.classList.remove('on');L.line.style.opacity=0;return;}
+    const p=L.local.clone().applyMatrix4(dnaGroup.matrixWorld).project(camera);
+    if(p.z>1||p.z<-1){L.el.classList.remove('on');L.line.style.opacity=0;return;}
+    const x=(p.x*.5+.5)*W,y=(-p.y*.5+.5)*H;
+    const ax=clamp(x,42,W-42),ay=clamp(y,42,H-76);
+    const lx=clamp(ax+L.offset[0],80,W-80),ly=clamp(ay+L.offset[1],34,H-70);
+    L.el.style.transform='translate('+lx.toFixed(1)+'px,'+ly.toFixed(1)+'px) translate(-50%,-50%)';
+    L.el.classList.add('on');
+    L.line.setAttribute('x1',ax.toFixed(1));L.line.setAttribute('y1',ay.toFixed(1));
+    L.line.setAttribute('x2',lx.toFixed(1));L.line.setAttribute('y2',ly.toFixed(1));
+    L.line.style.opacity=.55;
+  });
+}
+function updateCamera(t,dt){
+  if(!camera)return;
+  const shot=CAM_SHOTS.find((s)=>t>=s.start&&t<s.end)||CAM_SHOTS[0];
+  state.shot=shot.id;
+  if(state.auto){
+    const pos=new THREE.Vector3(...shot.pos),look=new THREE.Vector3(...shot.target);
+    const k=1-Math.exp(-dt*2.4);
+    camPos.lerp(pos,k);camTarget.lerp(look,1-Math.exp(-dt*2.8));
+    camera.position.copy(camPos);camera.lookAt(camTarget);
+    camera.fov=lerp(camera.fov,shot.fov,1-Math.exp(-dt*2.2));camera.updateProjectionMatrix();
+  }else{
+    const pos=new THREE.Vector3().setFromSphericalCoords(orbit.radius,orbit.phi,orbit.theta).add(orbit.target);
+    camera.position.copy(pos);camera.lookAt(orbit.target);camPos.copy(pos);camTarget.copy(orbit.target);
+  }
+  $('hud-mode').textContent=state.auto?shot.id:'MANUAL';
+  $('hud-zoom').textContent=(15/Math.max(.1,camPos.distanceTo(camTarget))).toFixed(2)+'x';
+}
+function render3D(now,dt){
+  if(!renderer||!scene||!camera||!dnaGroup)return;
+  const t=state.freeze!=null?state.freeze:(now-state.sceneStart)/1000;
+  updateCamera(t,dt);
+  dnaGroup.rotation.y=t*.085+Math.sin(t*.07)*.055;
+  dnaGroup.rotation.z=Math.sin(t*.09)*.035;
+  dnaGroup.position.y=Math.sin(t*.13)*.035;
+  if(dnaData.blobs){
+    const dummy=new THREE.Object3D();
+    dnaData.blobs.data.forEach((b,i)=>{
+      const ang=b.angle+t*b.drift;
+      const y=b.y+Math.sin(t*b.speed+b.phase)*.12;
+      dummy.position.set(Math.cos(ang)*b.radius,y,Math.sin(ang)*b.radius);
+      dummy.rotation.set(t*b.speed+b.phase,t*.2,0);
+      dummy.scale.setScalar(b.scale*(1+.18*Math.sin(t*2+b.phase)));
+      dummy.updateMatrix();dnaData.blobs.mesh.setMatrixAt(i,dummy.matrix);
+    });
+    dnaData.blobs.mesh.instanceMatrix.needsUpdate=true;
+  }
+  dnaData.proteins.forEach((g,i)=>{g.position.y=g.userData.baseY+Math.sin(t*.6+i)*.08;g.rotation.y=t*.12+i;});
+  dnaData.pulses.forEach((p,i)=>{const u=(t*.12+p.offset)%1;const pt=p.curve.getPointAt(u);p.pulse.position.copy(pt);p.pulse.scale.setScalar(.7+.35*Math.sin(t*4+i));});
+  dnaGroup.updateMatrixWorld(true);
+  renderer.render(scene,camera);
+  updateLabels();
+}
+function loop(now){
+  if(!state.lastTime)state.lastTime=now;
+  const dt=Math.min(.06,(now-state.lastTime)/1000||0);
+  state.lastTime=now;
+  if(state.playing){
+    state.cursor+=dt*7*state.speed;
+    if(state.cursor>state.genome.window.bp-1)state.cursor=0;
+    updateCursorUI(false);
+  }
+  render3D(now,dt);
+  requestAnimationFrame(loop);
+}
+
+async function loadLive(){
+  const w=state.genome.window;
+  const chrom=w.chrom,start=w.start,end=w.end;
+  const base='https://rest.ensembl.org';
+  const seqUrl=base+'/sequence/region/human/'+chrom+':'+start+'..'+end+':1?content-type=application/json';
+  const geneUrl=base+'/overlap/region/human/'+chrom+':'+start+'-'+end+'?feature=gene;content-type=application/json';
+  const varUrl=base+'/overlap/region/human/'+chrom+':'+start+'-'+end+'?feature=variation;content-type=application/json';
+  const ucscUrl='https://api.genome.ucsc.edu/getData/track?genome=hg38;track=refGene;chrom=chr'+chrom+';start='+(start-1)+';end='+end;
+  const [seqR,geneR,varR,txR]=await Promise.allSettled([
+    U.fetchJSON(seqUrl,{timeout:8000}),
+    U.fetchJSON(geneUrl,{timeout:8000}),
+    U.fetchJSON(varUrl,{timeout:8000}),
+    U.fetchJSON(ucscUrl,{timeout:8000})
+  ]);
+  let changed=false;
+  if(seqR.status==='fulfilled'&&seqR.value&&seqR.value.seq){
+    state.genome.window.sequence=String(seqR.value.seq).toUpperCase();
+    state.sources.SEQ='LIVE';changed=true;
+  }
+  if(geneR.status==='fulfilled'&&Array.isArray(geneR.value)&&geneR.value.length){
+    const list=geneR.value.map((g)=>{
+      const a=Math.max(start,g.start),b=Math.min(end,g.end);
+      return {name:g.external_name||g.id,id:g.id,strand:g.strand,biotype:g.biotype,absStart:g.start,absEnd:g.end,segments:[[Math.max(0,a-start),Math.min(state.genome.window.bp-1,b-start)]],description:g.description};
+    }).filter((g)=>g.absEnd>=start&&g.absStart<=end);
+    if(list.length){state.genome.genes=list;state.sources.GENE='LIVE';changed=true;}
+  }
+  if(varR.status==='fulfilled'&&Array.isArray(varR.value)&&varR.value.length){
+    const list=varR.value.slice(0,8).map((v)=>{
+      const alleles=v.alleles||[];
+      const cons=v.consequence_type||'variant';
+      const impact=/stop|frameshift|splice_acceptor|splice_donor/i.test(cons)?'HIGH':/missense|inframe|protein_altering/i.test(cons)?'MODERATE':/synonymous|utr/i.test(cons)?'LOW':'MODIFIER';
+      const gene=geneAt(Math.max(0,Math.min(state.genome.window.bp-1,v.start-start)));
+      return {id:v.id,pos:v.start,ref:alleles[0]||'N',alt:alleles[1]||alleles[0]||'-',gene:gene?gene.name:'INTERGENIC',consequence:cons.replace(/_/g,' '),impact,clinical:(v.clinical_significance||[]).join(', ')||'NOT REPORTED',frequency:null,source:v.source||'Ensembl'};
+    }).filter((v)=>v.pos>=start&&v.pos<=end);
+    if(list.length){state.genome.variants=list;state.sources.VAR='LIVE';changed=true;}
+  }
+  if(txR.status==='fulfilled'&&txR.value&&Array.isArray(txR.value.refGene)&&txR.value.refGene.length){
+    const n=state.genome.window.bp;
+    const list=txR.value.refGene.slice(0,10).map((t)=>{
+      const es=String(t.exonStarts||'').split(',').filter(Boolean).map(Number);
+      const ee=String(t.exonEnds||'').split(',').filter(Boolean).map(Number);
+      const seg=es.map((s,i)=>[Math.max(0,s-(start-1)),Math.min(n-1,(ee[i]||s)-(start-1))]).filter(([s,e])=>e>=s);
+      return {name:t.name2||t.name,id:t.name,strand:t.strand==='-'?-1:1,biotype:'refGene',absStart:t.txStart+1,absEnd:t.txEnd,segments:seg.length?seg:[[0,n-1]]};
+    }).filter((t)=>t.absEnd>=start&&t.absStart<=end);
+    if(list.length){state.genome.transcripts=list;state.sources.TX='LIVE';changed=true;}
+  }
+  normalizeGenome(state.genome);
+  if(changed){
+    state.genome.log.push([new Date().toISOString().slice(11,19),'LIVE','Ensembl/UCSC response applied']);
+    state.cursor=clamp(state.cursor,0,state.genome.window.bp-1);
+    renderAll();
+  }else{
+    state.genome.log.push([new Date().toISOString().slice(11,19),'SIM','live sources unavailable / baked fallback']);
+    renderLog();setMode();
+  }
+}
+
+async function boot(){
+  try{
+    state.genome=normalizeGenome(await U.fetchJSON('../shared/data/helix-9/genome.json',{timeout:10000}));
+  }catch(e){
+    document.body.innerHTML='<main class="app"><div class="panel" style="margin:20px;padding:20px;font-family:monospace;color:#FF9F1C">HELIX-9 data load failed: '+String(e)+'</div></main>';
+    return;
+  }
+  try{initThree();}catch(e){
+    const stage=document.querySelector('.stage');
+    if(stage)stage.insertAdjacentHTML('afterbegin','<div style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--accent);text-align:center;padding:24px">WEBGL UNAVAILABLE<br><span style="color:var(--dim);font-size:9px">The genome panels remain active; the 3D helix needs WebGL.</span></div>');
+  }
+  if(state.freeze!=null&&camera){
+    const shot=CAM_SHOTS.find((s)=>state.freeze>=s.start&&state.freeze<s.end)||CAM_SHOTS[0];
+    camPos.set(...shot.pos);camTarget.set(...shot.target);camera.position.copy(camPos);camera.lookAt(camTarget);camera.fov=shot.fov;camera.updateProjectionMatrix();state.playing=false;
+  }
+  renderAll();tickClock();setInterval(tickClock,1000);
+  updatePlayButton();updateAutoButton();
+  const cv=$('helix-canvas');
+  cv.addEventListener('pointerdown',(e)=>{
+    state.dragging=true;state.moved=false;state.lastX=e.clientX;state.lastY=e.clientY;state.auto=false;updateAutoButton();
+    orbit.target.copy(camTarget);const off=camera.position.clone().sub(orbit.target);
+    orbit.radius=Math.max(.1,off.length());orbit.theta=Math.atan2(off.x,off.z);orbit.phi=Math.acos(clamp(off.y/orbit.radius,-1,1));
+    cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove',(e)=>{
+    if(!state.dragging)return;
+    const dx=e.clientX-state.lastX,dy=e.clientY-state.lastY;
+    if(Math.abs(dx)+Math.abs(dy)>2)state.moved=true;
+    orbit.theta-=dx*.006;orbit.phi=clamp(orbit.phi-dy*.006,.18,2.9);
+    state.lastX=e.clientX;state.lastY=e.clientY;
+  });
+  cv.addEventListener('pointerup',(e)=>{
+    state.dragging=false;
+    if(state.moved||!dnaData.mid.length)return;
+    const rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=-1,bd=34;
+    dnaData.mid.forEach((p,i)=>{const v=p.clone().applyMatrix4(dnaGroup.matrixWorld).project(camera);const x=(v.x*.5+.5)*rect.width,y=(-v.y*.5+.5)*rect.height;const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i;}});
+    if(best>=0)setCursor(best,true);
+  });
+  cv.addEventListener('pointercancel',()=>{state.dragging=false;});
+  cv.addEventListener('wheel',(e)=>{e.preventDefault();state.auto=false;updateAutoButton();orbit.target.copy(camTarget);orbit.radius=clamp(orbit.radius*Math.exp(e.deltaY*.0012),2,30);},{passive:false});
+  $('btn-play').addEventListener('click',()=>{state.playing=!state.playing;updatePlayButton();});
+  $('btn-auto').addEventListener('click',()=>{state.auto=!state.auto;if(state.auto){camPos.copy(camera.position);camTarget.copy(orbit.target);}updateAutoButton();});
+  $('btn-reset').addEventListener('click',()=>{state.sceneStart=performance.now();state.cursor=132;state.auto=true;state.playing=true;orbit.target.set(0,0,0);orbit.radius=15;orbit.theta=0;orbit.phi=Math.PI/2;updatePlayButton();updateAutoButton();updateCursorUI(true);});
+  $('speed').addEventListener('change',(e)=>{state.speed=Number(e.target.value)||1;});
+  document.querySelectorAll('.base-card').forEach((card)=>card.addEventListener('click',()=>{const i=state.genome.window.sequence.indexOf(card.dataset.base);if(i>=0)setCursor(i,true);}));
+  $('cursor-range').addEventListener('input',(e)=>{setCursor(Number(e.target.value),true);});
+  window.addEventListener('resize',drawBrowserCanvases);
+  if(window.ResizeObserver)new ResizeObserver(()=>drawBrowserCanvases()).observe(document.querySelector('.browser-body'));
+  requestAnimationFrame(loop);
+  if(state.live)loadLive();else setMode();
+}
+boot();
+})();
+</script>
+</body>
+</html>

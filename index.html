@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NIGHT CONSOLES - Data System Index</title>
+<meta name="description" content="NIGHT CONSOLES theme index: nine large-format data interfaces for genome analysis, diagnostics, equities, geomagnetism, hull EVA, neural telemetry, storm forecasting, wildfire spread, and live flights.">
+<meta name="theme-color" content="#050506">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050506;--panel:#0A0908;--panel2:#0D0B09;--text:#F2E8DC;--dim:#8A7A68;--ink2:#C9B8A8;
+  --rule:#2A1D12;--rule2:#17100B;--accent:#F07800;--data:#C04800;--cool:#F2E8DC;--alarm:#FF3B30;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;min-height:100%;background:
+  radial-gradient(ellipse at 18% 0%,rgba(240,120,0,.10),transparent 42%),
+  radial-gradient(ellipse at 82% 22%,rgba(192,72,0,.06),transparent 38%),
+  var(--bg);
+  color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.4;
+  background-image:linear-gradient(rgba(240,120,0,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(240,120,0,.035) 1px,transparent 1px);
+  background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 20%,#000 20%,transparent 78%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:20;opacity:.13;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 4px);mix-blend-mode:screen}
+::selection{background:rgba(240,120,0,.32);color:#fff}
+a{color:inherit}
+.index{position:relative;z-index:1;max-width:1920px;margin:0 auto;padding:6px 6px 20px}
+.top{display:flex;align-items:center;gap:clamp(8px,1vw,16px);min-height:54px;padding:0 14px;border:1px solid var(--rule);background:linear-gradient(180deg,rgba(13,11,9,.96),rgba(5,5,6,.96));white-space:nowrap;overflow:hidden}
+.brand{display:flex;align-items:baseline;gap:9px;padding-right:14px;border-right:1px solid var(--rule2);flex:none}
+.brand i{width:8px;height:8px;border:1px solid var(--accent);transform:rotate(45deg);box-shadow:0 0 12px rgba(240,120,0,.75)}
+.brand b{font-family:var(--mono);font-size:16px;letter-spacing:.2em;font-weight:500;color:var(--accent)}
+.brand span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--dim)}
+.top-cell{display:flex;flex-direction:column;gap:1px;min-width:0}
+.top-cell .k{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--dim)}
+.top-cell .v{font-family:var(--mono);font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis}
+.top-spacer{flex:1 1 auto}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:end;padding:clamp(22px,3vw,46px) clamp(8px,2vw,24px) clamp(18px,2.2vw,30px)}
+.hero-k{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--accent);margin-bottom:12px}
+.hero h1{margin:0;font-size:clamp(38px,5vw,88px);line-height:.86;letter-spacing:-.045em;font-weight:500;text-transform:uppercase}
+.hero h1 span{color:var(--dim);font-weight:400}
+.hero p{max-width:600px;margin:12px 0 0;font-size:clamp(12px,1vw,16px);line-height:1.55;color:var(--ink2)}
+.hero-side{display:flex;flex-direction:column;gap:9px;border-left:1px solid var(--rule);padding-left:18px}
+.hero-side span{display:flex;justify-content:space-between;gap:18px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--dim);border-bottom:1px solid var(--rule2);padding-bottom:5px}
+.hero-side b{color:var(--text);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 2px}
+.card{--card-accent:var(--accent);display:flex;flex-direction:column;min-width:0;text-decoration:none;border:1px solid var(--rule);background:linear-gradient(180deg,rgba(13,11,9,.92),rgba(5,5,6,.96));overflow:hidden;transition:border-color .2s ease,transform .2s ease,box-shadow .2s ease}
+.card:hover,.card:focus-visible{border-color:var(--card-accent);transform:translateY(-2px);box-shadow:0 14px 44px rgba(0,0,0,.55),0 0 0 1px color-mix(in srgb,var(--card-accent) 35%,transparent);outline:none}
+.shot{position:relative;aspect-ratio:16/9;overflow:hidden;background:#020202;border-bottom:1px solid var(--rule2)}
+.shot img{display:block;width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03);transition:filter .3s ease;animation:previewDrift 3s ease-in-out infinite;will-change:transform}
+.card:hover .shot img{filter:saturate(1.05) contrast(1.06)}
+.shot::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(5,5,6,.06),transparent 55%,rgba(5,5,6,.72));box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)}
+.idx{position:absolute;left:12px;top:11px;z-index:2;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--text);background:rgba(5,5,6,.72);border:1px solid var(--rule);padding:3px 6px}
+.open{position:absolute;right:12px;top:11px;z-index:2;font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--card-accent);background:rgba(5,5,6,.72);border:1px solid color-mix(in srgb,var(--card-accent) 50%,transparent);padding:3px 6px}
+.live{position:absolute;left:12px;bottom:11px;z-index:2;display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--text);background:rgba(5,5,6,.76);border:1px solid var(--rule);padding:3px 6px}
+.live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--card-accent);box-shadow:0 0 8px var(--card-accent)}
+.meta{display:flex;flex-direction:column;gap:7px;padding:13px 14px 15px}
+.kicker{font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--dim)}
+.title{font-size:clamp(22px,2.2vw,38px);line-height:.95;letter-spacing:-.02em;font-weight:500;text-transform:uppercase;color:var(--text)}
+.sub{font-size:12px;line-height:1.45;color:var(--ink2);max-width:70ch}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.tags span{font-family:var(--mono);font-size:7.5px;letter-spacing:.08em;color:var(--dim);border:1px solid var(--rule2);padding:2px 5px;background:rgba(255,255,255,.015)}
+.foot{display:flex;align-items:center;gap:12px;margin-top:14px;padding:10px 6px 0;border-top:1px solid var(--rule2);font-family:var(--mono);font-size:8px;letter-spacing:.06em;color:var(--dim);flex-wrap:wrap}
+.foot b{color:var(--data);font-weight:400}
+.foot span:last-child{margin-left:auto}
+@media(max-width:1180px){.hero{grid-template-columns:1fr}.hero-side{display:none}.grid{grid-template-columns:1fr}.top-cell:nth-of-type(4){display:none}}
+@media(max-width:700px){.index{padding:4px 4px 16px}.top{min-height:48px;padding:0 9px;gap:8px}.brand b{font-size:13px}.brand span{display:none}.top-cell:nth-of-type(3){display:none}.hero{padding-top:28px}.hero h1{font-size:clamp(38px,13vw,68px)}.title{font-size:24px}.meta{padding:11px 11px 13px}.open{display:none}}
+@keyframes previewDrift{0%,100%{transform:scale(1.01) translate3d(0,0,0)}50%{transform:scale(1.035) translate3d(-.5%,-.45%,0)}}
+@media(prefers-reduced-motion:reduce){.card,.shot img{transition:none;animation:none}body::after{display:none}}
+</style>
+</head>
+<body>
+<main class="index">
+  <header class="top">
+    <div class="brand"><i></i><b>NIGHT CONSOLES</b><span>DATA SYSTEM INDEX</span></div>
+    <div class="top-cell"><span class="k">SYSTEMS</span><span class="v">09</span></div>
+    <div class="top-cell"><span class="k">FORMAT</span><span class="v">1920 DESKTOP</span></div>
+    <div class="top-cell"><span class="k">DEPLOY</span><span class="v">GITHUB PAGES</span></div>
+    <div class="top-spacer"></div>
+    <div class="top-cell"><span class="k">UTC</span><span class="v mono" id="clock">--:--:--</span></div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="hero-k">CLEAN-ROOM FUI / INSTRUMENT DECKS</div>
+      <h1>SELECT A<br><span>DATA SYSTEM</span></h1>
+      <p>Nine large-format interfaces. Each panel opens a self-contained data scene with its own telemetry, visualization, and live or simulated feeds.</p>
+    </div>
+    <aside class="hero-side">
+      <span>THEMES <b>09</b></span>
+      <span>CANVAS / WEBGL <b>YES</b></span>
+      <span>LIVE FEEDS <b>OPTIONAL</b></span>
+      <span>ENTRY POINT <b>INDEX.HTML</b></span>
+    </aside>
+  </section>
+
+  <section class="grid">
+    <a class="card" href="themes/genome-analysis.html" style="--card-accent:#F07800">
+      <div class="shot"><img src="assets/previews/helix-9.webp" width="1600" height="900" alt="HELIX-9 genome analysis preview"><span class="idx">01</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE / SIM</span></div>
+      <div class="meta">
+        <div class="kicker">HELIX-9 / GENOME DECK</div>
+        <div class="title">Genome Analysis</div>
+        <div class="sub">DNA structure, sequence browser, variants, proteins, and a cinematic 3D helix with Ensembl and UCSC data when available.</div>
+        <div class="tags"><span>DNA</span><span>ENSEMBL</span><span>3D HELIX</span><span>VARIANTS</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/preventive-lab.html" style="--card-accent:#FF3D7E">
+      <div class="shot"><img src="assets/previews/lapidary-health.webp" width="1600" height="900" loading="lazy" alt="Lapidary Health diagnostics preview"><span class="idx">02</span><span class="open">OPEN SYSTEM</span><span class="live">SIM</span></div>
+      <div class="meta">
+        <div class="kicker">LAPIDARY HEALTH / DIAGNOSTIC HUD</div>
+        <div class="title">Preventive Lab</div>
+        <div class="sub">Blood panel, vitals, risk flags, organ anatomy, ECG, and a diagnostic timeline for a fictional preventive-lab patient.</div>
+        <div class="tags"><span>CBC</span><span>LIPIDS</span><span>ANATOMY</span><span>RISK</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/market-data.html" style="--card-accent:#F2B441">
+      <div class="shot"><img src="assets/previews/market-deck.webp" width="1600" height="900" loading="lazy" alt="Market Deck equities preview"><span class="idx">03</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE / SIM</span></div>
+      <div class="meta">
+        <div class="kicker">MARKET DECK / US EQUITIES</div>
+        <div class="title">Market Data</div>
+        <div class="sub">Watchlist, candlesticks, forecast cone, sector breadth, order book, crypto tape, and event-risk news.</div>
+        <div class="tags"><span>EQUITIES</span><span>FORECAST</span><span>GDELT</span><span>COINGECKO</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/geomagnetic-field.html" style="--card-accent:#D6E4FF">
+      <div class="shot"><img src="assets/previews/declination.webp" width="1600" height="900" loading="lazy" alt="Declination geomagnetic observatory preview"><span class="idx">04</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE / MODEL</span></div>
+      <div class="meta">
+        <div class="kicker">DECLINATION / GEOMAGNETIC OBSERVATORY</div>
+        <div class="title">Geomagnetic Field</div>
+        <div class="sub">IGRF-14 field lines, magnetic dip poles, live solar-wind drivers, declination table, compass, and aurora oval.</div>
+        <div class="tags"><span>IGRF-14</span><span>SWPC</span><span>OVATION</span><span>MAGNETOSPHERE</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/asteroid-operations.html" style="--card-accent:#49F1FF">
+      <div class="shot"><img src="assets/previews/harrow.webp" width="1600" height="900" loading="lazy" alt="Harrow hull EVA preview"><span class="idx">05</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE / MODEL</span></div>
+      <div class="meta">
+        <div class="kicker">HARROW / HULL EVA</div>
+        <div class="title">Asteroid Operations</div>
+        <div class="sub">Helmet HUD on the freighter HARROW near Bennu: plate thickness loss, spiral EVA fit, DSN telemetry, and HYG stars.</div>
+        <div class="tags"><span>BENNU</span><span>EVA</span><span>DSN</span><span>STARFIELD</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/neural-telemetry.html" style="--card-accent:#00C8E0">
+      <div class="shot"><img src="assets/previews/tidal-3.webp" width="1600" height="900" loading="lazy" alt="Tidal-3 neural telemetry preview"><span class="idx">06</span><span class="open">OPEN SYSTEM</span><span class="live">SIM</span></div>
+      <div class="meta">
+        <div class="kicker">TIDAL-3 / DISTRIBUTED NEURAL ANALYSIS</div>
+        <div class="title">Neural Telemetry</div>
+        <div class="sub">Model DAG, loss and gradient traces, MLP/CNN/transformer comparison, weight histograms, and inference telemetry.</div>
+        <div class="tags"><span>MLP</span><span>CNN</span><span>TRANSFORMER</span><span>LOSS</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/storm-forecast.html" style="--card-accent:#F2B441">
+      <div class="shot"><img src="assets/previews/gyre-watch.webp" width="1600" height="900" loading="lazy" alt="Gyre Watch storm forecasting preview"><span class="idx">07</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE / SIM</span></div>
+      <div class="meta">
+        <div class="kicker">GYRE WATCH / STORM FORECASTING</div>
+        <div class="title">Storm Forecast</div>
+        <div class="sub">Aerostat track, pressure field, wind, precipitation, forecast cone, and a coastal storm-watch timeline.</div>
+        <div class="tags"><span>STORM</span><span>AEROSTAT</span><span>WIND</span><span>PRESSURE</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="themes/wildfire-spread.html" style="--card-accent:#FF2A1E">
+      <div class="shot"><img src="assets/previews/spotfire.webp" width="1600" height="900" loading="lazy" alt="Spotfire wildfire spread preview"><span class="idx">08</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE / SIM</span></div>
+      <div class="meta">
+        <div class="kicker">SPOTFIRE / WILDFIRE BEHAVIOUR</div>
+        <div class="title">Wildfire Spread</div>
+        <div class="sub">Fire weather, terrain, active fronts, spot fires, containment, resource status, and an event log across the line.</div>
+        <div class="tags"><span>FIRE</span><span>TERRAIN</span><span>WEATHER</span><span>CONTAINMENT</span></div>
+      </div>
+    </a>
+    <a class="card" href="themes/flight-tracking.html" style="--card-accent:#C1FF37">
+      <div class="shot"><img src="assets/previews/flight-tracking.webp" width="1600" height="900" loading="lazy" alt="Live Flights airspace operations preview"><span class="idx">09</span><span class="open">OPEN SYSTEM</span><span class="live">LIVE REGION / SIM</span></div>
+      <div class="meta">
+        <div class="kicker">FLIGHT TRACKING / AIRSPACE OPS</div>
+        <div class="title">Live Flights</div>
+        <div class="sub">World airspace map, regional AvioADSB aircraft, flight ladder, altitude profile, fleet mix, and selected-flight timeline.</div>
+        <div class="tags"><span>AVIOADSB</span><span>LIVE REGION</span><span>SIM GLOBAL</span><span>ADS-B</span></div>
+      </div>
+    </a>
+  </section>
+
+  <footer class="foot">
+    <span>NIGHT CONSOLES / CLEAN-ROOM FUI STUDIES</span>
+    <span>09 SYSTEMS / 1920 DESKTOP</span>
+    <b>RESEARCH VISUALIZATION / NOT OPERATIONAL</b>
+    <span>GITHUB PAGES READY</span>
+  </footer>
+</main>
+<script>
+(function(){
+  function tick(){var s=new Date().toISOString().slice(11,19);var el=document.getElementById('clock');if(el)el.textContent=s;}
+  tick();setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>

@@ -14,7 +14,7 @@ const PORT = 9400 + Math.floor(Math.random() * 200);
 const profile = `${process.env.TEMP}\\edge-cdp-${randomUUID().slice(0, 8)}`;
 
 const child = spawn(EDGE, [
-  '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+  '--headless=new', '--enable-webgl', '--ignore-gpu-blocklist', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-first-run', '--no-default-browser-check',
   '--hide-scrollbars', '--force-device-scale-factor=1',
   `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
   `--window-size=${w},${h}`, 'about:blank'

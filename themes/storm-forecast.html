@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storm Forecast - GYRE WATCH</title>
+<meta name="description" content="GYRE WATCH: a storm-forecasting aerostat display built around a live hurricane plan view, NHC track and cone, GOES/Himawari infrared imagery, and upper-air weather.">
+<meta name="theme-color" content="#070B14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="../assets/gyre-watch/ian-2022-ir.png">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+:root{--rule:rgba(76,110,166,.34);--rule2:rgba(76,110,166,.16);--ink2:rgba(220,230,242,.72);--ink3:rgba(92,200,240,.82);--mono:'Space Mono',ui-monospace,monospace;--sans:'Space Grotesk',system-ui,sans-serif;--ramp0:#1B3A5C;--ramp1:#1F7A8C;--ramp2:#2FA84F;--ramp3:#D9D62B;--ramp4:#F28C28;--ramp5:#E5322D;--ramp6:#C427B8;--ramp7:#F5F5F5}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text)}body{font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}button{font:inherit;color:inherit}::selection{background:rgba(92,200,240,.28);color:#fff}
+.gy{position:fixed;inset:0;display:grid;grid-template-rows:48px minmax(0,1fr) 320px 34px;gap:1px;background:var(--rule);overflow:hidden}
+.gy>*{min-width:0;min-height:0}
+.gy-top{display:flex;align-items:stretch;background:linear-gradient(180deg,#0D1526,#0A101D);border-bottom:1px solid var(--rule2);overflow:hidden;position:relative}.gy-top::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;opacity:.5;background:repeating-linear-gradient(90deg,rgba(76,110,166,.7) 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,rgba(92,200,240,.65) 0 1px,transparent 1px 96px)}
+.tc{flex:0 1 auto;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 12px;border-right:1px solid var(--rule2);white-space:nowrap;overflow:hidden}.tc .r1{font-size:10px;line-height:1.12;letter-spacing:.06em;font-weight:600}.tc .r1 b{color:var(--accent)}.tc .r2{font-family:var(--mono);font-size:8px;line-height:1.15;color:var(--dim);font-variant-numeric:tabular-nums}.tc .lb{font-size:8px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}.t-id{flex-shrink:0;padding-left:16px}.t-id .wm{font-size:11px;letter-spacing:.08em}.t-id .wm b{color:var(--accent)}.t-num{flex-direction:row;align-items:center;gap:8px}.t-num .v{font-family:var(--mono);font-size:16px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}.t-num .u{font-size:8px;letter-spacing:.12em;color:var(--ink2);font-weight:600}.t-clock{margin-left:auto;border-right:0;border-left:1px solid var(--rule2);text-align:right}.t-clock .v{font-family:var(--mono);font-size:15px;line-height:1;color:var(--text)}.t-grow{flex:1 1 auto}.t-grow .r1{overflow:hidden;text-overflow:clip}
+.pip{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(242,180,65,.8);animation:gy-pulse .8s ease-in-out infinite alternate;vertical-align:1px}.pip.blue{background:var(--data);box-shadow:0 0 6px rgba(92,200,240,.8)}
+@keyframes gy-pulse{from{opacity:1}to{opacity:.2}}
+.gy-mid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,.55fr);gap:1px;background:var(--rule);min-height:0}
+.gy-hero{position:relative;background:#050912;overflow:hidden;min-height:0}.gy-hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}.gy-hero::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 74% 72% at 48% 52%,transparent 58%,rgba(0,0,0,.34) 100%)}
+.hud{position:absolute;z-index:4;background:rgba(6,10,19,.82);border:1px solid var(--rule2);padding:5px 8px;pointer-events:none}.hud .h1{font-size:9px;letter-spacing:.13em;font-weight:600;color:var(--text);white-space:nowrap}.hud .h1 b{color:var(--accent)}.hud .h2{font-family:var(--mono);font-size:8px;letter-spacing:.03em;color:var(--dim);margin-top:2px;white-space:nowrap}.hud.hdr{left:10px;top:8px;border-left:2px solid var(--data)}.hud.meta{right:10px;top:8px;text-align:right}.hud.cbar{left:10px;bottom:20px;padding-bottom:4px}.cbar .sw{display:flex;margin-top:4px}.cbar .sw span{width:27px;height:8px}.cbar .tk{display:flex;font-family:var(--mono);font-size:7px;color:var(--dim);margin-top:2px}.cbar .tk span{width:27px}.hud.leg{left:50%;transform:translateX(-50%);bottom:20px;display:flex;gap:11px;align-items:center;font-size:7.5px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}.hud.leg i{display:inline-block;width:11px;border-top:1px solid;margin-right:4px;vertical-align:middle}.hud.leg i.d{border-top-style:dashed}.hud.leg em{display:inline-block;width:5px;height:5px;margin-right:4px;vertical-align:middle;font-style:normal}
+.gy-side{display:grid;grid-template-rows:1.15fr .85fr;gap:1px;background:var(--rule);min-height:0}
+.card{position:relative;background:linear-gradient(180deg,#0C1322,#070B14);overflow:hidden;min-height:0;display:flex;flex-direction:column}.card-hd{flex:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 10px 5px;border-bottom:1px solid var(--rule2);font-size:8px;letter-spacing:.12em;font-weight:600;color:var(--ink2);white-space:nowrap}.card-hd b{color:var(--text)}.card-bd{flex:1 1 auto;min-height:0;padding:7px 10px;overflow:hidden}
+.storm-name{font-size:24px;line-height:1;letter-spacing:.06em;font-weight:600;color:var(--accent)}.storm-cat{font-family:var(--mono);font-size:10px;color:var(--text);margin-left:7px}.storm-pos{font-family:var(--mono);font-size:9px;color:var(--ink2);margin-top:4px}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule2);margin-top:7px;border:1px solid var(--rule2)}.stat{background:rgba(7,11,20,.72);padding:5px 6px}.stat span{display:block;font-size:7px;letter-spacing:.13em;color:var(--dim)}.stat b{display:block;font-family:var(--mono);font-size:15px;line-height:1.1;font-weight:400;color:var(--text);margin-top:2px;font-variant-numeric:tabular-nums}.stat b small{font-size:8px;color:var(--dim);margin-left:2px}.stat.hot b{color:var(--accent)}.stat.blue b{color:var(--data)}.cone-note{font-family:var(--mono);font-size:8px;line-height:1.4;color:var(--dim);margin-top:7px;border-top:1px solid var(--rule2);padding-top:5px;white-space:normal}
+.fc-list{margin-top:5px;border-top:1px solid var(--rule2);padding-top:4px;font-family:var(--mono);font-size:8px;color:var(--ink2);overflow:hidden}
+.fc-list .fr{display:grid;grid-template-columns:3.2em minmax(0,1fr) auto;gap:6px;align-items:baseline;line-height:1.55;border-bottom:1px dashed rgba(76,110,166,.10);white-space:nowrap}
+.fc-list .fr.hd{color:var(--dim);font-size:7px;letter-spacing:.12em;border-bottom-color:var(--rule2)}
+.fc-list .fr .t{color:var(--accent)}.fc-list .fr .w{color:var(--text);text-align:right}
+.radii{display:none;margin-top:6px;border-top:1px solid var(--rule2);padding-top:5px}
+.radii .rh{display:flex;justify-content:space-between;font-size:7px;letter-spacing:.12em;color:var(--dim);margin-bottom:3px}
+.radii .rg{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--rule2);border:1px solid var(--rule2)}
+.radii .rc{background:rgba(7,11,20,.72);padding:3px 2px;text-align:center;min-width:0}
+.radii .rc.hd{font-size:6px;letter-spacing:.08em;color:var(--dim);background:transparent;display:flex;align-items:center;justify-content:center}
+.radii .rc b{display:block;font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text)}
+@media(min-height:1180px){.radii{display:block}}
+.mini{position:relative;height:86px;margin-top:6px;border-top:1px solid var(--rule2);padding-top:3px}
+.mini canvas{position:absolute;inset:3px 0 0 0;width:100%;height:calc(100% - 3px)}
+@media(max-height:900px){.mini{display:none}}
+.wx-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--rule2);border:1px solid var(--rule2)}.wx-cell{background:rgba(7,11,20,.7);padding:5px 6px}.wx-cell span{display:block;font-size:7px;letter-spacing:.1em;color:var(--dim)}.wx-cell b{display:block;font-family:var(--mono);font-size:13px;line-height:1.15;color:var(--text);font-weight:400;margin-top:2px}.wx-cell b small{font-size:8px;color:var(--dim);margin-left:2px}.wx-cell i{display:block;font-family:var(--mono);font-size:7px;color:var(--ink3);margin-top:2px;font-style:normal}.wx-note{font-family:var(--mono);font-size:7.5px;color:var(--dim);line-height:1.45;margin-top:7px;border-top:1px solid var(--rule2);padding-top:5px}
+.gy-bot{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);min-height:0}
+.bp{position:relative;background:var(--bg);overflow:hidden;min-height:0;display:flex;flex-direction:column}.bp-hd{flex:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 9px 3px;border-bottom:1px solid var(--rule2);font-size:8px;letter-spacing:.12em;font-weight:600;color:var(--ink2);white-space:nowrap;overflow:hidden}.bp-hd b{color:var(--text)}.bp-hd span:last-child{font-family:var(--mono);font-size:7px;letter-spacing:.02em;color:var(--dim);font-weight:400}.bp-cv{position:relative;flex:1 1 auto;min-height:0}.bp-cv canvas{position:absolute;inset:0;width:100%;height:100%}
+.lines{flex:1 1 auto;min-height:0;overflow:hidden}.ln{display:grid;grid-template-columns:4.2ch 4.8em minmax(0,1fr);gap:6px;padding:0 9px;align-items:center;font-family:var(--mono);font-size:8px;line-height:1.5;color:var(--ink2);white-space:nowrap;overflow:hidden;border-bottom:1px dashed rgba(76,110,166,.10)}.ln .ts{color:var(--dim)}.ln .tg{font-family:var(--sans);font-size:7px;letter-spacing:.12em;font-weight:700;color:var(--dim)}.ln .tx{overflow:hidden;text-overflow:clip}.ln.hot .tg{color:var(--accent)}.ln.alm .tg{color:var(--alarm)}
+.gy-foot{display:flex;align-items:center;gap:8px;padding:0 10px;background:linear-gradient(0deg,#0D1526,#0A101D);border-top:1px solid var(--rule2);overflow:hidden;white-space:nowrap}.pl{font-family:var(--mono);font-size:7px;letter-spacing:.05em;padding:2px 6px;border:1px solid rgba(92,200,240,.28);color:var(--ink2)}.pl b{font-weight:400;color:var(--data)}.pl.warn b{color:var(--accent)}.foot-note{margin-left:auto;font-family:var(--mono);font-size:7px;color:var(--dim)}
+.fatal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;display:none;padding:12px 18px;border:1px solid var(--alarm);background:rgba(7,11,20,.96);font-size:10px;letter-spacing:.1em;color:var(--alarm)}.fatal.on{display:block}
+.modal{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:rgba(7,11,20,.78);backdrop-filter:blur(7px)}.modal.on{display:grid}.mcard{width:min(760px,92vw);max-height:84vh;overflow:auto;position:relative;padding:22px 25px;border:1px solid var(--rule);background:linear-gradient(180deg,rgba(12,19,34,.98),rgba(7,11,20,.99));box-shadow:0 30px 100px rgba(0,0,0,.7)}.mcard h2{margin:0 0 8px;font-size:22px;letter-spacing:.12em;font-weight:500}.mcard h3{margin:16px 0 5px;font-size:9px;letter-spacing:.16em;color:var(--accent);font-weight:600}.mcard p,.mcard li{font-size:10px;line-height:1.6;color:var(--ink2)}.mcard p{margin:6px 0}.mcard ul{margin:0;padding-left:15px}.mcard code{color:var(--amber,#F2B441)}.mx{position:absolute;right:12px;top:10px;border:1px solid var(--rule2);background:transparent;width:26px;height:26px;cursor:pointer;color:var(--dim)}
+.data-btn{appearance:none;border:1px solid var(--rule2);background:transparent;color:var(--dim);font-family:var(--mono);font-size:8px;letter-spacing:.1em;padding:0 6px;cursor:pointer}.data-btn:hover{color:var(--text);border-color:var(--rule)}
+@media(max-width:1500px){.gy-mid{grid-template-columns:minmax(0,1.6fr) minmax(280px,.62fr)}.gy-bot{grid-template-columns:repeat(4,minmax(0,1fr))}.b-idx,.b-log{display:none}.gy-top .hide-15{display:none}.hud.leg{gap:8px;font-size:7px}}
+@media(max-width:1180px){.gy-mid{grid-template-columns:minmax(0,1.5fr) minmax(250px,.7fr)}.gy-top .hide-12{display:none}.gy-bot{grid-template-columns:repeat(4,minmax(0,1fr))}.gy-side{grid-template-rows:1fr .9fr}.storm-name{font-size:20px}.hud.cbar,.hud.leg{display:none}}
+@media(max-height:820px){.gy{grid-template-rows:44px minmax(0,1fr) 300px 30px}.card-bd{padding:5px 8px}.stat b{font-size:13px}.storm-name{font-size:20px}.cone-note,.fc-list,.radii{display:none}.bp-hd{font-size:7.5px;padding:4px 7px 2px}}
+@media(prefers-reduced-motion:reduce){.pip{animation:none}}
+</style>
+</head>
+<body>
+<main class="gy" id="gy-root">
+  <header class="gy-top">
+    <div class="tc t-id"><div class="wm">GYRE WATCH <b>12</b> · TETHERED AEROSTAT · FCST</div><div class="r2">STORM FORECASTING · AEROSTAT / SURFACE</div></div>
+    <div class="tc t-grow"><div class="r1"><b id="t-name">ACQUIRING STORM</b> · <span id="t-cat">--</span> · <span id="t-pos">--</span></div><div class="r2" id="t-motion">TRACK -- · MOTION --</div></div>
+    <div class="tc t-num"><div class="v" id="t-wind">--</div><div class="u">MAX WIND<br><span class="r2" id="t-wind2">KT</span></div></div>
+    <div class="tc t-num"><div class="v" id="t-pres">--</div><div class="u">PRESSURE<br><span class="r2">hPa</span></div></div>
+    <div class="tc hide-15"><div class="r1">AEROSTAT</div><div class="r2" id="t-station">--</div></div>
+    <div class="tc hide-12"><div class="r1"><span class="pip blue"></span> <span id="t-mode">BOOT</span></div><div class="r2" id="t-source">MAVERICKWX · NHC</div></div>
+    <div class="tc t-clock"><div class="r1"><span id="t-clock">--:--:--</span></div><div class="r2">UTC · <span id="t-sat">SAT</span> · <button class="data-btn" id="live-btn">LIVE</button> · <button class="data-btn" id="data-btn">DATA</button></div></div>
+  </header>
+
+  <section class="gy-mid">
+    <div class="gy-hero" id="hero">
+      <canvas id="storm-cv"></canvas>
+      <div class="hud hdr"><div class="h1"><b>PLAN-VIEW REFLECTIVITY</b> · <span id="h-layer">ACQUIRING SATELLITE</span></div><div class="h2" id="h-frame">SAT · FRAME -- · --</div></div>
+      <div class="hud meta"><div class="h1" id="h-zmax">Zmax -- dBZ · EYE --</div><div class="h2">PLAN VIEW · <span id="h-bbox">--</span></div></div>
+      <div class="hud cbar"><div class="h1">REFLECTIVITY · dBZ</div><div class="sw"><span style="background:#0B2036"></span><span style="background:#154B5E"></span><span style="background:#2C7A55"></span><span style="background:#A9A33A"></span><span style="background:#C97A2E"></span><span style="background:#BF3D33"></span><span style="background:#A43A8A"></span><span style="background:#EAEAEC"></span></div><div class="tk"><span>&lt;10</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span><span>70+</span></div></div>
+      <div class="hud leg"><span><i style="color:#DCE6F2"></i>EYE</span><span><i class="d" style="color:#FF3B5C"></i>TRACK</span><span><i style="color:#5CC8F0"></i>WIND RADII</span><span><em style="background:#F2B441"></em>AEROSTAT</span></div>
+    </div>
+    <aside class="gy-side">
+      <div class="card">
+        <div class="card-hd"><span><b>STORM CELL</b> · <span id="s-src">ACQUIRING</span></span><span class="u-src sim" id="storm-badge">WAIT</span></div>
+        <div class="card-bd">
+          <div><span class="storm-name" id="s-name">--</span><span class="storm-cat" id="s-cat">--</span></div>
+          <div class="storm-pos" id="s-pos">--</div>
+          <div class="stat-grid">
+            <div class="stat hot"><span>MAX WIND</span><b><span id="s-wind">--</span><small>kt</small></b></div>
+            <div class="stat blue"><span>PRESSURE</span><b><span id="s-pres">--</span><small>hPa</small></b></div>
+            <div class="stat"><span>MOTION</span><b><span id="s-motion">--</span></b></div>
+            <div class="stat"><span>EYE / CONE</span><b><span id="s-cone">--</span></b></div>
+          </div>
+          <div class="cone-note" id="s-note">Waiting for active storm or archive fallback.</div>
+          <div class="fc-list" id="fc-list"></div>
+          <div class="radii" id="radii"></div>
+          <div class="mini" id="int-cv"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span><b>AIRMASS</b> · <span id="w-src">MODEL</span></span><span class="u-src sim" id="wx-badge">WAIT</span></div>
+        <div class="card-bd">
+          <div class="wx-grid">
+            <div class="wx-cell"><span>TEMP</span><b><span id="w-t">--</span><small>°C</small></b><i id="w-t2">--</i></div>
+            <div class="wx-cell"><span>WIND</span><b><span id="w-w">--</span><small>km/h</small></b><i id="w-w2">--</i></div>
+            <div class="wx-cell"><span>PRESSURE</span><b><span id="w-p">--</span><small>hPa</small></b><i id="w-p2">--</i></div>
+          </div>
+          <div class="wx-note" id="w-note">Aerostat airmass / upper-air sounding.</div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="gy-bot">
+    <div class="bp"><div class="bp-hd"><span><b>SOUNDING</b> · SKEW-T log-P</span><span id="snd-meta">MODEL</span></div><div class="bp-cv" id="snd-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>RHI</b> · CROSS-SECTION · dBZ</span><span id="rhi-meta">MODEL</span></div><div class="bp-cv" id="rhi-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>ENSEMBLE</b> · EYE RADIUS</span><span id="ens-meta">21 MEM</span></div><div class="bp-cv" id="ens-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>LIGHTNING</b> · STRIKES/MIN</span><span id="ltg-meta">--</span></div><div class="bp-cv" id="ltg-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>FORECAST</b> · WIND / PRESSURE</span><span id="fc-meta">--</span></div><div class="bp-cv" id="fc-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>HODOGRAPH</b> · SHEAR</span><span id="hod-meta">MODEL</span></div><div class="bp-cv" id="hod-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>EYE PROFILE</b> · r-log p</span><span id="eye-meta">--</span></div><div class="bp-cv" id="eye-cv"></div></div>
+    <div class="bp"><div class="bp-hd"><span><b>BAROGRAPHS</b> · 6 H</span><span id="baro-meta">MODEL</span></div><div class="bp-cv" id="baro-cv"></div></div>
+    <div class="bp b-idx"><div class="bp-hd"><span><b>INDICES</b> · WIND PROFILE</span><span id="idx-meta">--</span></div><div class="bp-cv" id="idx-cv"></div></div>
+    <div class="bp b-log"><div class="bp-hd"><span><b>LOG</b> · GYRE 12</span><span id="log-sub">BOOT</span></div><div class="lines" id="lines"></div></div>
+  </section>
+
+  <footer class="gy-foot"><span class="pl">SATELLITE <b id="p-sat">--</b></span><span class="pl">TRACK <b id="p-track">--</b></span><span class="pl warn">MODE <b id="p-mode">--</b></span><span class="pl">LINK <b id="p-link">--</b></span><span class="foot-note">LIVE STORM DATA: MAVERICKWX / NHC · JTWC · IMAGERY: NASA GIBS · NOT FOR LIFE-SAFETY USE</span></footer>
+  <div class="fatal" id="fatal">GYRE WATCH DATA UNAVAILABLE</div>
+  <div class="modal" id="modal"><div class="mcard"><button class="mx" id="modal-x">×</button><h2>GYRE WATCH / DATA</h2><p>A storm-forecasting aerostat display. The hero is a real satellite/radar view; the storm track and forecast come from live NHC data via MaverickWX.</p><h3>LIVE</h3><ul><li>MaverickWX active storms and manifests, sourced from NOAA/NHC and JTWC</li><li>NASA GIBS GOES-East, GOES-West and Himawari infrared imagery</li><li>Open-Meteo upper-air and surface weather at the aerostat</li></ul>        <h3>ARCHIVE</h3><p>If no active storm or live imagery is available, Hurricane Ian 2022 is shown from a NOAA/NASA GIBS VIIRS brightness-temperature reconstruction. It is labelled ARCHIVE.</p><p>The hero opens on the archive reconstruction. Use the LIVE button in the header to load the current storm, and ARCHIVE to return.</p>        <h3>STYLE</h3><p>Infrared cloud-top brightness is mapped to a radar-like dBZ palette for the GYRE WATCH plan view. It is a stylised satellite view, not measured radar reflectivity.</p><h3>MODEL PANELS</h3><p>RHI, ensemble, lightning, barographs, hodograph and wind-profile panels are reconstructions derived from the storm intensity, wind radii, official forecast, and aerostat observations. They are labelled MODEL or EST; they are not measured radar or in-situ data.</p><p>Flags: <code>?sim=1</code> uses the archive only; <code>?motion=off</code> freezes all animation.</p></div></div>
+</main>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  const U = window.U;
+  U.page('gyre-watch', { scan: false });
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const TAU = Math.PI * 2;
+  const params = new URLSearchParams(location.search);
+  const SIM = params.get('sim') === '1';
+  const MOTION = params.get('motion') !== 'off' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MAV = 'https://api.maverickwx.com';
+  const GIBS = 'https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi';
+  const DBZ = [[0,'#050912'],[.14,'#0B2036'],[.28,'#154B5E'],[.42,'#2C7A55'],[.56,'#A9A33A'],[.70,'#C97A2E'],[.82,'#BF3D33'],[.92,'#A43A8A'],[1,'#EAEAEC']];
+  const state = {
+    mode: 'BOOT', storm: null, track: [], bbox: [-85.5,24.5,-80.3,27.5], station: null,
+    frames: [], frameTimes: [], weather: null, sounding: null, source: '',
+    live: false, sim: SIM, motion: MOTION, t0: performance.now(), raf: 0,
+    W: 0, H: 0, DPR: 1, heroW: 0, heroH: 0, log: [], frameIndex: 0,     archiveTime: null, archWx: 0, eye: null, hasCone: true, issuer: 'NHC', fadeFrom: null, fadeAt: 0, liveTimer: 0
+  };
+  window.__gy = state;
+  const FONT = getComputedStyle(document.body).fontFamily;
+  const MONO = 'Space Mono, ui-monospace, monospace';
+  const fmtLat = (v) => Math.abs(v).toFixed(1) + '° ' + (v >= 0 ? 'N' : 'S');
+  const fmtLon = (v) => Math.abs(v).toFixed(1) + '° ' + (v >= 0 ? 'E' : 'W');
+  const fmtWind = (v) => Math.round(v);
+  const hm = (d) => String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+  const hms = (d) => hm(d) + ':' + String(d.getUTCSeconds()).padStart(2,'0');
+  const catOf = (kt) => kt >= 137 ? 'CAT 5' : kt >= 113 ? 'CAT 4' : kt >= 96 ? 'CAT 3' : kt >= 83 ? 'CAT 2' : kt >= 64 ? 'CAT 1' : kt >= 34 ? 'TS' : 'TD';
+  const dot = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+
+  function pushLog(tag, text, hot, alm) {
+    state.log.unshift({ at: hm(new Date()), tag, text, hot: !!hot, alm: !!alm });
+    state.log = state.log.slice(0, 10);
+    $('lines').innerHTML = state.log.map((l) => '<div class="ln ' + (l.alm ? 'alm' : l.hot ? 'hot' : '') + '"><span class="ts">' + l.at + '</span><span class="tg">' + l.tag + '</span><span class="tx">' + l.text + '</span></div>').join('');
+    $('log-sub').textContent = state.log.length + ' SHOWN';
+  }
+
+  // ---- image / colorisation ---------------------------------------------------------------
+  function smoothstep(a, b, v) { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+  function colorize(source, sw, sh, inverted) {
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    const x = c.getContext('2d');
+    x.filter = 'blur(.7px)';
+    x.drawImage(source, 0, 0, sw, sh);
+    x.filter = 'none';
+    const im = x.getImageData(0, 0, sw, sh), d = im.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const l = (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114) / 255;
+      const raw = inverted ? (.36 - l) / .26 : (l - .12) / .72;
+      const t = Math.pow(clamp(raw, 0, 1), 1.03);
+      const col = ramp(t);
+      const base = .035 + l * .14;
+      const mix = smoothstep(.08, .38, t);
+      d[i] = Math.min(255, (col[0] * mix + base * 82) * .90);
+      d[i + 1] = Math.min(255, (col[1] * mix + base * 100) * .90);
+      d[i + 2] = Math.min(255, (col[2] * mix + base * 140) * .90);
+      d[i + 3] = 255;
+    }
+    x.putImageData(im, 0, 0);
+    return c;
+  }
+  function gradeLive(source, sw, sh) {
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.filter = 'blur(3.2px)';
+    x.drawImage(source, 0, 0, sw, sh);
+    x.filter = 'none';
+    const im = x.getImageData(0, 0, sw, sh), d = im.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const l = (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114) / 255;
+      const k = .58 + l * .14;
+      d[i] = clamp(d[i] * k * .58 + 3, 0, 255);
+      d[i + 1] = clamp(d[i + 1] * k * .66 + 5, 0, 255);
+      d[i + 2] = clamp(d[i + 2] * k * .82 + 11, 0, 255);
+      d[i + 3] = 255;
+    }
+    x.putImageData(im, 0, 0);
+    return c;
+  }
+  function ramp(t) {
+    for (let i = 1; i < DBZ.length; i++) {
+      if (t <= DBZ[i][0]) {
+        const a = DBZ[i - 1], b = DBZ[i], f = (t - a[0]) / Math.max(1e-6, b[0] - a[0]);
+        const ca = hex(a[1]), cb = hex(b[1]);
+        return [lerp(ca[0], cb[0], f), lerp(ca[1], cb[1], f), lerp(ca[2], cb[2], f)];
+      }
+    }
+    return hex(DBZ[DBZ.length - 1][1]);
+  }
+  function hex(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function loadImage(src) {
+    return new Promise((res) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+  }
+  async function fetchImage(url) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      if (!r.ok) return null;
+      const b = await r.blob();
+      if (window.createImageBitmap) return await createImageBitmap(b);
+      return await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = URL.createObjectURL(b); });
+    } catch { return null; }
+  }
+
+  // ---- storm sources -----------------------------------------------------------------------
+  function bboxFor(lat, lon, aspect) {
+    const halfLat = 4.2, halfLon = halfLat * aspect;
+    return [lon - halfLon, lat - halfLat, lon + halfLon, lat + halfLat];
+  }
+  function posAt(track, when) {
+    const pts = (track || []).filter((p) => p && p.time)
+      .map((p) => ({ lat: +p.lat, lon: +p.lon, t: Date.parse(p.time) }))
+      .filter((p) => isFinite(p.t)).sort((a, b) => a.t - b.t);
+    if (!pts.length) return null;
+    if (when <= pts[0].t) return { lat: pts[0].lat, lon: pts[0].lon };
+    for (let i = 1; i < pts.length; i++) {
+      if (when <= pts[i].t) {
+        const a = pts[i - 1], b = pts[i], f = (when - a.t) / Math.max(1, b.t - a.t);
+        return { lat: lerp(a.lat, b.lat, f), lon: lerp(a.lon, b.lon, f) };
+      }
+    }
+    const b = pts[pts.length - 1]; return { lat: b.lat, lon: b.lon };
+  }
+  function layerFor(basin) {
+    if (basin === 'AL') return 'GOES-East_ABI_Band13_Clean_Infrared';
+    if (basin === 'WP') return 'Himawari_AHI_Band13_Clean_Infrared';
+    return 'GOES-West_ABI_Band13_Clean_Infrared';
+  }
+  function satelliteFor(basin) { return basin === 'AL' ? 'GOES-EAST' : basin === 'WP' ? 'HIMAWARI' : 'GOES-WEST'; }
+  function satLabel() { return state.mode === 'ARCHIVE' ? 'VIIRS' : satelliteFor(state.storm && state.storm.basin); }
+  function wmsUrl(layer, bbox, time) {
+    const [w,s,e,n] = bbox;
+    return GIBS + '?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=' + encodeURIComponent(layer) + '&STYLES=&FORMAT=image/png&WIDTH=1600&HEIGHT=900&SRS=EPSG:4326&BBOX=' + w + ',' + s + ',' + e + ',' + n + (time ? '&TIME=' + encodeURIComponent(time) : '');
+  }
+  async function fetchFrames(layer, bbox) {
+    const base = new Date(Math.floor(Date.now() / 600000) * 600000);
+    const times = [new Date(base - 20 * 60000), new Date(base - 10 * 60000), base];
+    const out = [];
+    for (const d of times) {
+      const bmp = await fetchImage(wmsUrl(layer, bbox, d.toISOString()));
+      if (bmp) out.push({ c: gradeLive(bmp, 1600, 900), t: d });
+    }
+    if (!out.length) {
+      const bmp = await fetchImage(wmsUrl(layer, bbox, null));
+      if (bmp) out.push({ c: gradeLive(bmp, 1600, 900), t: new Date() });
+    }
+    return out;
+  }
+  async function loadArchive() {
+    const f = await U.fetchJSON('../shared/data/gyre-watch/fallback.json', { timeout: 12000 });
+    const img = await loadImage('../assets/gyre-watch/ian-2022-ir.png');
+    if (!img) throw new Error('archive image');
+    state.mode = 'ARCHIVE'; state.live = false; state.source = 'IAN 2022 · VIIRS IR';
+    state.storm = {
+      name: f.storm.name, basin: f.storm.basin, status: f.storm.status, category: f.storm.category,
+      lat: f.storm.lat, lon: f.storm.lon, windKt: f.storm.windKt, pressure: f.storm.pressureHpa,
+      movementBearing: f.storm.movementBearing, movementSpeedKt: f.storm.movementSpeedKt,
+      advisory: f.storm.advisory
+    };
+    state.track = f.track; state.windRadii = f.windRadii; state.bbox = f.bbox;
+    state.archiveTime = f.meta.date ? new Date(f.meta.date) : new Date('2022-09-27T18:00:00Z');
+    state.frames = [{ c: colorize(img, img.naturalWidth || 1600, img.naturalHeight || 867, true), t: state.archiveTime }];
+    state.eye = { lat: state.storm.lat, lon: state.storm.lon };
+    state.hasCone = true; state.issuer = 'NHC';
+    state.station = { lat: state.storm.lat + .9, lon: state.storm.lon - 1.1 };
+    state.sounding = modelSounding(state.storm);
+    state.weather = f.weather ? { t: f.weather.tempC, rh: f.weather.rh, w: f.weather.windKmh, g: f.weather.gustKmh, p: f.weather.pressureHpa, cloud: f.weather.cloud } : null;
+    setAll();
+    if (!state.motion) drawHero(performance.now());
+    pushLog('ARCH', 'HURRICANE IAN · 2022-09-27 · VIIRS IR', false);
+    pushLog('SAT', 'VIIRS NOAA-20 · 1600×867 · 18:00Z', false);
+    pushLog('TRACK', '12 PTS · NHC ARCHIVE', false);
+    pushLog('WIND', 'R34 / R50 / R64 · NM RADII', false);
+    pushLog('MODEL', 'TROPICAL SOUNDING · ARCHIVE', false);
+    pushLog('CONE', '114 H · ARCHIVE FORECAST', false);
+    pushLog('AERO', 'GW12 · 24.5N 84.3W · TETHERED', false);
+    pushLog('LINK', 'GIBS WMS · VIIRS NOAA-20', false);
+    pushLog('SYS', 'GYRE 12 · ARCHIVE MODE', false);
+  }
+  function modelSounding(storm) {
+    const p = [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100];
+    const t = p.map((q) => {
+      if (q >= 850) return 27 - (1000 - q) * .028;
+      if (q >= 500) return 14 - (850 - q) * .045;
+      if (q >= 200) return -5 - (500 - q) * .06;
+      return -50 - (200 - q) * .12;
+    });
+    const td = t.map((v, i) => v - (8 + (i % 4) * 2.2));
+    return { p, t, td, source: 'MODEL SOUNDING' };
+  }
+  async function loadArchiveWeather() {
+    if (!state.storm || state.mode !== 'ARCHIVE' || state.archWx) return;
+    state.archWx = 1;
+    const st = state.station; if (!st) return;
+    const when = state.archiveTime || new Date('2022-09-27T18:00:00Z');
+    const day = when.toISOString().slice(0, 10), hour = when.toISOString().slice(0, 13);
+    const vars = ['temperature_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','pressure_msl','cloud_cover'];
+    try {
+      const j = await U.fetchJSON('https://archive-api.open-meteo.com/v1/archive?latitude=' + st.lat + '&longitude=' + st.lon + '&start_date=' + day + '&end_date=' + day + '&hourly=' + vars.join(',') + '&timezone=UTC', { timeout: 15000 });
+      if (state.mode !== 'ARCHIVE') return;
+      const h = j.hourly, times = h.time || [];
+      let idx = 0;
+      for (let i = 0; i < times.length; i++) if (times[i] <= hour) idx = i;
+      const wx = { t: h.temperature_2m?.[idx], rh: h.relative_humidity_2m?.[idx], w: h.wind_speed_10m?.[idx], g: h.wind_gusts_10m?.[idx], p: h.pressure_msl?.[idx], cloud: h.cloud_cover?.[idx] };
+      if (wx.t == null) return;
+      state.weather = wx;
+      setWeather();
+      pushLog('WX', 'ARCHIVE AIRMASS · ' + Math.round(wx.t) + '°C · ' + Math.round(wx.w) + ' KM/H', false);
+    } catch (e) { /* keep the model sounding */ }
+  }
+  async function loadLive() {
+    if (SIM) return;
+    try {
+      const active = await U.fetchJSON(MAV + '/api/v1/active.json', { timeout: 15000 });
+      if (!active || !active.storms || !active.storms.length) throw new Error('no active storms');
+      const candidates = active.storms.filter((s) => ['AL','EP','CP','WP'].includes(s.basin))
+        .sort((a,b) => (+b.summary.max_sustained_wind_kt || 0) - (+a.summary.max_sustained_wind_kt || 0));
+      for (const cand of candidates) {
+        try {
+          const m = await U.fetchJSON(cand.manifest_url, { timeout: 15000 });
+          if (!m || !m.summary) continue;
+          const s = m.summary;
+          const storm = {
+            name: m.name || cand.name, basin: m.basin || cand.basin, status: m.status,
+            category: catOf(+s.max_sustained_wind_kt || 0),
+            lat: +s.position_lat, lon: +s.position_lon, windKt: +s.max_sustained_wind_kt || 0,
+            pressure: +s.min_pressure_hpa || null, movementBearing: +s.movement_bearing_deg || 0,
+            movementSpeedKt: +s.movement_speed_kt || 0, advisory: m.advisory_number ? 'ADVISORY ' + m.advisory_number : 'LIVE'
+          };
+          const aspect = state.heroW && state.heroH ? state.heroW / state.heroH : 1.67;
+          const bbox = bboxFor(storm.lat, storm.lon, aspect);
+          const layer = layerFor(storm.basin);
+          const frames = await fetchFrames(layer, bbox);
+          if (!frames.length) throw new Error('no imagery');
+          if (state.mode === 'ARCHIVE' && state.frames.length) { state.fadeFrom = state.frames[0].c; state.fadeAt = performance.now(); }
+          state.mode = 'LIVE'; state.live = true;
+          state.issuer = m.issuing_center || 'JTWC';
+          state.source = state.issuer + ' · ' + satelliteFor(storm.basin) + ' IR';
+          state.storm = storm;
+          state.bbox = bbox;
+          state.frames = frames;
+          const issue = m.forecast_init_time || m.source_issue_time || new Date().toISOString();
+          state.track = [
+            { time: issue, lat: storm.lat, lon: storm.lon, windKt: storm.windKt, tau: 0, kind: 'current' },
+            ...(m.forecast || []).map((p) => ({ time: p.valid_time, lat: p.position_lat, lon: p.position_lon, windKt: p.max_sustained_wind_kt, tau: p.tau, kind: p.tau <= 0 ? 'current' : 'forecast' }))
+          ];
+          state.windRadii = (s.wind_radii || []).map((r) => ({ thresholdKt: r.threshold_kt, ne: r.ne_nm, se: r.se_nm, sw: r.sw_nm, nw: r.nw_nm }));
+          state.hasCone = s.has_cone !== false;
+          const ft = frames[frames.length - 1].t;
+          state.eye = posAt(state.track, (ft instanceof Date ? ft : new Date(ft)).getTime()) || { lat: storm.lat, lon: storm.lon };
+          state.station = { lat: state.eye.lat + .9, lon: state.eye.lon - 1.1 };
+          state.weather = null;
+          setAll(); loadWeather();
+          if (!state.motion) drawHero(performance.now());
+          pushLog('NHC', storm.name + ' · ' + storm.category + ' · ' + Math.round(storm.windKt) + ' KT', true);
+          pushLog('SAT', satelliteFor(storm.basin) + ' IR · ' + frames.length + ' FRAMES', false);
+          return;
+        } catch (e) { /* try the next storm */ }
+      }
+      throw new Error('no live storm imagery');
+    } catch (e) {
+      pushLog('LIVE', 'UNAVAILABLE · ARCHIVE FALLBACK', true);
+      if (!state.storm) await loadArchive();
+      loadArchiveWeather();
+    }
+  }
+  async function loadWeather() {
+    const st = state.station; if (!st) return;
+    if (state.mode === 'ARCHIVE') {
+      state.weather = null; state.sounding = modelSounding(state.storm); setWeather(); return;
+    }
+    const vars = ['temperature_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','pressure_msl','cloud_cover'];
+    const levels = [1000,925,850,700,600,500,400,300,250,200,150,100];
+    for (const p of levels) vars.push('temperature_' + p + 'hPa', 'relative_humidity_' + p + 'hPa');
+    try {
+      const j = await U.fetchJSON('https://api.open-meteo.com/v1/forecast?latitude=' + st.lat + '&longitude=' + st.lon + '&hourly=' + vars.join(',') + '&forecast_days=1&timezone=UTC', { timeout: 15000 });
+      const h = j.hourly, times = h.time || [];
+      const now = new Date();
+      let idx = 0;
+      for (let i = 0; i < times.length; i++) if (times[i] <= now.toISOString().slice(0,13) + ':00') idx = i;
+      state.weather = { t: h.temperature_2m?.[idx], rh: h.relative_humidity_2m?.[idx], w: h.wind_speed_10m?.[idx], g: h.wind_gusts_10m?.[idx], p: h.pressure_msl?.[idx], cloud: h.cloud_cover?.[idx] };
+      state.sounding = { p: levels, t: levels.map((p) => h['temperature_' + p + 'hPa']?.[idx]), td: levels.map((p) => dewpoint(h['temperature_' + p + 'hPa']?.[idx], h['relative_humidity_' + p + 'hPa']?.[idx])), source: 'OPEN-METEO · ' + fmtLat(st.lat) + ' ' + fmtLon(st.lon) };
+      setWeather(); pushLog('WX', 'AEROSTAT AIRMASS · ' + Math.round(state.weather.t) + '°C · ' + Math.round(state.weather.w) + ' KM/H', false);
+    } catch (e) {
+      state.weather = null; state.sounding = modelSounding(state.storm); setWeather();
+      pushLog('WX', 'OPEN-METEO UNAVAILABLE · MODEL', true);
+    }
+  }
+  function dewpoint(t, rh) { if (t == null || rh == null) return null; const a = 17.27, b = 237.7, g = a * t / (b + t) + Math.log(rh / 100); return b * g / (a - g); }
+
+  // ---- derived fields for the instrument panels -------------------------------------------
+  const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  function windProfile() {
+    const s = state.storm || {};
+    const dir0 = s.movementBearing != null ? +s.movementBearing : 300;
+    const spd0 = Math.max(14, (+s.windKt || 60) * .34);
+    const lv = [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100];
+    const turn = [0, 8, 20, 38, 55, 72, 88, 104, 114, 124, 134, 144];
+    const mult = [.40, .48, .58, .72, .86, 1.0, 1.10, 1.20, 1.24, 1.28, 1.30, 1.26];
+    const spd = lv.map((p, i) => spd0 * mult[i]);
+    const dir = lv.map((p, i) => (dir0 + turn[i] + 360) % 360);
+    const u = dir.map((d, i) => -spd[i] * Math.sin(d * Math.PI / 180));
+    const v = dir.map((d, i) => -spd[i] * Math.cos(d * Math.PI / 180));
+    return { p: lv, spd, dir, u, v };
+  }
+  function eyeRmw() {
+    const rr = state.windRadii || [];
+    const r64 = rr.find((r) => r.thresholdKt === 64);
+    if (r64) return Math.max(10, Math.max(r64.ne || 0, r64.se || 0, r64.sw || 0, r64.nw || 0) || 18);
+    return Math.max(10, Math.min(42, (state.storm ? state.storm.windKt : 60) * .26));
+  }
+  function pressureAt(p0, r, rmw) {
+    const x = Math.exp(-Math.pow(Math.max(0, r) / Math.max(8, rmw * 2.7), 1.65));
+    return p0 + 27 * (1 - x) + 3.5 * (r / 200);
+  }
+  function pressureFromWind(kt) { return 1012 - Math.max(0, kt) * .55; }
+  function rhiValue(rk, zk, t, rmwKm) {
+    const wall = 56 * Math.exp(-Math.pow((rk - rmwKm) / 9, 2)) * Math.exp(-Math.pow((zk - 3.4) / 4.6, 2));
+    const core = 64 * Math.exp(-Math.pow((rk - rmwKm * .42) / 16, 2)) * Math.exp(-Math.pow((zk - 6) / 5, 2));
+    const band = 19 * Math.exp(-Math.pow((zk - 3.2) / 3.3, 2)) * (.55 + .45 * Math.sin(rk * .055 - zk * .22 + t * .55));
+    const strat = 15 * Math.exp(-Math.pow((zk - 4.6) / 3.4, 2)) * (.5 + .5 * Math.sin(rk * .04 - zk * .15 + t * .4)) * Math.exp(-rk / 240);
+    const anvil = 23 * Math.exp(-Math.pow((rk - rmwKm * 1.7) / 34, 2)) * Math.exp(-Math.pow((zk - 10.6) / 2.8, 2));
+    return clamp(wall + core + band + strat + anvil + 7 * rnd(rk * 1.3 + zk * 7.1 + t * .6) - 9, 0, 70);
+  }
+
+  // ---- UI ----------------------------------------------------------------------------------
+  function setAll() { setTop(); setStorm(); setSatMeta(); setWeather(); setPanelMeta(); }
+  function setTop() {
+    const s = state.storm; if (!s) return;
+    $('t-name').textContent = s.name;
+    $('t-cat').textContent = s.category || catOf(s.windKt);
+    $('t-pos').textContent = fmtLat(s.lat) + ' ' + fmtLon(s.lon);
+    $('t-motion').textContent = 'TRACK ' + (s.movementBearing != null ? Math.round(s.movementBearing) + '° ' + Math.round(s.movementSpeedKt) + ' KT' : '--') + ' · ' + (state.mode === 'LIVE' ? 'LIVE' : 'ARCHIVE');
+    $('t-wind').textContent = fmtWind(s.windKt);
+    $('t-wind2').textContent = s.category || catOf(s.windKt);
+    $('t-pres').textContent = s.pressure ? Math.round(s.pressure) : '--';
+    $('t-station').textContent = state.station ? fmtLat(state.station.lat) + ' ' + fmtLon(state.station.lon) : '--';
+    $('t-mode').textContent = state.mode;
+    $('t-source').textContent = state.source || '--';
+    $('p-mode').textContent = state.mode;
+    $('p-track').textContent = state.track.length + ' PTS';
+    $('p-link').textContent = state.frames.length + ' FR';
+    $('t-sat').textContent = satLabel() || '--';
+    $('p-sat').textContent = satLabel() || '--';
+    const lb = $('live-btn'); if (lb) lb.textContent = state.mode === 'LIVE' ? 'ARCHIVE' : 'LIVE';
+    U.setSrc($('storm-badge'), state.mode === 'LIVE' ? 'live' : 'sim', state.mode === 'LIVE' ? 'LIVE' : 'ARCHIVE');
+    U.setSrc($('wx-badge'), state.weather ? 'live' : 'sim', state.weather ? 'LIVE' : 'MODEL');
+  }
+  function setStorm() {
+    const s = state.storm; if (!s) return;
+    $('s-name').textContent = s.name;
+    $('s-cat').textContent = s.category || catOf(s.windKt);
+    $('s-pos').textContent = fmtLat(s.lat) + ' ' + fmtLon(s.lon) + ' · ' + (s.advisory || '');
+    $('s-wind').textContent = fmtWind(s.windKt);
+    $('s-pres').textContent = s.pressure ? Math.round(s.pressure) : '--';
+    $('s-motion').textContent = s.movementBearing != null ? Math.round(s.movementBearing) + '° ' + Math.round(s.movementSpeedKt) + ' kt' : '--';
+    $('s-cone').textContent = (state.track.length > 1 ? (state.track[state.track.length - 1].tau || 120) + ' H' : '--');
+    $('s-note').textContent = state.mode === 'LIVE' ? state.issuer + ' TRACK + OFFICIAL FORECAST · SATELLITE ' + satLabel() + ' IR' : 'ARCHIVE RECONSTRUCTION · HURRICANE IAN · VIIRS IR';
+    $('s-src').textContent = state.mode === 'LIVE' ? state.issuer + ' / MAVERICKWX' : 'ARCHIVE';
+    setForecastList(); setRadii();
+  }
+  function setRadii() {
+    const el = $('radii'); if (!el) return;
+    const rr = state.windRadii || [];
+    if (!rr.length) { el.innerHTML = ''; return; }
+    const dirs = ['ne', 'se', 'sw', 'nw'];
+    let h = '<div class="rh"><span>WIND RADII · NM</span><span>' + rr.map((r) => r.thresholdKt).join(' / ') + ' KT</span></div><div class="rg">';
+    h += '<div class="rc hd"></div>' + dirs.map((d) => '<div class="rc hd">' + d.toUpperCase() + '</div>').join('');
+    for (const r of rr) {
+      h += '<div class="rc hd">' + r.thresholdKt + '</div>';
+      for (const d of dirs) h += '<div class="rc"><b>' + Math.round(r[d] || 0) + '</b></div>';
+    }
+    el.innerHTML = h + '</div>';
+  }
+  function setForecastList() {
+    const el = $('fc-list'); if (!el) return;
+    const all = (state.track || []).filter((p) => p.kind !== 'past');
+    if (!all.length) { el.innerHTML = ''; return; }
+    const pts = [];
+    for (const w of [0, 12, 24, 48, 72, 96, 120]) {
+      let best = null;
+      for (const p of all) if (!best || Math.abs((p.tau || 0) - w) < Math.abs((best.tau || 0) - w)) best = p;
+      if (best && !pts.includes(best)) pts.push(best);
+    }
+    const rows = ['<div class="fr hd"><span>TAU</span><span>POSITION</span><span class="w">WIND</span></div>'];
+    for (const p of pts) {
+      rows.push('<div class="fr"><span class="t">+' + Math.round(p.tau || 0) + 'H</span><span>' + fmtLat(p.lat) + ' ' + fmtLon(p.lon) + '</span><span class="w">' + Math.round(p.windKt || 0) + ' kt</span></div>');
+    }
+    el.innerHTML = rows.join('');
+  }
+  function setSatMeta() {
+    $('h-layer').textContent = state.mode === 'ARCHIVE' ? 'VIIRS IR → dBZ' : (satLabel() || 'SATELLITE') + ' CLEAN IR';
+    $('h-frame').textContent = 'SAT · FRAME ' + String(state.frames.length).padStart(3,'0') + ' · ' + (state.frames[0] ? hm(state.frames[0].t) : '--') + ' UTC';
+    $('h-bbox').textContent = state.bbox.map((v) => v.toFixed(1)).join(' / ');
+    $('h-zmax').textContent = 'Zmax ' + (state.storm ? Math.round(40 + state.storm.windKt * .16) : '--') + ' dBZ · EYE ' + (state.storm ? 'EST' : '--');
+  }
+  function setWeather() {
+    const w = state.weather;
+    const real = !!(w && state.mode === 'ARCHIVE');
+    $('w-src').textContent = real ? 'OPEN-METEO ARCH' : (state.sounding ? state.sounding.source : 'MODEL');
+    $('w-t').textContent = w && w.t != null ? Math.round(w.t) : '--';
+    $('w-w').textContent = w && w.w != null ? Math.round(w.w) : '--';
+    $('w-p').textContent = w && w.p != null ? Math.round(w.p) : '--';
+    $('w-t2').textContent = w && w.g != null ? 'GUST ' + Math.round(w.g) + ' km/h' : '--';
+    $('w-w2').textContent = w && w.cloud != null ? 'CLOUD ' + Math.round(w.cloud) + '%' : '--';
+    $('w-p2').textContent = state.sounding ? 'T100 ' + (state.sounding.t[state.sounding.t.length-1] != null ? Math.round(state.sounding.t[state.sounding.t.length-1]) + '°C' : '--') : '--';
+    $('w-note').textContent = state.mode === 'LIVE' ? 'OPEN-METEO AIRMASS · AEROSTAT / SURFACE' : real ? 'OPEN-METEO ARCHIVE AIRMASS · 2022-09-27 18:00Z' : 'MODEL TROPICAL SOUNDING · ARCHIVE STORM';
+    U.setSrc($('wx-badge'), w && state.mode === 'LIVE' ? 'live' : 'sim', w ? (state.mode === 'LIVE' ? 'LIVE' : 'ARCH') : 'MODEL');
+    $('snd-meta').textContent = state.sounding ? state.sounding.source : 'MODEL';
+    $('fc-meta').textContent = state.track.length ? state.track.length + ' PTS · ' + (state.storm ? (state.storm.category || catOf(state.storm.windKt)) : '') : '--';
+    setPanelMeta();
+  }
+  function setPanelMeta() {
+    const s = state.storm || {};
+    const wp = windProfile();
+    const shear = Math.abs(wp.spd[5] - wp.spd[0]);
+    const rmw = eyeRmw();
+    $('rhi-meta').textContent = 'MODEL · ' + Math.round(s.windKt || 0) + ' KT';
+    $('ens-meta').textContent = '21 MEM · ' + Math.round(rmw) + ' NM';
+    $('ltg-meta').textContent = 'EST ' + lightningNow() + '/MIN';
+    $('hod-meta').textContent = 'SHEAR ' + Math.round(shear) + ' KT';
+    $('eye-meta').textContent = 'RMW ' + Math.round(rmw) + ' NM';
+    $('baro-meta').textContent = 'MODEL · 6 H';
+    $('idx-meta').textContent = '0-6 KM ' + Math.round(shear) + ' KT';
+  }
+
+  // ---- hero canvas -------------------------------------------------------------------------
+  function resize() {
+    const cv = $('storm-cv'), r = $('hero').getBoundingClientRect();
+    state.DPR = Math.min(window.devicePixelRatio || 1, 2);
+    state.W = Math.max(1, Math.round(r.width)); state.H = Math.max(1, Math.round(r.height));
+    state.heroW = state.W; state.heroH = state.H;
+    cv.width = Math.round(state.W * state.DPR); cv.height = Math.round(state.H * state.DPR);
+    cv.style.width = state.W + 'px'; cv.style.height = state.H + 'px';
+  }
+  function xy(lat, lon) {
+    const b = state.bbox, w = state.W, h = state.H;
+    return [(lon - b[0]) / (b[2] - b[0]) * w, (b[3] - lat) / (b[3] - b[1]) * h];
+  }
+  function drawHero(now) {
+    const cv = $('storm-cv'), ctx = cv.getContext('2d');
+    const t = (now - state.t0) / 1000, tt = state.motion ? t : 0;
+    ctx.setTransform(state.DPR, 0, 0, state.DPR, 0, 0);
+    ctx.clearRect(0, 0, state.W, state.H);
+    ctx.fillStyle = '#050912'; ctx.fillRect(0, 0, state.W, state.H);
+    if (state.motion) {
+      const zoom = 1.012 + .010 * Math.sin(tt * .22);
+      const px = 7 * Math.sin(tt * .11), py = 5 * Math.cos(tt * .14);
+      ctx.setTransform(state.DPR * zoom, 0, 0, state.DPR * zoom, state.DPR * (px + (1 - zoom) * state.W / 2), state.DPR * (py + (1 - zoom) * state.H / 2));
+    }
+    if (!state.frames.length) {
+      ctx.fillStyle = 'rgba(220,230,242,.55)'; ctx.font = '10px ' + MONO; ctx.fillText('ACQUIRING SATELLITE…', 20, 30);
+      return;
+    }
+    const fi = state.frames.length > 1 ? Math.floor(tt / 2) % state.frames.length : 0;
+    const next = state.frames[(fi + 1) % state.frames.length];
+    const f = state.frames.length > 1 ? (tt % 2) / 2 : 0;
+    const eye = state.eye || state.storm;
+    const [ecx, ecy] = eye ? xy(eye.lat, eye.lon) : [state.W / 2, state.H / 2];
+    const spin = tt * .20, cover = 1.22;
+    const paint = (img, alpha) => {
+      if (!img) return;
+      ctx.save();
+      ctx.translate(ecx, ecy); ctx.rotate(spin); ctx.scale(cover, cover);
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, -ecx, -ecy, state.W, state.H);
+      ctx.restore();
+    };
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    paint(state.frames[fi].c, 1);
+    if (state.frames.length > 1) paint(next.c, f);
+    if (state.fadeFrom) {
+      const ff = state.motion ? clamp((now - state.fadeAt) / 1800, 0, 1) : 1;
+      if (ff < 1) paint(state.fadeFrom, 1 - ff);
+      else state.fadeFrom = null;
+    }
+    drawGrid(ctx);
+    drawSweep(ctx, tt);
+    drawRangePulses(ctx, tt);
+    drawRotation(ctx, tt);
+    drawRainbands(ctx, tt);
+    drawStormOverlay(ctx, tt);
+    drawLightning(ctx, tt);
+    drawScanline(ctx, tt);
+  }
+  function drawGrid(ctx) {
+    const b = state.bbox;
+    ctx.save(); ctx.strokeStyle = 'rgba(220,230,242,.09)'; ctx.lineWidth = .7;
+    for (let lon = Math.ceil(b[0]); lon <= b[2]; lon += 1) { const x = xy((b[1]+b[3])/2, lon)[0]; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,state.H); ctx.stroke(); }
+    for (let lat = Math.ceil(b[1]); lat <= b[3]; lat += 1) { const y = xy(lat, (b[0]+b[2])/2)[1]; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(state.W,y); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(220,230,242,.45)'; ctx.font = '7px ' + MONO;
+    ctx.fillText(b[0].toFixed(1) + '°', 5, state.H - 5);
+    ctx.fillText(b[2].toFixed(1) + '°', state.W - 35, state.H - 5);
+    ctx.fillText(b[3].toFixed(1) + '°', 5, 10);
+    ctx.restore();
+  }
+  function drawSweep(ctx, t) {
+    const e = state.eye || state.storm; if (!e) return;
+    const [cx, cy] = xy(e.lat, e.lon);
+    const a = t * .35;
+    ctx.save(); ctx.translate(cx, cy);
+    const g = ctx.createLinearGradient(0,0,Math.cos(a)*state.W,Math.sin(a)*state.W);
+    g.addColorStop(0,'rgba(92,200,240,.22)'); g.addColorStop(1,'rgba(92,200,240,0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*state.W,Math.sin(a)*state.W); ctx.stroke();
+    ctx.fillStyle = 'rgba(92,200,240,.06)'; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,Math.max(state.W,state.H),a-0.22,a); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(180,240,255,.42)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a)*20, Math.sin(a)*20); ctx.lineTo(Math.cos(a)*Math.max(state.W,state.H), Math.sin(a)*Math.max(state.W,state.H)); ctx.stroke();
+    const b = a + Math.PI;
+    ctx.strokeStyle = 'rgba(92,200,240,.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(b)*state.W,Math.sin(b)*state.W); ctx.stroke();
+    ctx.restore();
+  }
+  function drawRangePulses(ctx, t) {
+    const e = state.eye || state.storm; if (!e) return;
+    const [cx, cy] = xy(e.lat, e.lon);
+    const b = state.bbox, pxL = state.W / (b[2] - b[0]), pxA = state.H / (b[3] - b[1]);
+    ctx.save();
+    for (let k = 0; k < 3; k++) {
+      const u = (t * .20 + k / 3) % 1;
+      const r = u * Math.max(state.W, state.H) * .85;
+      ctx.strokeStyle = 'rgba(92,200,240,' + (.18 * (1 - u)).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(cx, cy, r, r * pxA / pxL, 0, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawRotation(ctx, t) {
+    const e = state.eye || state.storm; if (!e) return;
+    const [cx, cy] = xy(e.lat, e.lon);
+    const b = state.bbox, pxL = state.W / (b[2] - b[0]), pxA = state.H / (b[3] - b[1]);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * .20);
+    for (let arm = 0; arm < 3; arm++) {
+      ctx.beginPath();
+      let tip = null;
+      for (let a = .15; a < 3.35; a += .08) {
+        const r = .55 * Math.exp(.52 * a);
+        const ang = a + arm * TAU / 3;
+        const x = Math.cos(ang) * r * pxL, y = Math.sin(ang) * r * pxA;
+        if (!tip) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        tip = [x, y];
+      }
+      ctx.strokeStyle = 'rgba(150,225,255,.10)'; ctx.lineWidth = 3.4; ctx.stroke();
+      ctx.strokeStyle = 'rgba(190,240,255,.32)'; ctx.lineWidth = 1.1; ctx.stroke();
+      if (tip) { ctx.fillStyle = 'rgba(190,245,255,.60)'; ctx.beginPath(); ctx.arc(tip[0], tip[1], 1.8, 0, TAU); ctx.fill(); }
+    }
+    ctx.setLineDash([9, 12]); ctx.lineDashOffset = -t * 34;
+    ctx.strokeStyle = 'rgba(190,240,255,.16)'; ctx.lineWidth = 1;
+    for (const d of [1.1, 2.0, 3.0]) {
+      ctx.beginPath(); ctx.ellipse(0, 0, d * pxL, d * pxA, 0, 0, TAU); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+  function drawRainbands(ctx, t) {
+    const e = state.eye || state.storm; if (!e) return;
+    const [cx, cy] = xy(e.lat, e.lon);
+    const b = state.bbox, pxL = state.W / (b[2] - b[0]), pxA = state.H / (b[3] - b[1]);
+    ctx.save();
+    for (let i = 0; i < 120; i++) {
+      const seed = rnd(i * 4.13 + 1.7);
+      const phase = (seed + t * (.035 + .015 * (i % 4))) % 1;
+      const rr = .55 + 2.6 * (1 - phase);
+      const ang = seed * TAU + t * (.18 + .05 * (i % 3)) + phase * 2.2;
+      const x = cx + Math.cos(ang) * rr * pxL, y = cy + Math.sin(ang) * rr * pxA;
+      const a = .12 + .38 * (1 - rr / 3.2);
+      ctx.fillStyle = 'rgba(170,228,255,' + a.toFixed(3) + ')';
+      ctx.fillRect(x, y, 1.6, 1.6);
+    }
+    ctx.restore();
+  }
+  function drawLightning(ctx, t) {
+    const e = state.eye || state.storm; if (!e) return;
+    const [cx, cy] = xy(e.lat, e.lon);
+    const b = state.bbox, pxL = state.W / (b[2] - b[0]), pxA = state.H / (b[3] - b[1]);
+    const period = .9, k = Math.floor(t / period), ph = (t % period) / period;
+    if (ph > .16) return;
+    ctx.save();
+    for (let i = 0; i < 4; i++) {
+      const a = rnd(k * 13.1 + i * 7.7) * TAU;
+      const rr = .55 + 1.6 * rnd(k * 5.3 + i);
+      const x = cx + Math.cos(a) * rr * pxL, y = cy + Math.sin(a) * rr * pxA;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 16);
+      g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(.25, 'rgba(140,230,255,.55)'); g.addColorStop(1, 'rgba(140,230,255,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 16, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(x - 3, y - 7); ctx.lineTo(x + 2, y - 2); ctx.lineTo(x - 1, y + 1); ctx.lineTo(x + 3, y + 7); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function pointAlong(pts, u) {
+    if (!pts.length) return null;
+    if (pts.length === 1) return pts[0].xy;
+    let total = 0; const segs = [];
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i].xy[0] - pts[i-1].xy[0], pts[i].xy[1] - pts[i-1].xy[1]);
+      segs.push(d); total += d;
+    }
+    let target = u * total;
+    for (let i = 0; i < segs.length; i++) {
+      if (target <= segs[i]) {
+        const f = segs[i] ? target / segs[i] : 0;
+        return [lerp(pts[i].xy[0], pts[i+1].xy[0], f), lerp(pts[i].xy[1], pts[i+1].xy[1], f)];
+      }
+      target -= segs[i];
+    }
+    return pts[pts.length - 1].xy;
+  }
+  function drawStormOverlay(ctx, t) {
+    const s = state.storm; if (!s) return;
+    const e = state.eye || s;
+    const [cx, cy] = xy(e.lat, e.lon);
+    const b = state.bbox, pxPerLon = state.W / (b[2] - b[0]), pxPerLat = state.H / (b[3] - b[1]);
+    // wind radii
+    if (state.windRadii && state.windRadii.length) {
+      ctx.save(); ctx.setLineDash([3,4]); ctx.lineDashOffset = -t * 8; ctx.lineWidth = .8;
+      const cols = ['rgba(92,200,240,.55)','rgba(242,180,65,.55)','rgba(255,59,92,.55)'];
+      state.windRadii.forEach((r, i) => {
+        const deg = Math.max(r.ne || 0, r.se || 0, r.sw || 0, r.nw || 0) / 60;
+        ctx.strokeStyle = cols[Math.min(i, 2)];
+        ctx.beginPath(); ctx.ellipse(cx, cy, deg * pxPerLon, deg * pxPerLat, 0, 0, TAU); ctx.stroke();
+      });
+      ctx.restore();
+    }
+    // pressure contours
+    ctx.save(); ctx.strokeStyle = 'rgba(242,180,65,.15)'; ctx.lineWidth = .7;
+    for (const d of [.8, 1.4, 2.1, 2.9]) {
+      const rr = d * (1 + .014 * Math.sin(t * .9 + d * 2.4));
+      ctx.beginPath(); ctx.ellipse(cx, cy, rr*pxPerLon, rr*pxPerLat, 0, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+    // forecast cone (forecast points only)
+    if (state.track.length > 1) {
+      const pts = state.track.map((p) => ({ ...p, xy: xy(p.lat, p.lon) }));
+      const fc = pts.filter((p) => p.kind !== 'past');
+      if (state.hasCone && fc.length > 1) {
+        const left = [], right = [];
+        for (let i = 0; i < fc.length; i++) {
+          const p = fc[i], q = fc[Math.min(fc.length-1, i+1)], prev = fc[Math.max(0,i-1)];
+          const dx = q.xy[0]-prev.xy[0], dy = q.xy[1]-prev.xy[1], len = Math.hypot(dx,dy)||1;
+          const nx = -dy/len, ny = dx/len;
+          const r = (p.tau || 0) / 120 * state.W * .16 + 12;
+          left.push([p.xy[0]+nx*r, p.xy[1]+ny*r]); right.push([p.xy[0]-nx*r, p.xy[1]-ny*r]);
+        }
+        ctx.save(); ctx.beginPath();
+        left.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+        for (let i=right.length-1;i>=0;i--) ctx.lineTo(right[i][0],right[i][1]);
+        ctx.closePath(); ctx.fillStyle='rgba(242,180,65,.06)'; ctx.fill();
+        ctx.strokeStyle='rgba(242,180,65,.34)'; ctx.lineWidth=.8; ctx.setLineDash([4,5]); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+      }
+      // observed track (dashed)
+      const past = pts.filter((p) => p.kind === 'past' || p.kind === 'current');
+      ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(220,230,242,.34)'; ctx.lineWidth=1;
+      ctx.beginPath(); past.forEach((p,i)=> i?ctx.lineTo(p.xy[0],p.xy[1]):ctx.moveTo(p.xy[0],p.xy[1])); ctx.stroke(); ctx.restore();
+      // forecast track
+      if (fc.length > 1) {
+        ctx.beginPath(); fc.forEach((p,i)=> i?ctx.lineTo(p.xy[0],p.xy[1]):ctx.moveTo(p.xy[0],p.xy[1]));
+        ctx.strokeStyle='rgba(242,180,65,.9)'; ctx.lineWidth=1.3; ctx.stroke();
+      }
+      pts.forEach((p)=>{
+        const cur = p.kind === 'current';
+        const fcast = p.kind === 'forecast';
+        ctx.fillStyle = cur ? '#FFFFFF' : fcast ? 'rgba(242,180,65,.95)' : 'rgba(220,230,242,.6)';
+        ctx.beginPath(); ctx.arc(p.xy[0],p.xy[1],cur?3.2:fcast?2.2:1.6,0,TAU); ctx.fill();
+      });
+      fc.forEach((p) => {
+        const tau = Math.round(p.tau || 0);
+        if ([24,48,72,96,120].includes(tau)) {
+          ctx.font='7px '+MONO; ctx.fillStyle='rgba(242,180,65,.9)';
+          ctx.fillText('+'+tau+'H', p.xy[0]+6, p.xy[1]-5);
+        }
+      });
+      if (state.motion && fc.length > 1) {
+        const q = pointAlong(fc, (t * .12) % 1);
+        if (q) {
+          const g = ctx.createRadialGradient(q[0], q[1], 0, q[0], q[1], 11);
+          g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(.4, 'rgba(242,180,65,.5)'); g.addColorStop(1, 'rgba(242,180,65,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q[0], q[1], 11, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(q[0], q[1], 2.2, 0, TAU); ctx.fill();
+        }
+      }
+    }
+    // eye / eyewall
+    ctx.save(); ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(cx,cy,7,0,TAU); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-13,cy); ctx.lineTo(cx+13,cy); ctx.moveTo(cx,cy-13); ctx.lineTo(cx,cy+13); ctx.stroke();
+    ctx.restore();
+    // aerostat
+    if (state.station) {
+      const [sx,sy] = xy(state.station.lat, state.station.lon);
+      ctx.save(); ctx.strokeStyle='rgba(242,180,65,.8)'; ctx.fillStyle='rgba(242,180,65,.9)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(sx,sy,4,0,TAU); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx,sy-7); ctx.lineTo(sx+7,sy); ctx.lineTo(sx,sy+7); ctx.lineTo(sx-7,sy); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(cx,cy); ctx.strokeStyle='rgba(242,180,65,.18)'; ctx.stroke();
+      ctx.font='7px '+MONO; ctx.fillStyle='rgba(242,180,65,.9)'; ctx.fillText('GW12 · AEROSTAT', sx+10, sy+3);
+      ctx.restore();
+    }
+    // labels
+    tag(ctx, cx+16, cy-28, 'EYE · ' + fmtLat(e.lat) + ' ' + fmtLon(e.lon), 'rgba(220,230,242,.9)');
+    tag(ctx, cx-92, cy+54, 'EYEWALL · 34/50/64 KT', 'rgba(92,200,240,.9)');
+    tag(ctx, 24, 100, 'RAINBAND · IR → dBZ', 'rgba(220,230,242,.8)');
+    if (state.track.length > 1) tag(ctx, state.W-148, 66, 'FORECAST · ' + state.issuer + ' TRACK', 'rgba(242,180,65,.9)');
+    // sweep dot
+    const [tx,ty] = xy(e.lat, e.lon);
+    ctx.fillStyle='rgba(92,200,240,.8)'; ctx.beginPath(); ctx.arc(tx,ty,2,0,TAU); ctx.fill();
+  }
+  function tag(ctx, x, y, text, color) {
+    ctx.save(); ctx.font='7px '+MONO; const w=ctx.measureText(text).width+8;
+    ctx.fillStyle='rgba(5,9,18,.78)'; ctx.fillRect(x,y-10,w,14);
+    ctx.strokeStyle='rgba(76,110,166,.4)'; ctx.strokeRect(x+.3,y-9.7,w-.6,13.4);
+    ctx.fillStyle=color; ctx.fillText(text,x+4,y);
+    ctx.restore();
+  }
+  function drawScanline(ctx,t){ const y=(t*.06%1)*state.H; ctx.save(); ctx.strokeStyle='rgba(92,200,240,.10)'; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(state.W,y); ctx.stroke(); ctx.restore(); }
+  function startHero(){ const step=(now)=>{ state.raf=requestAnimationFrame(step); if(!state.motion)return; drawHero(now); const fi=state.frames.length>1?Math.floor(((now-state.t0)/1000)/2)%state.frames.length:0; if(fi!==state.frameIndex){state.frameIndex=fi; setSatMeta();} }; if(state.motion) state.raf=requestAnimationFrame(step); else drawHero(state.t0); }
+
+  // ---- panel canvases ----------------------------------------------------------------------
+  function catColor(kt) {
+    return kt >= 137 ? '#F5F5F5' : kt >= 113 ? '#C427B8' : kt >= 96 ? '#E5322D' : kt >= 83 ? '#F28C28' : kt >= 64 ? '#D9D62B' : kt >= 34 ? '#2FA84F' : '#1F7A8C';
+  }
+  function lightningNow() {
+    const base = 45 + ((state.storm ? state.storm.windKt : 60) * 1.5);
+    const k = Math.floor((performance.now() / 1000) * .55);
+    return Math.round(base * (.30 + .70 * rnd(k * 1.7)) * (1 + .40 * Math.sin(k * .7)));
+  }
+  function initPanels() {
+    const mk = (sel, fn) => U.canvas(sel, (ctx, w, h, t) => { try { fn(ctx, w, h, state.motion ? t : 0); } catch (e) { /* keep the loop alive */ } }, { fps: 20 });
+    mk('#snd-cv', drawSounding);
+    mk('#rhi-cv', drawRHI);
+    mk('#ens-cv', drawEnsemble);
+    mk('#ltg-cv', drawLightning);
+    mk('#fc-cv', drawForecast);
+    mk('#hod-cv', drawHodograph);
+    mk('#eye-cv', drawEyeProfile);
+    mk('#baro-cv', drawBaro);
+    mk('#idx-cv', drawIndices);
+    mk('#int-cv', drawIntensity);
+  }
+  function panelGrid(ctx, L, R, T, B, w, h) {
+    ctx.strokeStyle = 'rgba(76,110,166,.12)'; ctx.lineWidth = .7;
+    for (let i = 0; i <= 4; i++) { const y = T + (h - T - B) * i / 4; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(w - R, y); ctx.stroke(); }
+    for (let i = 0; i <= 4; i++) { const x = L + (w - L - R) * i / 4; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, h - B); ctx.stroke(); }
+  }
+  function drawSounding(ctx, w, h, t) {
+    const s = state.sounding; if (!s) return;
+    const L = 32, R = 10, T = 12, B = 18, pw = w - L - R, ph = h - T - B;
+    const l0 = Math.log(1000), l1 = Math.log(100);
+    const xT = (v) => L + (v + 80) / 120 * pw, yP = (p) => T + (l0 - Math.log(p)) / (l0 - l1) * ph;
+    panelGrid(ctx, L, R, T, B, w, h);
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.font = '6px ' + MONO;
+    for (let p = 1000; p >= 100; p -= 100) ctx.fillText(p, 3, yP(p) + 2);
+    for (let temp = -80; temp <= 40; temp += 20) ctx.fillText(temp, xT(temp) - 4, h - 6);
+    const t0 = s.t[0] != null ? s.t[0] : 27;
+    const parcel = s.p.map((p) => p >= 950 ? t0 - (1000 - p) * .10 : (t0 - 5) - (950 - p) * .10);
+    // CAPE shading where the parcel is warmer than the environment
+    ctx.save(); ctx.fillStyle = 'rgba(242,180,65,.10)'; ctx.beginPath();
+    let open = false;
+    s.p.forEach((p, i) => {
+      if (s.t[i] == null || parcel[i] <= s.t[i]) { if (open) { ctx.closePath(); open = false; } return; }
+      const x = xT(parcel[i]), y = yP(p);
+      if (!open) { ctx.moveTo(xT(s.t[i]), y); ctx.lineTo(x, y); open = true; } else ctx.lineTo(x, y);
+      ctx.lineTo(xT(s.t[i]), y);
+    });
+    if (open) ctx.closePath(); ctx.fill(); ctx.restore();
+    const line = (arr, color, width, dash) => {
+      ctx.save(); if (dash) ctx.setLineDash(dash); ctx.beginPath(); let started = false;
+      s.p.forEach((p, i) => { if (arr[i] == null) return; const x = xT(arr[i]), y = yP(p); started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true; });
+      ctx.strokeStyle = color; ctx.lineWidth = width || 1.2; ctx.stroke(); ctx.restore();
+    };
+    line(s.t, '#F2B441'); line(s.td, '#5CC8F0');
+    line(parcel, 'rgba(220,230,242,.55)', 1, [3, 3]);
+    const scan = (t * .18 % 1) * ph;
+    ctx.strokeStyle = 'rgba(242,180,65,.20)'; ctx.beginPath(); ctx.moveTo(L, T + scan); ctx.lineTo(w - R, T + scan); ctx.stroke();
+    const pi = state.motion ? Math.floor((t * .45 % 1) * (s.p.length - 1)) : 0;
+    if (parcel[pi] != null) {
+      const x = xT(parcel[pi]), y = yP(s.p[pi]);
+      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x, y, 2.2, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(220,230,242,.8)'; ctx.fillText(Math.round(parcel[pi]) + '°C', x + 4, y - 3);
+    }
+    ctx.fillStyle = 'rgba(220,230,242,.72)'; ctx.fillText('T', w - 16, T + 8); ctx.fillStyle = '#5CC8F0'; ctx.fillText('Td', w - 20, T + 17);
+    ctx.fillStyle = 'rgba(107,124,147,.8)'; ctx.fillText('hPa', 3, h - 6); ctx.fillText('T °C', w - 28, h - 6);
+  }
+  function drawRHI(ctx, w, h, t) {
+    const L = 26, R = 8, T = 10, B = 16, pw = w - L - R, ph = h - T - B;
+    const rmwKm = eyeRmw() * 1.852;
+    ctx.save();
+    for (let y = T; y < h - B; y += 3) {
+      for (let x = L; x < w - R; x += 3) {
+        const r = (x - L) / pw * 300, z = (h - B - y) / ph * 16;
+        const v = rhiValue(r, z, t * .35, rmwKm);
+        if (v < 5) continue;
+        const c = ramp(v / 70);
+        ctx.fillStyle = 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',.82)';
+        ctx.fillRect(x, y, 3, 3);
+      }
+    }
+    ctx.restore();
+    panelGrid(ctx, L, R, T, B, w, h);
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.font = '6px ' + MONO;
+    ctx.fillText('0', L - 2, h - 6); ctx.fillText('150', L + pw / 2 - 6, h - 6); ctx.fillText('300 km', w - R - 22, h - 6);
+    ctx.fillText('16 km', 2, T + 7); ctx.fillText('0', 2, h - B);
+    const sx = L + (t * .12 % 1) * pw;
+    ctx.strokeStyle = 'rgba(220,230,242,.55)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(sx, T); ctx.lineTo(sx, h - B); ctx.stroke();
+    ctx.fillStyle = 'rgba(220,230,242,.7)'; ctx.fillText('SCAN ' + Math.round((t * .12 % 1) * 100) + '%', sx + 4, T + 8);
+    if (t * 2.2 % 1 < .08) {
+      const x = L + (.16 + rnd(Math.floor(t * 2.2)) * .18) * pw, y = T + ph * .55;
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(x - 4, y); ctx.lineTo(x + 4, y); ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4); ctx.stroke();
+    }
+  }
+  function drawEnsemble(ctx, w, h, t) {
+    const fp = (state.track || []).filter((p) => p.kind !== 'past').map((p) => ({ tau: p.tau || 0, p: pressureFromWind(p.windKt || 0) }));
+    if (!fp.length) return;
+    const L = 26, R = 8, T = 10, B = 16, pw = w - L - R, ph = h - T - B;
+    const maxTau = Math.max(24, ...fp.map((p) => p.tau));
+    const pMin = Math.min(...fp.map((p) => p.p)) - 12, pMax = Math.max(...fp.map((p) => p.p)) + 12;
+    const x = (v) => L + v / maxTau * pw, y = (v) => T + (pMax - v) / (pMax - pMin) * ph;
+    panelGrid(ctx, L, R, T, B, w, h);
+    for (let i = 0; i < 21; i++) {
+      ctx.beginPath();
+      fp.forEach((p, j) => {
+        const v = p.p + (rnd(i * 7.3 + p.tau) * 2 - 1) * (3.5 + i % 5) + Math.sin(p.tau * .10 + i) * 2;
+        j ? ctx.lineTo(x(p.tau), y(v)) : ctx.moveTo(x(p.tau), y(v));
+      });
+      ctx.strokeStyle = i === 0 ? 'rgba(92,200,240,.55)' : 'rgba(92,200,240,.16)'; ctx.lineWidth = i === 0 ? 1.1 : .6; ctx.stroke();
+    }
+    ctx.beginPath();
+    fp.forEach((p, j) => { j ? ctx.lineTo(x(p.tau), y(p.p)) : ctx.moveTo(x(p.tau), y(p.p)); });
+    ctx.strokeStyle = '#F2B441'; ctx.lineWidth = 1.6; ctx.stroke();
+    const cx = L + (t * .07 % 1) * pw;
+    ctx.strokeStyle = 'rgba(242,180,65,.30)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(cx, T); ctx.lineTo(cx, h - B); ctx.stroke();
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.font = '6px ' + MONO;
+    ctx.fillText('hPa', 2, T + 8); ctx.fillText('0', L - 2, h - 6); ctx.fillText('+' + maxTau + 'H', w - R - 22, h - 6);
+  }
+  function drawLightning(ctx, w, h, t) {
+    const L = 22, R = 8, T = 10, B = 16, pw = w - L - R, ph = h - T - B;
+    const base = 45 + ((state.storm ? state.storm.windKt : 60) * 1.5);
+    const n = Math.max(24, Math.floor(pw / 4));
+    const phase = t * .55, k = Math.floor(phase), frac = phase - k;
+    const bw = pw / n;
+    panelGrid(ctx, L, R, T, B, w, h);
+    let peak = 0;
+    for (let i = 0; i < n; i++) {
+      const v = base * (.25 + .75 * rnd(i + k * 1.7)) * (1 + .40 * Math.sin((i + k) * .7));
+      peak = Math.max(peak, v);
+      const bh = clamp(v / (base * 1.5), 0, 1) * ph;
+      const x = L + i * bw - frac * bw;
+      const col = v > base * 1.15 ? '#FF3B5C' : v > base * .85 ? '#F2B441' : '#5CC8F0';
+      ctx.fillStyle = col; ctx.globalAlpha = .72;
+      ctx.fillRect(x, h - B - bh, Math.max(1, bw - 1), bh);
+      ctx.globalAlpha = 1;
+    }
+    const now = Math.round(base * (.30 + .70 * rnd(k * 1.7)) * (1 + .40 * Math.sin(k * .7)));
+    ctx.fillStyle = 'rgba(220,230,242,.8)'; ctx.font = '6px ' + MONO;
+    ctx.fillText('NOW ' + now + '/MIN', L, T + 7); ctx.fillText('PEAK ' + Math.round(peak), w - R - 40, T + 7);
+    ctx.fillText('60 MIN', w - R - 24, h - 6);
+    const sx = L + (t * .30 % 1) * pw;
+    ctx.strokeStyle = 'rgba(242,180,65,.18)'; ctx.beginPath(); ctx.moveTo(sx, T); ctx.lineTo(sx, h - B); ctx.stroke();
+  }
+  function drawForecast(ctx, w, h, t) {
+    const tr = (state.track || []).filter((p) => p.kind !== 'past'); if (!tr.length) return;
+    const L = 28, R = 10, T = 12, B = 16, pw = w - L - R, ph = h - T - B;
+    const maxTau = Math.max(24, ...tr.map((p) => p.tau || 0)), maxW = Math.max(80, ...tr.map((p) => p.windKt || 0)) * 1.1;
+    const x = (v) => L + v / maxTau * pw, y = (v) => T + ph - v / maxW * ph;
+    panelGrid(ctx, L, R, T, B, w, h);
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.font = '6px ' + MONO;
+    for (let tau = 0; tau <= maxTau; tau += 24) ctx.fillText('+' + tau, x(tau) - 5, h - 6);
+    for (let v = 0; v <= maxW; v += 40) ctx.fillText(v, 2, y(v) + 2);
+    const bw = Math.min(14, pw / Math.max(1, tr.length) * .55);
+    tr.forEach((p, i) => {
+      const xx = x(p.tau || 0), yy = y(p.windKt || 0);
+      const grow = state.motion ? .72 + .28 * Math.min(1, t / 2.5) * (1 + .04 * Math.sin(t * 2 + i)) : 1;
+      const bh = (h - B - yy) * grow;
+      ctx.fillStyle = catColor(p.windKt || 0); ctx.globalAlpha = .55;
+      ctx.fillRect(xx - bw / 2, h - B - bh, bw, bh); ctx.globalAlpha = 1;
+      ctx.fillStyle = i === 0 ? '#FFFFFF' : '#F2B441';
+      ctx.beginPath(); ctx.arc(xx, yy, i === 0 ? 2.4 : 1.8, 0, TAU); ctx.fill();
+    });
+    // pressure line on the same frame
+    ctx.beginPath();
+    tr.forEach((p, i) => { const xx = x(p.tau || 0), yy = T + ph - (pressureFromWind(p.windKt || 0) - 930) / 90 * ph; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); });
+    ctx.strokeStyle = 'rgba(92,200,240,.65)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(220,230,242,.72)'; ctx.fillText('KT', 2, T + 7); ctx.fillText('TAU', w - 26, h - 6);
+    const sx = L + (t * .20 % 1) * pw;
+    ctx.strokeStyle = 'rgba(242,180,65,.16)'; ctx.beginPath(); ctx.moveTo(sx, T); ctx.lineTo(sx, h - B); ctx.stroke();
+  }
+  function drawIntensity(ctx, w, h, t) {
+    const tr = (state.track || []).filter((p) => p.kind !== 'past'); if (!tr.length) return;
+    const L = 4, R = 4, T = 10, B = 10, pw = w - L - R, ph = h - T - B;
+    const maxTau = Math.max(24, ...tr.map((p) => p.tau || 0)), maxW = Math.max(80, ...tr.map((p) => p.windKt || 0)) * 1.15;
+    const x = (v) => L + v / maxTau * pw, y = (v) => T + ph - v / maxW * ph;
+    ctx.strokeStyle = 'rgba(76,110,166,.12)'; ctx.lineWidth = .7;
+    for (let i = 0; i <= 2; i++) { const yy = T + ph * i / 2; ctx.beginPath(); ctx.moveTo(L, yy); ctx.lineTo(w - R, yy); ctx.stroke(); }
+    ctx.beginPath();
+    tr.forEach((p, i) => { const xx = x(p.tau || 0), yy = y(p.windKt || 0); i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); });
+    ctx.lineTo(x(tr[tr.length - 1].tau || 0), h - B); ctx.lineTo(x(tr[0].tau || 0), h - B); ctx.closePath();
+    ctx.fillStyle = 'rgba(242,180,65,.07)'; ctx.fill();
+    ctx.beginPath();
+    tr.forEach((p, i) => { const xx = x(p.tau || 0), yy = y(p.windKt || 0); i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); });
+    ctx.strokeStyle = '#F2B441'; ctx.lineWidth = 1.3; ctx.stroke();
+    tr.forEach((p, i) => {
+      const xx = x(p.tau || 0), yy = y(p.windKt || 0);
+      ctx.fillStyle = catColor(p.windKt || 0);
+      ctx.beginPath(); ctx.arc(xx, yy, i === 0 ? 2.4 : 1.5, 0, TAU); ctx.fill();
+    });
+    const cur = tr[0], xx = x(cur.tau || 0), yy = y(cur.windKt || 0);
+    const pulse = 3 + 1.6 * Math.sin(t * 3);
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = .8;
+    ctx.beginPath(); ctx.arc(xx, yy, pulse, 0, TAU); ctx.stroke();
+    const sx = L + (t * .16 % 1) * pw;
+    ctx.strokeStyle = 'rgba(242,180,65,.16)'; ctx.beginPath(); ctx.moveTo(sx, T); ctx.lineTo(sx, h - B); ctx.stroke();
+    ctx.fillStyle = 'rgba(107,124,147,.8)'; ctx.font = '6px ' + MONO;
+    ctx.fillText('INTENSITY · KT', 2, 7);
+    ctx.fillStyle = catColor(cur.windKt || 0); ctx.fillText(Math.round(cur.windKt || 0) + ' KT', w - 34, 7);
+    ctx.fillStyle = 'rgba(107,124,147,.65)'; ctx.fillText('+' + maxTau + 'H', w - R - 22, h - 2);
+  }
+  function drawHodograph(ctx, w, h, t) {
+    const wp = windProfile();
+    const max = Math.max(30, ...wp.spd) * 1.15;
+    const cx = w * .48, cy = h * .55, R = Math.min(w, h) * .38;
+    const x = (u) => cx + u / max * R, y = (v) => cy - v / max * R;
+    ctx.strokeStyle = 'rgba(76,110,166,.16)'; ctx.lineWidth = .7;
+    for (const ring of [max / 3, max * 2 / 3, max]) { ctx.beginPath(); ctx.arc(cx, cy, ring / max * R, 0, TAU); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+    ctx.beginPath();
+    wp.u.forEach((u, i) => { i ? ctx.lineTo(x(u), y(wp.v[i])) : ctx.moveTo(x(u), y(wp.v[i])); });
+    ctx.strokeStyle = 'rgba(92,200,240,.75)'; ctx.lineWidth = 1.3; ctx.stroke();
+    wp.u.forEach((u, i) => {
+      const c = i < 4 ? '#5CC8F0' : i < 8 ? '#F2B441' : '#FF3B5C';
+      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x(u), y(wp.v[i]), i === 0 ? 2.6 : 1.6, 0, TAU); ctx.fill();
+    });
+    const u0 = wp.u[0], v0 = wp.v[0];
+    ctx.strokeStyle = 'rgba(220,230,242,.8)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x(u0), y(v0)); ctx.stroke();
+    const f = state.motion ? (t * .22 % 1) : 0;
+    const idx = f * (wp.u.length - 1), i0 = Math.floor(idx), i1 = Math.min(wp.u.length - 1, i0 + 1), ff = idx - i0;
+    const mu = lerp(wp.u[i0], wp.u[i1], ff), mv = lerp(wp.v[i0], wp.v[i1], ff);
+    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x(mu), y(mv), 2.6, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.font = '6px ' + MONO;
+    ctx.fillText('u', w - 10, cy + 2); ctx.fillText('v', cx + 3, T + 8);
+    ctx.fillText(Math.round(wp.spd[0]) + ' kt SFC', 3, h - 6);
+  }
+  function drawEyeProfile(ctx, w, h, t) {
+    const s = state.storm; if (!s) return;
+    const p0 = s.pressure || 1000, rmw = eyeRmw(), rmax = 200;
+    const L = 26, R = 8, T = 12, B = 16, pw = w - L - R, ph = h - T - B;
+    const x = (r) => L + r / rmax * pw, y = (p) => T + (1 - (p - (p0 - 2)) / 38) * ph;
+    panelGrid(ctx, L, R, T, B, w, h);
+    ctx.beginPath();
+    for (let r = 0; r <= rmax; r += 2) { const p = pressureAt(p0, r, rmw); r ? ctx.lineTo(x(r), y(p)) : ctx.moveTo(x(r), y(p)); }
+    ctx.strokeStyle = '#F2B441'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.lineTo(x(rmax), h - B); ctx.lineTo(x(0), h - B); ctx.closePath();
+    ctx.fillStyle = 'rgba(242,180,65,.06)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(92,200,240,.45)'; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x(rmw), T); ctx.lineTo(x(rmw), h - B); ctx.stroke(); ctx.setLineDash([]);
+    const rr = state.motion ? (t * .14 % 1) * rmax : 0;
+    const pp = pressureAt(p0, rr, rmw);
+    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x(rr), y(pp), 2.4, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(220,230,242,.8)'; ctx.font = '6px ' + MONO;
+    ctx.fillText(Math.round(pp) + ' hPa', x(rr) + 4, y(pp) - 4);
+    ctx.fillStyle = 'rgba(107,124,147,.7)';
+    ctx.fillText('hPa', 2, T + 8); ctx.fillText('0', L - 2, h - 6); ctx.fillText('200 nm', w - R - 26, h - 6);
+    ctx.fillStyle = 'rgba(92,200,240,.8)'; ctx.fillText('RMW ' + Math.round(rmw) + ' nm', x(rmw) + 3, T + 8);
+  }
+  function drawBaro(ctx, w, h, t) {
+    const base = state.weather && state.weather.p != null ? state.weather.p : 1000;
+    const rows = [{ id: 'R1 · NNE', off: 2.0, ph: .0 }, { id: 'R2 · WSW', off: -1.5, ph: 1.7 }, { id: 'R3 · SE', off: .5, ph: 3.1 }];
+    const L = 52, R = 8, T = 8, B = 10, pw = w - L - R, ph = h - T - B, rh = ph / rows.length;
+    ctx.strokeStyle = 'rgba(76,110,166,.10)'; ctx.lineWidth = .7;
+    for (let i = 1; i < rows.length; i++) { const y = T + rh * i; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(w - R, y); ctx.stroke(); }
+    ctx.font = '6px ' + MONO;
+    rows.forEach((row, ri) => {
+      const y0 = T + rh * ri + rh * .5;
+      const trace = [];
+      for (let i = 0; i <= 90; i++) {
+        const x = i / 90;
+        const p = base + row.off + .55 * Math.sin(x * 9 + row.ph + t * .5) + .22 * Math.sin(x * 31 + row.ph);
+        trace.push({ x: L + x * pw, y: y0 - (p - (base - 4)) / 8 * rh * .8 });
+      }
+      ctx.beginPath(); trace.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      ctx.strokeStyle = ri === 1 ? '#F2B441' : 'rgba(92,200,240,.75)'; ctx.lineWidth = ri === 1 ? 1.3 : 1; ctx.stroke();
+      const last = trace[trace.length - 1];
+      ctx.fillStyle = ri === 1 ? '#F2B441' : '#5CC8F0'; ctx.beginPath(); ctx.arc(last.x, last.y, 1.8, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(220,230,242,.8)'; ctx.fillText(row.id, 2, y0 - 2);
+      ctx.fillStyle = ri === 1 ? '#F2B441' : 'rgba(92,200,240,.8)'; ctx.fillText((base + row.off).toFixed(1), 2, y0 + 8);
+    });
+    const sx = L + (t * .12 % 1) * pw;
+    ctx.strokeStyle = 'rgba(242,180,65,.15)'; ctx.beginPath(); ctx.moveTo(sx, T); ctx.lineTo(sx, h - B); ctx.stroke();
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.fillText('-6 h', L, h - 3); ctx.fillText('NOW', w - R - 16, h - 3);
+  }
+  function drawIndices(ctx, w, h, t) {
+    const wp = windProfile();
+    const levels = [1000, 850, 700, 500, 300, 200];
+    const L = 34, R = 8, T = 12, B = 10, pw = w - L - R, ph = h - T - B, rh = ph / levels.length;
+    const max = Math.max(30, ...wp.spd);
+    ctx.font = '6px ' + MONO;
+    levels.forEach((p, i) => {
+      const j = wp.p.indexOf(p); if (j < 0) return;
+      const y = T + rh * i + rh * .5;
+      const grow = state.motion ? .78 + .22 * Math.min(1, t / 2) * (1 + .05 * Math.sin(t * 2 + i)) : 1;
+      const bw = wp.spd[j] / max * (pw - 46) * grow;
+      ctx.fillStyle = 'rgba(76,110,166,.16)'; ctx.fillRect(L, y - 2.5, pw - 46, 5);
+      ctx.fillStyle = i < 2 ? '#5CC8F0' : i < 4 ? '#F2B441' : '#FF3B5C';
+      ctx.globalAlpha = .8; ctx.fillRect(L, y - 2.5, bw, 5); ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(107,124,147,.8)'; ctx.fillText(p, 2, y + 2);
+      ctx.fillStyle = 'rgba(220,230,242,.85)'; ctx.fillText(Math.round(wp.spd[j]) + ' kt ' + String(Math.round(wp.dir[j])).padStart(3, '0') + '°', L + pw - 44, y + 2);
+    });
+    ctx.fillStyle = 'rgba(107,124,147,.7)'; ctx.fillText('hPa', 2, h - 2); ctx.fillText('SPEED / DIR', w - R - 48, h - 2);
+    const sy = T + (t * .18 % 1) * ph;
+    ctx.strokeStyle = 'rgba(242,180,65,.18)'; ctx.beginPath(); ctx.moveTo(L, sy); ctx.lineTo(w - R, sy); ctx.stroke();
+  }
+
+  // ---- boot ---------------------------------------------------------------------------------
+  async function boot(){
+    try {
+      resize(); initPanels();
+      await loadArchive();
+      setInterval(() => { $('t-clock').textContent = hms(new Date()); }, 1000); $('t-clock').textContent = hms(new Date());
+      setInterval(() => { const el = $('ltg-meta'); if (el) el.textContent = 'EST ' + lightningNow() + '/MIN'; }, 2500);
+      if (!SIM) { loadArchiveWeather(); }
+      else { const lb = $('live-btn'); if (lb) { lb.textContent = 'SIM'; lb.disabled = true; } }
+      startHero();
+      window.addEventListener('resize', () => { clearTimeout(state._rz); state._rz=setTimeout(()=>{ resize(); if(!state.motion) drawHero(performance.now()); },120); });
+    } catch(e) { $('fatal').classList.add('on'); console.error(e); }
+  }
+const modal=$('modal'); $('data-btn').addEventListener('click',()=>modal.classList.add('on')); $('modal-x').addEventListener('click',()=>modal.classList.remove('on')); modal.addEventListener('click',(e)=>{if(e.target===modal)modal.classList.remove('on');}); document.addEventListener('keydown',(e)=>{if(e.key==='Escape')modal.classList.remove('on');});
+$('live-btn').addEventListener('click', async () => {
+  const btn = $('live-btn');
+  if (state.mode === 'LIVE') {
+    clearInterval(state.liveTimer); state.liveTimer = 0;
+    await loadArchive();
+    return;
+  }
+  btn.textContent = 'CONNECTING';
+  await loadLive();
+  if (state.mode === 'LIVE' && !state.liveTimer) state.liveTimer = setInterval(loadLive, 300000);
+  if (state.mode !== 'LIVE') btn.textContent = 'LIVE';
+});
+boot();
+})();
+</script>
+</body>
+</html>

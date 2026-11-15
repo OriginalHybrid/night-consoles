@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wildfire Spread - SPOTFIRE</title>
+<meta name="description" content="SPOTFIRE: a motion-first wildfire behaviour console. Authored training scenario with live weather, air quality, alerts and thermal detections.">
+<meta name="theme-color" content="#0C0305">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+:root{--bg:#0C0305;--panel:#180608;--text:#F6E6E0;--dim:#9A6A66;--accent:#FF2A1E;--data:#D8F0FF;--cool:#5CC0FF;--alarm:#FFC24A;--hot:#FF3B1E;--hot2:#FF8A3C;--amber:#FFC24A;--ice:#D8F0FF;--rule:rgba(255,74,58,.30);--rule2:rgba(255,74,58,.13);--ink2:rgba(246,230,224,.78);--ink3:rgba(246,230,224,.52)}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg)}body{color:var(--text);font-family:var(--mono);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}button{font:inherit;color:inherit}::selection{background:rgba(255,42,30,.35);color:#fff}
+.sp-root{position:fixed;inset:0;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 42%,#2A0705 0%,#120204 46%,#060102 100%)}
+.sp-world{position:absolute;inset:0;z-index:1;overflow:hidden;cursor:grab}.sp-world.dragging{cursor:grabbing}#sp-terrain,#sp-live{position:absolute;inset:0;width:100%;height:100%;display:block}#sp-terrain{z-index:0}#sp-live{z-index:1}
+.sp-world::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(8,1,2,.45),transparent 18%,transparent 74%,rgba(8,1,2,.58)),radial-gradient(ellipse at 48% 58%,transparent 34%,rgba(4,0,1,.30) 100%)}
+.sp-top{position:absolute;left:0;right:0;top:0;height:48px;z-index:30;display:flex;align-items:stretch;min-width:0;background:linear-gradient(180deg,rgba(10,2,3,.97),rgba(12,3,4,.78) 72%,rgba(10,2,3,.92));border-bottom:1px solid var(--rule2);box-shadow:0 8px 24px rgba(0,0,0,.34)}
+.sp-top::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--accent),rgba(255,42,30,.42) 26%,rgba(255,42,30,.08) 62%,transparent)}
+.sp-brand{flex:0 0 188px;display:flex;align-items:center;gap:9px;padding:0 13px;border-right:1px solid var(--rule2);background:rgba(255,42,30,.035)}
+.sp-brand .mark{width:16px;height:16px;position:relative;border:1px solid var(--accent);transform:rotate(45deg);flex:none}
+.sp-brand .mark::before,.sp-brand .mark::after{content:'';position:absolute;background:var(--accent)}
+.sp-brand .mark::before{left:7px;top:-5px;width:1px;height:24px;opacity:.5}.sp-brand .mark::after{left:-5px;top:7px;width:24px;height:1px;opacity:.5}
+.sp-brand b{display:block;font-family:var(--disp);font-size:15px;letter-spacing:.19em;line-height:1;font-weight:600}.sp-brand small{display:block;margin-top:4px;font-size:7.5px;color:var(--dim);letter-spacing:.17em}
+.sp-tgroup{display:flex;align-items:stretch;min-width:0;flex:1}.sp-tcell{min-width:0;padding:7px 12px 6px;border-right:1px solid var(--rule2);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.sp-tcell span{font-size:7.5px;letter-spacing:.17em;color:var(--dim);white-space:nowrap}.sp-tcell b{font-size:11px;line-height:1;font-weight:500;white-space:nowrap;letter-spacing:.035em}.sp-tcell b i{font-style:normal;color:var(--accent);font-size:7.5px;letter-spacing:.12em;margin-left:5px}
+.sp-tcell.wide{min-width:196px}.sp-tcell.hot b{color:var(--amber)}
+.sp-tright{margin-left:auto;display:flex;align-items:center;gap:12px;padding:0 12px;border-left:1px solid var(--rule2);flex:none}.sp-clock{text-align:right;line-height:1}.sp-clock b{display:block;font-size:16px;font-weight:500;letter-spacing:.08em;color:var(--ice)}.sp-clock small{display:block;margin-top:4px;font-size:7.5px;color:var(--dim);letter-spacing:.12em}
+.sp-btn{appearance:none;border:1px solid var(--rule);background:rgba(255,42,30,.07);padding:5px 9px;font-size:8px;letter-spacing:.16em;cursor:pointer;transition:.16s ease}.sp-btn:hover{border-color:var(--accent);background:rgba(255,42,30,.16)}.sp-btn:focus-visible{outline:1px solid var(--ice);outline-offset:2px}
+.sp-left,.sp-right{position:absolute;top:56px;bottom:276px;z-index:20;display:grid;gap:1px;pointer-events:none;min-height:0}.sp-left{left:8px;width:350px;grid-template-rows:1.18fr .57fr .72fr}.sp-right{right:8px;width:302px;grid-template-rows:1.15fr .58fr .47fr}
+.sp-panel{position:relative;min-height:0;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(26,6,8,.88),rgba(11,3,4,.62)),radial-gradient(circle at 0 0,rgba(255,42,30,.10),transparent 42%);border:1px solid var(--rule2);box-shadow:0 10px 26px rgba(0,0,0,.18);pointer-events:auto;backdrop-filter:blur(5px)}
+.sp-panel::before,.sp-panel::after{content:'';position:absolute;width:10px;height:10px;pointer-events:none;border-color:rgba(255,74,58,.52);border-style:solid}.sp-panel::before{left:-1px;top:-1px;border-width:1px 0 0 1px}.sp-panel::after{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
+.sp-ph{flex:none;height:22px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px;border-bottom:1px solid var(--rule2);font-size:7.5px;letter-spacing:.16em;color:var(--ink2);background:rgba(255,42,30,.025);white-space:nowrap;overflow:hidden}.sp-ph b{font-weight:500;color:var(--text)}.sp-ph .u-src{font-size:7px;letter-spacing:.1em}
+.sp-pb{flex:1;min-height:0;padding:7px 8px;overflow:hidden}
+.wx-grid{display:grid;grid-template-columns:1.16fr 1fr 1.04fr;gap:1px;border:1px solid var(--rule2);background:var(--rule2)}.wx-cell{background:rgba(8,2,3,.58);padding:6px 7px 5px;min-width:0}.wx-cell span{display:block;font-size:7px;letter-spacing:.15em;color:var(--dim)}.wx-cell b{display:block;margin-top:3px;font-size:18px;line-height:1;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.01em}.wx-cell i{display:block;margin-top:3px;font-style:normal;font-size:7px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wx-cell b small{font-size:9px;color:var(--dim);font-weight:400}
+.wx-ffwi{margin-top:7px;border:1px solid var(--rule2);padding:6px 7px;background:rgba(8,2,3,.44)}.wx-ffwi-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:7.5px;letter-spacing:.12em;color:var(--ink2)}.wx-ffwi-h em{font-style:normal;color:var(--amber);font-size:7px;letter-spacing:.12em}.wx-ffwi-h b{font-size:19px;line-height:1;font-weight:500;color:var(--amber);font-variant-numeric:tabular-nums}
+.sp-bar{position:relative;height:9px;margin-top:5px;overflow:hidden;background:repeating-linear-gradient(90deg,rgba(216,240,255,.11) 0 1px,transparent 1px 8px),rgba(0,0,0,.32);border:1px solid rgba(255,74,58,.14)}.sp-bar>i{position:absolute;left:0;top:0;bottom:0;display:block;width:0;transition:width .5s ease,background .5s ease}.sp-bar>u{position:absolute;top:-2px;bottom:-2px;width:1px;background:rgba(246,230,224,.5)}
+.wx-ffwi-f{display:flex;justify-content:space-between;margin-top:4px;font-size:7px;color:var(--dim);letter-spacing:.1em}.wx-fch{display:flex;justify-content:space-between;align-items:baseline;margin-top:7px;font-size:7px;letter-spacing:.13em;color:var(--dim);white-space:nowrap;gap:6px}.wx-fch b{color:var(--ink2);font-weight:400}.wx-fch span:last-child{color:var(--amber);font-variant-numeric:tabular-nums}
+.sp-cv{position:relative;width:100%;min-height:1px;overflow:hidden}.sp-cv canvas{display:block}#fc-box{height:64px;margin-top:2px}
+.wx-note,.fuel-note{margin-top:4px;font-size:7px;line-height:1.4;letter-spacing:.07em;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wx-note b,.fuel-note b{color:var(--ink3);font-weight:400}
+.obs-list{display:grid;grid-auto-rows:1fr;height:100%}.obs-row{display:grid;grid-template-columns:45px 48px 48px 1fr;gap:5px;align-items:center;border-bottom:1px dashed rgba(255,74,58,.10);font-size:8px;min-height:0;animation:sp-row .5s ease both}.obs-row:last-child{border-bottom:0}.obs-row .t{color:var(--dim);letter-spacing:.04em}.obs-row .v{color:var(--ink2);font-variant-numeric:tabular-nums}.obs-row .w{color:var(--ice);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.emc-row{display:grid;grid-template-columns:30px 1fr 42px;gap:7px;align-items:center;height:24%;min-height:20px;font-size:7.5px;color:var(--dim);letter-spacing:.08em}.emc-row .eb{height:6px;position:relative;background:rgba(0,0,0,.3);border:1px solid rgba(255,74,58,.10);overflow:hidden}.emc-row .eb i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--cool),var(--amber));transition:width .6s ease}.emc-row b{text-align:right;font-weight:500;color:var(--ink2);font-variant-numeric:tabular-nums}
+.th-top{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}.th-top b{font-size:25px;line-height:.9;font-weight:500;font-variant-numeric:tabular-nums;color:var(--ice)}.th-top span{font-size:7px;line-height:1.45;text-align:right;letter-spacing:.1em;color:var(--dim)}#thermal-box{height:142px;margin-top:3px}
+.th-near{margin-top:2px;padding:3px 0;border-top:1px solid var(--rule2);border-bottom:1px solid var(--rule2);font-size:7px;letter-spacing:.1em;color:var(--ink3);line-height:1.35}.th-near b{color:var(--amber);font-weight:500}.th-list{display:grid;gap:1px;margin-top:4px}.th-row{display:grid;grid-template-columns:1fr 58px 36px;gap:5px;font-size:7.5px;line-height:1.6;color:var(--dim);border-bottom:1px dashed rgba(255,74,58,.10)}.th-row span:nth-child(2){text-align:right;color:var(--ink2);font-variant-numeric:tabular-nums}.th-row span:last-child{text-align:right;color:var(--amber);font-variant-numeric:tabular-nums}.th-credit{margin-top:4px;font-size:6.5px;letter-spacing:.08em;color:var(--dim);opacity:.8}
+.air-top{display:flex;align-items:flex-end;gap:8px}.air-top b{font-size:31px;line-height:.86;font-weight:500;color:var(--ice);font-variant-numeric:tabular-nums}.air-top span{font-size:7px;line-height:1.35;color:var(--dim);letter-spacing:.1em}.air-grid{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-size:7px;color:var(--dim);letter-spacing:.08em}.air-grid b{color:var(--ink2);font-weight:500;font-variant-numeric:tabular-nums}#aq-box{height:48px;margin-top:2px}.air-foot{margin-top:2px;font-size:6.5px;color:var(--dim);letter-spacing:.08em}
+.al-state{font-size:8px;line-height:1.45;letter-spacing:.1em;color:var(--ink2)}.al-state b{color:var(--amber);font-weight:500}.al-list{margin-top:4px;display:grid;gap:1px}.al-row{font-size:7.5px;line-height:1.45;border-bottom:1px dashed rgba(255,74,58,.10);padding:3px 0}.al-row b{display:block;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.al-row span{color:var(--dim);font-size:7px}.al-foot{margin-top:5px;font-size:6.5px;color:var(--dim);letter-spacing:.07em}
+.sp-bot{position:absolute;left:8px;right:8px;bottom:8px;height:260px;z-index:24;display:grid;grid-template-columns:1.02fr 1.28fr .92fr 1.4fr;gap:1px;min-height:0}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;height:100%}.res-item{min-width:0;padding:3px 0;border-bottom:1px dashed rgba(255,74,58,.10)}.res-top{display:flex;justify-content:space-between;gap:6px;font-size:7.5px;letter-spacing:.08em}.res-top b{color:var(--ink2);font-weight:500}.res-top span{color:var(--dim);font-size:6.5px}.res-bar{height:3px;margin-top:3px;background:rgba(216,240,255,.08);position:relative;overflow:hidden}.res-bar i{display:block;height:100%;width:0;background:var(--cool);transition:width .6s ease}.res-item.hot .res-bar i{background:var(--amber)}.res-item.hot .res-top span{color:var(--amber)}
+.trig-top{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}.trig-top b{font-size:27px;line-height:.9;font-weight:500;color:var(--amber);font-variant-numeric:tabular-nums}.trig-top span{font-size:7px;line-height:1.4;text-align:right;color:var(--dim);letter-spacing:.1em}.trig-top span b{display:block;font-size:10px;color:var(--ink2)}.trig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:6px;border:1px solid var(--rule2);background:var(--rule2)}.trig-grid div{background:rgba(8,2,3,.55);padding:4px 5px}.trig-grid span{display:block;font-size:6.5px;letter-spacing:.1em;color:var(--dim)}.trig-grid b{display:block;margin-top:2px;font-size:10px;font-weight:500;color:var(--ink2);font-variant-numeric:tabular-nums}#trig-box{height:48px;margin-top:5px}.trig-note{margin-top:2px;font-size:6.5px;color:var(--dim);letter-spacing:.06em;line-height:1.35}
+.spot-list{display:grid;gap:0}.spot-row{display:grid;grid-template-columns:10px 1fr 54px 62px;gap:5px;align-items:center;height:25%;min-height:21px;border-bottom:1px dashed rgba(255,74,58,.10);font-size:7.5px;letter-spacing:.06em}.spot-dot{width:5px;height:5px;border-radius:50%;background:var(--dim);box-shadow:0 0 0 1px rgba(0,0,0,.4)}.spot-row.grow .spot-dot{background:var(--hot);animation:u-pulse 1.5s ease-in-out infinite}.spot-row.new .spot-dot{background:var(--amber);animation:u-pulse 1.1s ease-in-out infinite}.spot-row.hold .spot-dot{background:var(--cool)}.spot-row .nm{color:var(--ink2)}.spot-row .dm{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}.spot-row .st{text-align:right;color:var(--dim);font-size:6.5px}.spot-row.grow .st{color:var(--accent)}.spot-row.new .st{color:var(--amber)}.spot-row.hold .st{color:var(--cool)}#spot-box{height:48px;margin-top:4px}
+.log-list{display:grid;grid-auto-rows:1fr;height:100%}.log-row{display:grid;grid-template-columns:34px 32px 1fr;gap:5px;align-items:center;border-bottom:1px dashed rgba(255,74,58,.10);min-height:0;font-size:7.5px;line-height:1.25;animation:sp-log .55s ease both}.log-row:last-child{border-bottom:0}.log-row time{color:var(--dim);letter-spacing:.04em;font-variant-numeric:tabular-nums}.log-row .tag{color:var(--cool);letter-spacing:.08em;font-size:6.5px}.log-row.hot .tag{color:var(--accent)}.log-row .msg{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.log-row.hot .msg{color:var(--text)}
+.sp-legend{position:absolute;left:366px;right:310px;bottom:278px;z-index:22;display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;padding:4px 8px;border-top:1px solid rgba(255,74,58,.09);border-bottom:1px solid rgba(255,74,58,.09);background:linear-gradient(90deg,transparent,rgba(8,2,3,.44) 12%,rgba(8,2,3,.44) 88%,transparent);font-size:6.5px;letter-spacing:.12em;color:var(--dim);pointer-events:none}.sp-legend i{display:inline-block;width:12px;height:1px;margin-right:4px;vertical-align:middle;background:currentColor}.sp-legend .f{color:var(--hot)}.sp-legend .e{color:var(--hot2)}.sp-legend .w{color:var(--cool)}.sp-legend .a{color:var(--amber)}.sp-legend .i{color:rgba(255,194,74,.6)}.sp-legend .c{color:rgba(255,194,74,.8)}
+.sp-focus{position:absolute;left:50%;top:62px;transform:translateX(-50%);z-index:21;display:flex;align-items:center;gap:8px;pointer-events:none;font-size:7px;letter-spacing:.15em;color:var(--ink3);text-shadow:0 1px 6px #000}.sp-focus b{color:var(--amber);font-weight:500}.sp-focus .ln{width:34px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,194,74,.6))}.sp-focus .ln.r{background:linear-gradient(90deg,rgba(255,194,74,.6),transparent)}
+.sp-cut{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:0;background:#FFE7DA;mix-blend-mode:screen}.sp-cut::after{content:'';position:absolute;left:0;right:0;top:42%;height:16%;background:linear-gradient(180deg,transparent,rgba(255,60,24,.8),transparent)}.sp-cut.go{animation:sp-cut .62s ease-out}
+.sp-modal{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:rgba(4,0,1,.70);backdrop-filter:blur(7px)}.sp-modal.on{display:grid}.sp-card{width:min(860px,92vw);max-height:84vh;overflow:auto;position:relative;padding:23px 27px 25px;border:1px solid var(--rule);background:linear-gradient(180deg,rgba(31,7,9,.97),rgba(10,2,3,.98));box-shadow:0 30px 100px rgba(0,0,0,.62)}.sp-card::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent 72%)}.sp-card h2{margin:0;font-family:var(--disp);font-size:24px;letter-spacing:.13em;font-weight:500}.sp-card h3{margin:19px 0 6px;font-size:8px;letter-spacing:.18em;color:var(--accent);font-weight:500}.sp-card p,.sp-card li{font-size:10px;line-height:1.65;color:var(--ink2)}.sp-card p{margin:7px 0}.sp-card ul{margin:0;padding-left:15px}.sp-card li{margin:3px 0}.sp-card a{color:var(--ice);text-underline-offset:2px}.sp-card code{color:var(--amber);font-size:9px}.sp-x{position:absolute;right:13px;top:11px;appearance:none;border:1px solid var(--rule2);background:transparent;width:28px;height:28px;cursor:pointer;color:var(--dim);font-size:15px}.sp-x:hover{color:var(--text);border-color:var(--rule)}.sp-card .meta-row{display:grid;grid-template-columns:150px 1fr;gap:8px;border-top:1px solid var(--rule2);padding:5px 0;font-size:9px}.sp-card .meta-row span{color:var(--dim);letter-spacing:.1em;font-size:8px}.sp-card .meta-row b{color:var(--ink2);font-weight:400}
+.sp-fatal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;display:none;padding:12px 18px;border:1px solid var(--accent);background:rgba(20,3,4,.94);font-size:10px;letter-spacing:.12em;color:var(--amber)}.sp-fatal.on{display:block}
+@keyframes sp-row{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}@keyframes sp-log{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}@keyframes sp-cut{0%{opacity:0}10%{opacity:.42}22%{opacity:.06}100%{opacity:0}}
+@media(max-width:1660px){.sp-brand{flex-basis:168px}.sp-tcell{padding-left:9px;padding-right:9px}.sp-tcell.hide-16{display:none}.sp-left{width:330px}.sp-right{width:288px}.sp-legend{left:346px;right:296px}}
+@media(max-width:1460px){.sp-tcell.wide{min-width:168px}.sp-tcell.hide-14{display:none}.sp-left{width:310px}.sp-right{width:276px}.sp-bot{height:244px;grid-template-columns:1fr 1.2fr .88fr 1.32fr}.sp-left,.sp-right{bottom:260px}.sp-legend{left:326px;right:284px;bottom:262px}}
+@media(max-width:1180px){.sp-left{display:none}.sp-right{width:258px}.sp-tcell.hide-12{display:none}.sp-bot{height:224px;grid-template-columns:1fr 1.25fr .9fr}.sp-bot>.sp-panel:nth-child(4){display:none}.sp-left,.sp-right{bottom:240px}.sp-legend{left:10px;right:266px;bottom:242px}}
+@media(prefers-reduced-motion:reduce){.obs-row,.log-row,.sp-cut.go{animation:none!important}.sp-bar>i,.emc-row .eb i,.res-bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="sp-root">
+  <div class="sp-world" aria-hidden="true"><canvas id="sp-terrain"></canvas><canvas id="sp-live"></canvas></div>
+
+  <header class="sp-top">
+    <div class="sp-brand"><span class="mark"></span><div><b>SPOTFIRE</b><small>KESTREL / DAY 02</small></div></div>
+    <div class="sp-tgroup">
+      <div class="sp-tcell"><span>INCIDENT</span><b>KESTREL <i>SCENARIO</i></b></div>
+      <div class="sp-tcell hide-16"><span>FBAN</span><b>R. VALE</b></div>
+      <div class="sp-tcell"><span>ACTIVE FRONT</span><b id="top-front">--</b></div>
+      <div class="sp-tcell"><span>HEAD ROS</span><b id="top-ros">--</b></div>
+      <div class="sp-tcell wide"><span>WIND / GUST</span><b id="top-wind">--</b></div>
+      <div class="sp-tcell hide-14"><span>SPOT 3</span><b id="top-spot">--</b></div>
+      <div class="sp-tcell hide-12"><span>LOWELL CLEAR</span><b id="top-eta">--</b></div>
+    </div>
+    <div class="sp-tright"><div class="sp-clock"><b id="top-clock">--:--</b><small id="top-live">LIVE --:--Z</small></div><button class="sp-btn" id="sp-data" type="button">DATA</button></div>
+  </header>
+
+  <div class="sp-focus" aria-hidden="true"><span class="ln"></span><span>FOCUS</span><b id="focus-text">SPOT 3</b><span class="ln r"></span></div>
+
+  <aside class="sp-left" aria-label="Weather and fuel">
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>FIRE WEATHER</b> / AWS 2 RIDGE</span><span class="u-src live" id="wx-badge"><i></i>LIVE</span></div>
+      <div class="sp-pb">
+        <div class="wx-grid">
+          <div class="wx-cell"><span>TEMP</span><b id="wx-t">--</b><i id="wx-t-i">--</i></div>
+          <div class="wx-cell"><span>RH</span><b id="wx-rh">--</b><i id="wx-rh-i">--</i></div>
+          <div class="wx-cell"><span>WIND</span><b id="wx-wind">--</b><i id="wx-wind-i">--</i></div>
+          <div class="wx-cell"><span>GUST</span><b id="wx-gust">--</b><i id="wx-gust-i">--</i></div>
+          <div class="wx-cell"><span>DIR</span><b id="wx-dir">--</b><i id="wx-dir-i">--</i></div>
+          <div class="wx-cell"><span>DEW</span><b id="wx-dew">--</b><i id="wx-dew-i">--</i></div>
+        </div>
+        <div class="wx-ffwi">
+          <div class="wx-ffwi-h"><span>FOSBERG FFWI <em>DERIVED</em></span><b id="ffwi-v">--</b></div>
+          <div class="sp-bar"><i id="ffwi-fill"></i><u style="left:50%"></u></div>
+          <div class="wx-ffwi-f"><span id="ffwi-class">--</span><span id="ffwi-emc">EMC --%</span></div>
+        </div>
+        <div class="wx-fch"><span id="fc-title">NEXT 6 H <b>TEMP / WIND</b></span><span id="fc-meta">--</span></div>
+        <div class="sp-cv" id="fc-box"></div>
+        <div class="wx-note">MODEL GRID · ELEV <b id="wx-elev">--</b> · <span id="wx-rain">--</span></div>
+      </div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>OBS</b> / LAST 12 H</span><span>AWS 2 · 10 MIN</span></div>
+      <div class="sp-pb"><div class="obs-list" id="obs-list"></div></div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>FUEL MOISTURE</b> / LAG</span><span class="u-src snap"><i></i>MODEL</span></div>
+      <div class="sp-pb">
+        <div class="emc-row"><span>1 H</span><div class="eb"><i id="emc-1"></i></div><b id="emc-1v">--</b></div>
+        <div class="emc-row"><span>10 H</span><div class="eb"><i id="emc-10"></i></div><b id="emc-10v">--</b></div>
+        <div class="emc-row"><span>100 H</span><div class="eb"><i id="emc-100"></i></div><b id="emc-100v">--</b></div>
+        <div class="emc-row"><span>1000 H</span><div class="eb"><i id="emc-1000"></i></div><b id="emc-1000v">--</b></div>
+        <div class="fuel-note">SIMARD EMC · <b id="fuel-ffwi">FFWI --</b> · SCENARIO WIND</div>
+      </div>
+    </section>
+  </aside>
+
+  <aside class="sp-right" aria-label="Thermal and air">
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>THERMAL</b> / 6 H</span><span class="u-src live" id="th-badge"><i></i>LIVE</span></div>
+      <div class="sp-pb">
+        <div class="th-top"><b id="th-global">--</b><span id="th-meta">CLUSTERS<br>DETECTIONS</span></div>
+        <div class="sp-cv" id="thermal-box"></div>
+        <div class="th-near" id="th-near">GLOBAL VIEW · LOADING</div>
+        <div class="th-list" id="th-list"></div>
+        <div class="th-credit">Source: kanari.io · CC BY 4.0</div>
+      </div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>AIR</b> / SMOKE</span><span class="u-src live" id="aq-badge"><i></i>LIVE</span></div>
+      <div class="sp-pb">
+        <div class="air-top"><b id="aq-pm">--</b><span>µg/m³<br>PM2.5</span></div>
+        <div class="air-grid"><span>EAQI <b id="aq-eaqi">--</b></span><span>US <b id="aq-us">--</b></span><span id="aq-state">--</span></div>
+        <div class="sp-cv" id="aq-box"></div>
+        <div class="air-foot">MODEL · NOT A SENSOR · <span id="aq-note">--</span></div>
+      </div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>ALERTS</b> / NWS</span><span class="u-src live" id="al-badge"><i></i>LIVE</span></div>
+      <div class="sp-pb">
+        <div class="al-state" id="al-state">LOADING ACTIVE ALERTS</div>
+        <div class="al-list" id="al-list"></div>
+        <div class="al-foot">ANCHOR 39.93N 120.95W · <span id="al-count">--</span></div>
+      </div>
+    </section>
+  </aside>
+
+  <div class="sp-legend" aria-hidden="true">
+    <span class="f"><i></i>ACTIVE FRONT</span><span class="e"><i></i>EMBER FLIGHT</span><span class="w"><i></i>WIND</span><span class="a"><i></i>TRIGGER</span><span class="i"><i></i>ISOCHRONE 30M</span><span class="c"><i></i>CONTAINMENT</span>
+  </div>
+
+  <footer class="sp-bot">
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>RESOURCES</b> / EAST DIVISION</span><span id="res-check">--</span></div>
+      <div class="sp-pb"><div class="res-grid" id="res-grid"></div></div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>TRIGGER</b> / LOWELL FLATS</span><span class="u-src degraded"><i></i>SCENARIO</span></div>
+      <div class="sp-pb">
+        <div class="trig-top"><b id="trig-time">17:02</b><span>CLEAR-BY<b id="trig-margin">+0:30</b></span></div>
+        <div class="trig-grid"><div><span>POP</span><b>6,200</b></div><div><span>LEAD</span><b>160 MIN</b></div><div><span>NOW</span><b id="trig-now">--:--</b></div></div>
+        <div class="sp-cv" id="trig-box"></div>
+        <div class="trig-note">WIND SHIFT 15:00 · 200° → 240° · ETA WINDOW ASSESSED</div>
+      </div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>SPOT FIRES</b></span><span>4 TRACKED</span></div>
+      <div class="sp-pb"><div class="spot-list" id="spot-list"></div><div class="sp-cv" id="spot-box"></div></div>
+    </section>
+    <section class="sp-panel">
+      <div class="sp-ph"><span><b>ANALYST LOG</b></span><span id="log-count">--</span></div>
+      <div class="sp-pb"><div class="log-list" id="log-list"></div></div>
+    </section>
+  </footer>
+
+  <div class="sp-cut" id="sp-cut"></div>
+  <div class="sp-fatal" id="sp-fatal"></div>
+
+  <div class="sp-modal" id="sp-modal" role="dialog" aria-modal="true" aria-labelledby="sp-modal-title">
+    <div class="sp-card">
+      <button class="sp-x" id="sp-close" type="button" aria-label="Close">×</button>
+      <h2 id="sp-modal-title">SPOTFIRE / DATA</h2>
+      <p>Kestrel Fire is an authored training scenario. The terrain, fire front, isochrones, spot fires, resources, trigger clock and log are synthetic. Live feeds are labelled separately at each panel.</p>
+      <h3>LIVE / KEYLESS</h3>
+      <div class="meta-row"><span>OPEN-METEO</span><b>Weather, 92-day history, soil moisture, elevation — model grid.</b></div>
+      <div class="meta-row"><span>OPEN-METEO AQ</span><b>PM2.5, PM10, European AQI, US AQI — model, not a sensor.</b></div>
+      <div class="meta-row"><span>NWS</span><b>Active alerts for 39.93N 120.95W. No alert is not proof of no hazard.</b></div>
+      <div class="meta-row"><span>KANARI.IO</span><b>6-hour satellite thermal detections, global. Source: kanari.io · CC BY 4.0. No social or witness content is shown.</b></div>
+      <h3>DERIVED / AUTHORED</h3>
+      <div class="meta-row"><span>FFWI</span><b>Fosberg Fire Weather Index from Simard EMC and scenario wind. Scaled to 100 at RH 0% and 30 mph.</b></div>
+      <div class="meta-row"><span>EMC</span><b>Simard equilibrium moisture content, clamped. 10H/100H/1000H bars are modelled lag estimates.</b></div>
+      <div class="meta-row"><span>TERRAIN</span><b>160 × 116 authored height/fuel grid, 3D perspective with wind tracers. Not a real DEM.</b></div>
+      <div class="meta-row"><span>SCENARIO</span><b>13 stages, 13:20–16:20, ×4 playback. Wind shift at 15:00. Trigger 17:02, lead 160 min.</b></div>
+      <h3>FILES</h3>
+      <p><a href="../shared/data/spotfire/terrain.json">terrain.json</a> · <a href="../shared/data/spotfire/scenario.json">scenario.json</a> · <a href="../shared/data/spotfire/fallback.json">fallback.json</a> · <a href="../shared/data/spotfire/README.md">README</a></p>
+      <p>If a feed fails, the page says so. It never invents thermal detections or active alerts. Use <code>?sim=1</code> for the authored weather fallback and <code>?motion=off</code> for a still frame.</p>
+    </div>
+  </div>
+</div>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  U.page('spotfire', { scan: false });
+  const TAU = Math.PI * 2;
+  const SP = window.SP = {};
+  SP.TAU = TAU;
+  SP.$ = (id) => document.getElementById(id);
+  SP.clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  SP.lerp = (a, b, t) => a + (b - a) * t;
+  SP.pad = (v) => String(Math.round(v)).padStart(2, '0');
+  SP.round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
+  SP.rad = Math.PI / 180;
+  SP.params = new URLSearchParams(location.search);
+  SP.SIM = SP.params.get('sim') === '1' || SP.params.get('sim') === 'true';
+  SP.MOTION = !(SP.params.get('motion') === 'off' || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  SP.SPEED = SP.clamp(parseFloat(SP.params.get('speed') || '4') || 4, 1, 16);
+  SP.DATA = '../shared/data/spotfire/';
+  SP.ANCHOR = { lat: 39.93, lon: -120.95 };
+  SP.INITIAL_MIN = 32;
+  SP.state = {
+    terrain: null, scenario: null, fallback: null,
+    weather: null, aq: null, alerts: null, thermal: null,
+    live: { weather: false, aq: false, alerts: false, thermal: false },
+    min: SP.INITIAL_MIN, stage: null, stageIndex: 0, loop: 0,
+    motion: SP.MOTION, quality: 1, fps: 0,
+    logSig: '', logExtras: [], lastMinute: -1, lastWeatherStage: -1
+  };
+  SP.startMs = performance.now() - (SP.INITIAL_MIN * 60000) / SP.SPEED;
+  SP.nowMin = () => ((performance.now() - SP.startMs) * SP.SPEED / 60000) % 180;
+  SP.hm = (date) => {
+    const d = date instanceof Date ? date : new Date(date);
+    return SP.pad(d.getUTCHours()) + ':' + SP.pad(d.getUTCMinutes());
+  };
+  SP.hmMin = (str) => { const p = String(str).split(':'); return (+p[0]) * 60 + (+p[1]); };
+  SP.scenarioDate = (min) => new Date(new Date(SP.state.scenario.meta.start).getTime() + min * 60000);
+  SP.sampleH = function (u, v) {
+    const t = SP.state.terrain;
+    if (!t) return 0;
+    const x = SP.clamp(u, 0, 1) * (t.meta.width - 1);
+    const y = SP.clamp(v, 0, 1) * (t.meta.height - 1);
+    const x0 = Math.floor(x), y0 = Math.floor(y);
+    const x1 = Math.min(t.meta.width - 1, x0 + 1), y1 = Math.min(t.meta.height - 1, y0 + 1);
+    const fx = x - x0, fy = y - y0;
+    const src = SP.state.hSmooth || t.heights;
+    const a = src[y0 * t.meta.width + x0], b = src[y0 * t.meta.width + x1];
+    const c = src[y1 * t.meta.width + x0], d = src[y1 * t.meta.width + x1];
+    return SP.lerp(SP.lerp(a, b, fx), SP.lerp(c, d, fx), fy);
+  };
+  SP.stageAt = function (min) {
+    const s = SP.state.scenario;
+    if (!s) return null;
+    const p = SP.clamp(min / 15, 0, s.stages.length - 1);
+    const i = Math.min(s.stages.length - 2, Math.floor(p));
+    const f = p - i;
+    const a = s.stages[i], b = s.stages[i + 1];
+    const front = a.front.map((q, k) => [SP.lerp(q[0], b.front[k][0], f), SP.lerp(q[1], b.front[k][1], f)]);
+    return {
+      i: Math.floor(p), f, a, b, front,
+      wind: SP.lerp(a.wind, b.wind, f), gust: SP.lerp(a.gust, b.gust, f), dir: SP.lerp(a.dir, b.dir, f),
+      ros: SP.lerp(a.ros, b.ros, f), active: SP.lerp(a.active, b.active, f), spotD: SP.lerp(a.spotD, b.spotD, f)
+    };
+  };
+  SP.setSrc = function (el, kind, text) {
+    if (!el) return;
+    el.className = 'u-src ' + kind;
+    el.innerHTML = '<i></i>' + text;
+  };
+  SP.haversine = function (a, b) {
+    const R = 6371, dLat = (b.lat - a.lat) * SP.rad, dLon = (b.lon - a.lon) * SP.rad;
+    const q = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * SP.rad) * Math.cos(b.lat * SP.rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(q));
+  };
+  SP.eventPoint = function (e) {
+    const p = e.centroid || {};
+    if (Array.isArray(p)) return { lon: +p[0] || 0, lat: +p[1] || 0 };
+    let lat = +p.lat || +p.latitude || 0, lon = +p.lon || +p.lng || +p.longitude || 0;
+    if (!lat && !lon && Array.isArray(e.bbox) && e.bbox.length >= 4) {
+      lon = (+e.bbox[0] + +e.bbox[2]) / 2; lat = (+e.bbox[1] + +e.bbox[3]) / 2;
+    } else if (!lat && !lon && e.bbox) {
+      lon = (+e.bbox.west + +e.bbox.east) / 2; lat = (+e.bbox.south + +e.bbox.north) / 2;
+    }
+    return { lat, lon };
+  };
+  SP.emcSimard = function (tempF, rh) {
+    const r = SP.clamp(rh, 1, 100);
+    let e;
+    if (r < 10) e = .03229 + .281073 * r - .000578 * r * tempF;
+    else if (r < 50) e = 2.22749 + .160107 * r - .014784 * tempF;
+    else e = 21.0606 + .005565 * r * r - .00035 * r * tempF - .483199 * r;
+    return SP.clamp(e, 1.3, 35);
+  };
+  SP.ffwi = function (tempC, rh, windKmh) {
+    const emc = SP.emcSimard(tempC * 9 / 5 + 32, rh);
+    const x = emc / 30;
+    const eta = SP.clamp(1 - 2 * x + 1.5 * x * x - .5 * x * x * x, .02, 1);
+    const windMph = windKmh * .621371;
+    return { emc, value: SP.clamp(100 * eta * Math.sqrt(1 + windMph * windMph) / 30, 0, 100) };
+  };
+  SP.ffwiClass = function (v) {
+    return v < 25 ? 'LOW' : v < 50 ? 'MODERATE' : v < 75 ? 'HIGH' : v < 90 ? 'VERY HIGH' : 'EXTREME';
+  };
+  SP.ffwiColor = function (v) {
+    return v < 25 ? '#5CC0FF' : v < 50 ? '#FFC24A' : v < 75 ? '#FF8A3C' : '#FF3B1E';
+  };
+  SP.pushLog = function (tag, text, hot) {
+    const at = SP.hm(SP.scenarioDate(SP.state.min));
+    SP.state.logExtras.push({ at, tag, text, hot: !!hot, live: true });
+    if (SP.state.logExtras.length > 20) SP.state.logExtras.shift();
+    SP.state.logSig = '';
+    SP.renderLog();
+  };
+  SP.buildRes = function () {
+    const root = SP.$('res-grid');
+    root.innerHTML = SP.state.scenario.resources.map((r, i) => {
+      const hot = r.pct >= 70 || r.status === 'ENGAGED';
+      return '<div class="res-item' + (hot ? ' hot' : '') + '" data-i="' + i + '"><div class="res-top"><b>' + r.unit + '</b><span>' + r.status + '</span></div><div class="res-bar"><i style="width:' + r.pct + '%"></i></div></div>';
+    }).join('');
+    SP.$('res-check').textContent = 'CHECK-IN ' + SP.hm(SP.scenarioDate(25)) + ' / ' + SP.hm(SP.scenarioDate(85));
+  };
+  SP.renderWeather = function () {
+    const w = SP.state.weather;
+    if (!w || !SP.state.stage) return;
+    const c = w.current;
+    SP.$('wx-t').innerHTML = SP.round(c.temperature_2m, 1) + '<small>°C</small>';
+    SP.$('wx-t-i').textContent = 'APPARENT ' + SP.round(c.apparent_temperature ?? c.temperature_2m, 1) + '°';
+    SP.$('wx-rh').innerHTML = SP.round(c.relative_humidity_2m, 0) + '<small>%</small>';
+    SP.$('wx-rh-i').textContent = 'DEW ' + SP.round(c.dew_point_2m, 1) + '°';
+    SP.$('wx-wind').innerHTML = SP.round(c.wind_speed_10m, 0) + '<small>KM/H</small>';
+    SP.$('wx-wind-i').textContent = 'SCENARIO ' + Math.round(SP.state.stage.wind) + ' KM/H';
+    SP.$('wx-gust').innerHTML = SP.round(c.wind_gusts_10m ?? 0, 0) + '<small>KM/H</small>';
+    SP.$('wx-gust-i').textContent = '10 MIN MEAN';
+    SP.$('wx-dir').innerHTML = Math.round(c.wind_direction_10m ?? 0) + '<small>°</small>';
+    SP.$('wx-dir-i').textContent = 'FROM';
+    SP.$('wx-dew').innerHTML = SP.round(c.dew_point_2m, 1) + '<small>°C</small>';
+    SP.$('wx-dew-i').textContent = 'DEPRESSION ' + SP.round(c.temperature_2m - c.dew_point_2m, 1) + '°';
+    SP.$('wx-elev').textContent = Math.round(w.elevation || 0).toLocaleString() + ' M';
+    SP.$('wx-rain').textContent = (w.rain72 ? SP.round(w.rain72, 1) + ' MM / 72 H' : 'NO WETTING RAIN 72 H');
+    SP.setSrc(SP.$('wx-badge'), w.live ? 'live' : 'sim', w.live ? 'LIVE' : 'SIM');
+    const f = SP.ffwi(c.temperature_2m, c.relative_humidity_2m, SP.state.stage.wind);
+    SP.$('ffwi-v').textContent = Math.round(f.value);
+    SP.$('ffwi-class').textContent = SP.ffwiClass(f.value) + ' · ' + Math.round(f.value) + '/100';
+    SP.$('ffwi-emc').textContent = 'EMC ' + SP.round(f.emc, 1) + '%';
+    SP.$('ffwi-fill').style.width = SP.clamp(f.value, 0, 100) + '%';
+    SP.$('ffwi-fill').style.background = 'linear-gradient(90deg,rgba(92,192,255,.35),' + SP.ffwiColor(f.value) + ')';
+    SP.$('ffwi-class').style.color = SP.ffwiColor(f.value);
+    SP.$('fuel-ffwi').textContent = 'FFWI ' + Math.round(f.value) + ' · EMC ' + SP.round(f.emc, 1) + '%';
+    const lag = [f.emc, f.emc * 1.22, f.emc * 1.58, f.emc * 2.05];
+    [1, 10, 100, 1000].forEach((k, i) => {
+      const v = SP.clamp(lag[i], 1, 32);
+      SP.$('emc-' + k).style.width = SP.clamp(v / 32 * 100, 0, 100) + '%';
+      SP.$('emc-' + k + 'v').textContent = SP.round(v, 1) + '%';
+    });
+    SP.$('obs-list').innerHTML = (w.obs || []).map((r, i) => '<div class="obs-row" style="animation-delay:' + (i * 35) + 'ms"><span class="t">' + r.t + '</span><span class="v">' + r.temp + '°</span><span class="v">' + r.rh + '%</span><span class="w">' + r.wind + ' ' + r.dir + '°</span></div>').join('');
+  };
+  SP.renderAQ = function () {
+    const a = SP.state.aq;
+    if (!a) return;
+    SP.$('aq-pm').textContent = SP.round(a.pm2_5, 1);
+    SP.$('aq-eaqi').textContent = Math.round(a.european_aqi ?? 0);
+    SP.$('aq-us').textContent = Math.round(a.us_aqi ?? 0);
+    const level = a.european_aqi < 20 ? 'GOOD' : a.european_aqi < 40 ? 'FAIR' : a.european_aqi < 60 ? 'MODERATE' : a.european_aqi < 80 ? 'POOR' : 'VERY POOR';
+    SP.$('aq-state').textContent = level;
+    SP.$('aq-state').style.color = a.european_aqi < 40 ? '#5CC0FF' : a.european_aqi < 60 ? '#FFC24A' : '#FF3B1E';
+    SP.$('aq-note').textContent = a.live ? 'OPEN-METEO' : 'AUTHORED FALLBACK';
+    SP.setSrc(SP.$('aq-badge'), a.live ? 'live' : 'sim', a.live ? 'LIVE' : 'SIM');
+  };
+  SP.renderAlerts = function () {
+    const a = SP.state.alerts;
+    if (!a) return;
+    const feats = a.features || [];
+    SP.$('al-count').textContent = feats.length + ' ACTIVE';
+    if (!a.live) {
+      if (a.sim) {
+        SP.$('al-state').innerHTML = '<b>SIMULATED EMPTY ALERT STATE</b><br>AUTHORED FALLBACK · NO ACTIVE ALERTS';
+        SP.$('al-list').innerHTML = '<div class="al-row"><span>No live NWS query is made in simulation.</span></div>';
+        SP.setSrc(SP.$('al-badge'), 'sim', 'SIM');
+      } else {
+        SP.$('al-state').innerHTML = '<b>ALERTS UNAVAILABLE</b><br>NWS REQUEST FAILED · NOT A CLEARANCE';
+        SP.$('al-list').innerHTML = '';
+        SP.setSrc(SP.$('al-badge'), 'degraded', 'OFF');
+      }
+      return;
+    }
+    SP.setSrc(SP.$('al-badge'), 'live', 'LIVE');
+    if (!feats.length) {
+      SP.$('al-state').innerHTML = '<b>NO ACTIVE FIRE WEATHER ALERTS</b><br>POINT 39.93N 120.95W · NWS';
+      SP.$('al-list').innerHTML = '<div class="al-row"><span>No Red Flag, Fire Weather Watch or evacuation alert observed.</span></div>';
+      return;
+    }
+    SP.$('al-state').innerHTML = '<b>' + feats.length + ' ACTIVE ALERT' + (feats.length === 1 ? '' : 'S') + '</b>';
+    SP.$('al-list').innerHTML = feats.slice(0, 4).map((f) => {
+      const p = f.properties || {};
+      return '<div class="al-row"><b>' + (p.event || 'ALERT') + '</b><span>' + (p.severity || '') + ' · ' + (p.areaDesc || '') + '</span></div>';
+    }).join('');
+  };
+  SP.renderThermal = function () {
+    const t = SP.state.thermal;
+    if (!t) return;
+    SP.$('th-global').textContent = t.clusters.toLocaleString();
+    SP.$('th-meta').innerHTML = 'CLUSTERS<br>' + t.total.toLocaleString() + ' DETECTIONS';
+    if (!t.live) {
+      SP.$('th-near').innerHTML = t.sim ? '<b>THERMAL FEED DISABLED IN SIM</b> · NO FABRICATED FIRES' : '<b>THERMAL FEED UNAVAILABLE</b> · NO FABRICATED FIRES';
+      SP.$('th-list').innerHTML = '';
+      SP.setSrc(SP.$('th-badge'), t.sim ? 'sim' : 'degraded', t.sim ? 'SIM' : 'OFF');
+      return;
+    }
+    SP.setSrc(SP.$('th-badge'), 'live', 'LIVE');
+    const near = t.near;
+    if (!near) SP.$('th-near').innerHTML = '<b>NO DETECTIONS</b> · GLOBAL FEED EMPTY';
+    else SP.$('th-near').innerHTML = (t.localCount ? '<b>' + t.localCount + '</b> CLUSTERS WITHIN 500 KM' : '<b>NO DETECTIONS WITHIN 500 KM</b>') + ' · NEAREST <b>' + Math.round(near.km).toLocaleString() + ' KM</b>';
+    SP.$('th-list').innerHTML = (t.rows || []).map((r) => '<div class="th-row"><span>' + r.label + '</span><span>' + r.km + ' KM</span><span>' + r.frp + '</span></div>').join('');
+  };
+  SP.updateTop = function () {
+    const s = SP.state.stage;
+    if (!s) return;
+    SP.$('top-front').textContent = s.active.toFixed(1) + ' KM';
+    SP.$('top-ros').textContent = s.ros.toFixed(1) + ' KM/H';
+    SP.$('top-wind').textContent = Math.round(s.wind) + ' / ' + Math.round(s.gust) + ' KM/H ' + Math.round(s.dir) + '°';
+    SP.$('top-wind').style.color = s.wind_shift ? 'var(--amber)' : '';
+    SP.$('top-spot').textContent = Math.round(s.spotD) + ' M';
+    const trig = new Date(SP.state.scenario.meta.trigger);
+    const now = SP.scenarioDate(SP.state.min);
+    const margin = Math.round((trig - (now.getTime() + SP.state.scenario.meta.clear_min * 60000)) / 60000);
+    const mm = (margin >= 0 ? '+' : '−') + Math.floor(Math.abs(margin) / 60) + ':' + SP.pad(Math.abs(margin) % 60);
+    SP.$('top-eta').textContent = SP.hm(trig) + ' / ' + mm;
+    SP.$('top-clock').textContent = SP.hm(now);
+    SP.$('top-live').textContent = (SP.SIM ? 'SIM ' : 'LIVE ') + SP.hm(new Date()) + 'Z';
+    SP.$('trig-now').textContent = SP.hm(now);
+    SP.$('trig-margin').textContent = mm;
+    SP.$('trig-margin').style.color = margin >= 0 ? 'var(--cool)' : 'var(--accent)';
+    SP.$('focus-text').textContent = 'SPOT 3 / ' + Math.max(40, Math.round(s.spotD)) + ' M / ' + (s.i < 7 ? 'WIND 200°' : 'WIND 240°');
+  };
+  SP.updateSpots = function () {
+    const minStage = SP.state.min / 15;
+    SP.$('spot-list').innerHTML = SP.state.scenario.spots.map((sp) => {
+      const on = minStage >= sp.start;
+      const d = on ? Math.round(sp.d0 + sp.grow * (minStage - sp.start)) : null;
+      let cls = 'hold', st = sp.state;
+      if (sp.id === 3 && on) { cls = 'grow'; st = 'GROWING'; }
+      if (sp.id === 4 && on) { cls = 'new'; st = 'NEW'; }
+      if (sp.id === 2) { cls = 'hold'; st = 'CONTAINED'; }
+      if (sp.id === 1) { cls = 'hold'; st = 'HOLDING'; }
+      if (!on) { cls = ''; st = 'NOT ACTIVE'; }
+      return '<div class="spot-row ' + cls + '"><span class="spot-dot"></span><span class="nm">' + sp.label + '</span><span class="dm">' + (d === null ? '—' : d + ' M') + '</span><span class="st">' + st + '</span></div>';
+    }).join('');
+  };
+  SP.renderLog = function () {
+    if (!SP.state.scenario) return;
+    const now = SP.hm(SP.scenarioDate(SP.state.min));
+    const nowMin = SP.hmMin(now);
+    const auth = SP.state.scenario.log.filter((e) => SP.hmMin(e.at) <= nowMin);
+    const all = auth.concat(SP.state.logExtras);
+    const shown = all.slice(-8);
+    const sig = shown.map((e) => e.at + e.tag + e.text).join('|');
+    if (sig === SP.state.logSig) return;
+    SP.state.logSig = sig;
+    SP.$('log-list').innerHTML = shown.map((e) => '<div class="log-row' + (e.hot ? ' hot' : '') + '"><time>' + e.at + '</time><span class="tag">' + e.tag + '</span><span class="msg">' + e.text + '</span></div>').join('');
+    SP.$('log-count').textContent = String(shown.length).padStart(2, '0') + ' / ' + String(all.length).padStart(2, '0');
+  };
+  SP.parseWeather = function (raw) {
+    const c = raw.current || {}, h = raw.hourly || {}, times = h.time || [];
+    const target = c.time || times[times.length - 1];
+    let idx = 0;
+    for (let i = 0; i < times.length; i++) if (times[i] <= target) idx = i;
+    const obs = [];
+    for (let k = 0; k < 6; k++) {
+      const i = Math.max(0, idx - k * 2);
+      if (times[i]) obs.push({ t: times[i].slice(11, 16), temp: Math.round(h.temperature_2m[i]), rh: Math.round(h.relative_humidity_2m[i]), wind: Math.round(h.wind_speed_10m[i]), dir: Math.round(h.wind_direction_10m[i] || 0) });
+    }
+    const next6 = [];
+    for (let k = 1; k <= 6; k++) {
+      const i = Math.min(times.length - 1, idx + k);
+      if (times[i]) next6.push({ t: times[i].slice(11, 16), temp: +h.temperature_2m[i], wind: +h.wind_speed_10m[i] });
+    }
+    let rain72 = 0;
+    for (let i = Math.max(0, idx - 71); i <= idx; i++) rain72 += +(h.precipitation?.[i] || 0);
+    return {
+      live: true, elevation: raw.elevation,
+      current: {
+        time: c.time || times[idx], temperature_2m: c.temperature_2m,
+        relative_humidity_2m: c.relative_humidity_2m, dew_point_2m: c.dew_point_2m,
+        apparent_temperature: c.apparent_temperature, precipitation: c.precipitation,
+        wind_speed_10m: c.wind_speed_10m, wind_direction_10m: c.wind_direction_10m,
+        wind_gusts_10m: c.wind_gusts_10m, cloud_cover: c.cloud_cover
+      }, obs, next6, rain72,
+      soil1: h.soil_moisture_0_to_7cm?.[idx], soil2: h.soil_moisture_7_to_28cm?.[idx]
+    };
+  };
+  SP.parseAQ = function (raw) {
+    const c = raw.current || {}, h = raw.hourly || {}, times = h.time || [];
+    const target = c.time || times[times.length - 1];
+    let idx = 0;
+    for (let i = 0; i < times.length; i++) if (times[i] <= target) idx = i;
+    const arr = [];
+    for (let i = Math.max(0, idx - 23); i <= idx; i++) arr.push(+(h.pm2_5?.[i] || 0));
+    return { live: true, pm2_5: c.pm2_5, pm10: c.pm10, european_aqi: c.european_aqi, us_aqi: c.us_aqi, hourly: arr };
+  };
+  SP.parseAlerts = function (raw) {
+    return { live: true, features: (raw.features || []).filter((f) => f && f.properties) };
+  };
+  SP.parseThermal = function (raw) {
+    const events = Array.isArray(raw.events) ? raw.events : [];
+    let total = +(raw.meta && raw.meta.totalDetections) || 0;
+    if (!total) total = events.reduce((a, e) => a + (+e.count || 0), 0);
+    const points = [];
+    const mapped = [];
+    events.forEach((e) => {
+      const p = SP.eventPoint(e);
+      if (!p.lat && !p.lon) return;
+      const frp = +(e.maxFrp || e.frp || 0);
+      const point = { lat: p.lat, lon: p.lon, frp, conf: +(e.maxConf || e.confidence || 0), count: +(e.count || 0), km: SP.haversine({ lat: 39.93, lon: -120.95 }, p) };
+      mapped.push(point);
+      points.push(point);
+    });
+    mapped.sort((a, b) => a.km - b.km);
+    const near = mapped[0] || null;
+    const localCount = mapped.filter((p) => p.km <= 500).length;
+    const top = mapped.slice().sort((a, b) => b.frp - a.frp).slice(0, 2);
+    const rows = [];
+    if (near) rows.push({ label: 'NEAREST ' + near.lat.toFixed(1) + '/' + near.lon.toFixed(1), km: Math.round(near.km).toLocaleString(), frp: Math.round(near.frp) + ' MW' });
+    top.forEach((p) => rows.push({ label: 'TOP FRP ' + p.lat.toFixed(1) + '/' + p.lon.toFixed(1), km: Math.round(p.km).toLocaleString(), frp: Math.round(p.frp) + ' MW' }));
+    return { live: true, clusters: events.length, total, points: points.slice(0, 2400), near, localCount, rows: rows.slice(0, 3) };
+  };
+  SP.tickUI = function () {
+    if (!SP.state.scenario) return;
+    const min = SP.nowMin();
+    SP.state.min = min;
+    const st = SP.stageAt(min);
+    if (!st) return;
+    SP.state.stage = st;
+    SP.updateTop();
+    SP.updateSpots();
+    SP.renderLog();
+    if (SP.paintTrigger) SP.paintTrigger();
+    const ws = Math.floor(min / 7.5);
+    if (ws !== SP.state.lastWeatherStage) { SP.state.lastWeatherStage = ws; SP.renderWeather(); }
+    window.__spState = {
+      fps: SP.state.fps, quality: SP.state.quality, motion: SP.state.motion, sim: SP.SIM,
+      scenario: { minute: SP.round(min, 1), clock: SP.hm(SP.scenarioDate(min)), stage: st.i, ros: SP.round(st.ros, 1), wind: Math.round(st.wind), spotD: Math.round(st.spotD) },
+      live: { weather: !!(SP.state.weather && SP.state.weather.live), aq: !!(SP.state.aq && SP.state.aq.live), alerts: !!(SP.state.alerts && SP.state.alerts.live), thermal: !!(SP.state.thermal && SP.state.thermal.live) }
+    };
+  };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const SP = window.SP;
+  const state = SP.state;
+  const $ = SP.$;
+  const clamp = SP.clamp, lerp = SP.lerp, round = SP.round, TAU = SP.TAU;
+  const FONT = getComputedStyle(document.body).fontFamily;
+  let W = 0, H = 0, DPR = 1, plate = null, liveCtx = null, raf = 0, smokeSprite = null, fireSprite = null;
+  let lastFps = 0, frames = 0, low = 0, lastFrameTs = 0, windP = null, windSeed = 7;
+  const CAM = {
+    az: 338 * Math.PI / 180, el: 38 * Math.PI / 180, d: 50, f: 2000,
+    cx: 0, cy: 0, tx: 0, ty: 0, tz: 1.8, zoom: 1,
+    fwd: [0, 1, 0], rt: [1, 0, 0], up: [0, 0, 1], eye: [0, 0, 0]
+  };
+  const D2R = Math.PI / 180;
+  const zOf = (h) => (.25 + clamp(h, 0, 1) * .80) * 3.0;
+  function setCamera() {
+    const b = CAM.az, e = CAM.el;
+    const f = [Math.sin(b) * Math.cos(e), Math.cos(b) * Math.cos(e), -Math.sin(e)];
+    const rl = Math.hypot(f[1], f[0]) || 1;
+    const r = [f[1] / rl, -f[0] / rl, 0];
+    const up = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+    CAM.d = 50; CAM.f = W * 1.04 * CAM.zoom; CAM.cx = W * .50; CAM.cy = H * .435;
+    CAM.fwd = f; CAM.rt = r; CAM.up = up;
+    CAM.eye = [CAM.tx - f[0] * CAM.d, CAM.ty - f[1] * CAM.d, CAM.tz - f[2] * CAM.d];
+    window.__spZoom = CAM.zoom; window.__spPan = { x: CAM.tx, y: CAM.ty };
+  }
+  function project(u, v, h) {
+    const wx = (u - .5) * 34, wy = (.5 - v) * 25, wz = zOf(h);
+    const vx = wx - CAM.eye[0], vy = wy - CAM.eye[1], vz = wz - CAM.eye[2];
+    const d = vx * CAM.fwd[0] + vy * CAM.fwd[1] + vz * CAM.fwd[2];
+    const iz = 1 / Math.max(.05, d);
+    return {
+      x: CAM.cx + CAM.f * (vx * CAM.rt[0] + vy * CAM.rt[1]) * iz,
+      y: CAM.cy - CAM.f * (vx * CAM.up[0] + vy * CAM.up[1] + vz * CAM.up[2]) * iz,
+      d: d
+    };
+  }
+  function pointOnFront(front, q) {
+    const p = clamp(q, 0, 1) * (front.length - 1);
+    const i = Math.min(front.length - 2, Math.floor(p)), f = p - i;
+    return [lerp(front[i][0], front[i + 1][0], f), lerp(front[i][1], front[i + 1][1], f)];
+  }
+  function frontPath(ctx, front, dy) {
+    const pts = front.map((p) => project(p[0], p[1], SP.sampleH(p[0], p[1]) + dy));
+    if (!pts.length) return;
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      ctx.quadraticCurveTo(a.x, a.y, (a.x + b.x) * .5, (a.y + b.y) * .5);
+    }
+    const n = pts.length;
+    if (n > 1) ctx.quadraticCurveTo(pts[n - 2].x, pts[n - 2].y, pts[n - 1].x, pts[n - 1].y);
+  }
+  const smoothstep = (a, b, x) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  const grain2 = (x, y) => {
+    const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+    return s - Math.floor(s);
+  };
+  function mapTag(ctx, x, y, title, sub, accent) {
+    ctx.save();
+    ctx.font = '600 7.5px ' + FONT;
+    const w = Math.max(ctx.measureText(title).width, sub ? (() => { ctx.font = '6.5px ' + FONT; return ctx.measureText(sub).width; })() : 0) + 15;
+    const h = sub ? 28 : 16;
+    ctx.fillStyle = 'rgba(9,1,2,.82)'; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(255,74,58,.28)'; ctx.lineWidth = .6; ctx.strokeRect(x + .3, y + .3, w - .6, h - .6);
+    ctx.fillStyle = accent; ctx.fillRect(x, y, 1.6, h);
+    ctx.font = '600 7.5px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(246,230,224,.92)'; ctx.fillText(title, x + 7, y + 10);
+    if (sub) {
+      ctx.font = '6.5px ' + FONT; ctx.fillStyle = 'rgba(216,240,255,.58)';
+      ctx.fillText(sub, x + 7, y + 21);
+    }
+    ctx.restore();
+    return h;
+  }
+
+  const mapView = { drag: false, lastX: 0, lastY: 0, rendering: false, dirty: false };
+  function requestViewRender() {
+    mapView.dirty = true;
+    if (mapView.rendering) return;
+    mapView.rendering = true;
+    requestAnimationFrame(() => {
+      if (mapView.dirty && state.terrain) {
+        mapView.dirty = false;
+        const bt = performance.now();
+        buildPlate();
+        state.buildMs = Math.round(performance.now() - bt);
+        window.__spBuildMs = state.buildMs;
+        drawWorld(performance.now() / 1000, true);
+      }
+      mapView.rendering = false;
+      if (mapView.dirty) requestViewRender();
+    });
+  }
+  function groundBasis() {
+    const rl = Math.hypot(CAM.fwd[0], CAM.fwd[1]) || 1;
+    return { rx: CAM.rt[0], ry: CAM.rt[1], fx: CAM.fwd[0] / rl, fy: CAM.fwd[1] / rl };
+  }
+  function clampPan() {
+    const mx = 2 + 34 * (CAM.zoom - 1) / (2 * CAM.zoom);
+    const my = 1.5 + 25 * (CAM.zoom - 1) / (2 * CAM.zoom);
+    CAM.tx = clamp(CAM.tx, -mx, mx); CAM.ty = clamp(CAM.ty, -my, my);
+  }
+  function initMapZoom() {
+    const world = document.querySelector('.sp-world');
+    if (!world) return;
+    world.addEventListener('wheel', (e) => {
+      if (!state.terrain) return;
+      e.preventDefault();
+      const old = CAM.zoom;
+      const next = clamp(old * Math.exp(-e.deltaY * .0016), 1, 2.6);
+      if (Math.abs(next - old) < 1e-4) return;
+      const f0 = CAM.f, f1 = W * 1.04 * next, sinE = Math.sin(CAM.el) || .6;
+      const sx = CAM.d / f0 - CAM.d / f1;
+      const sy = CAM.d / (f0 * sinE) - CAM.d / (f1 * sinE);
+      const dx = e.clientX - W * .5, dy = e.clientY - H * .5;
+      const g = groundBasis();
+      CAM.tx += dx * sx * g.rx - dy * sy * g.fx;
+      CAM.ty += dx * sx * g.ry - dy * sy * g.fy;
+      CAM.zoom = next;
+      if (next <= 1.001) { CAM.zoom = 1; CAM.tx = 0; CAM.ty = 0; }
+      clampPan();
+      window.__spZoom = CAM.zoom; window.__spPan = { x: CAM.tx, y: CAM.ty };
+      requestViewRender();
+    }, { passive: false });
+    world.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !state.terrain) return;
+      mapView.drag = true; mapView.lastX = e.clientX; mapView.lastY = e.clientY;
+      world.classList.add('dragging');
+      try { world.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    });
+    world.addEventListener('pointermove', (e) => {
+      if (!mapView.drag) return;
+      const dx = e.clientX - mapView.lastX, dy = e.clientY - mapView.lastY;
+      mapView.lastX = e.clientX; mapView.lastY = e.clientY;
+      const sx = CAM.d / CAM.f, sy = CAM.d / (CAM.f * (Math.sin(CAM.el) || .6));
+      const g = groundBasis();
+      CAM.tx += -dx * sx * g.rx + dy * sy * g.fx;
+      CAM.ty += -dx * sx * g.ry + dy * sy * g.fy;
+      clampPan();
+      window.__spPan = { x: CAM.tx, y: CAM.ty };
+      requestViewRender();
+    });
+    const end = (e) => {
+      if (!mapView.drag) return;
+      mapView.drag = false; world.classList.remove('dragging');
+      try { world.releasePointerCapture(e.pointerId); } catch {}
+    };
+    world.addEventListener('pointerup', end);
+    world.addEventListener('pointercancel', end);
+    world.addEventListener('dblclick', () => {
+      CAM.zoom = 1; CAM.tx = 0; CAM.ty = 0;
+      window.__spZoom = 1; window.__spPan = { x: 0, y: 0 };
+      requestViewRender();
+    });
+  }
+
+  function buildTopoData(GW, GH, HGT) {
+    const levels = [], LEVELS = 30;
+    const ex = new Float64Array(4), ey = new Float64Array(4);
+    for (let li = 1; li < LEVELS; li++) {
+      const lvl = li / LEVELS, out = [];
+      for (let j = 0; j < GH - 1; j++) {
+        for (let i = 0; i < GW - 1; i++) {
+          const k = j * GW + i;
+          const a = HGT[k], b = HGT[k + 1], c = HGT[k + GW + 1], d = HGT[k + GW];
+          if ((a < lvl) === (b < lvl) && (b < lvl) === (c < lvl) && (c < lvl) === (d < lvl)) continue;
+          let n = 0;
+          const u0 = i / (GW - 1), u1 = (i + 1) / (GW - 1), v0 = j / (GH - 1), v1 = (j + 1) / (GH - 1);
+          if ((a < lvl) !== (b < lvl)) { const f = (lvl - a) / (b - a); ex[n] = u0 + (u1 - u0) * f; ey[n] = v0; n++; }
+          if ((b < lvl) !== (c < lvl)) { const f = (lvl - b) / (c - b); ex[n] = u1; ey[n] = v0 + (v1 - v0) * f; n++; }
+          if ((d < lvl) !== (c < lvl)) { const f = (lvl - d) / (c - d); ex[n] = u0 + (u1 - u0) * f; ey[n] = v1; n++; }
+          if ((a < lvl) !== (d < lvl)) { const f = (lvl - a) / (d - a); ex[n] = u0; ey[n] = v0 + (v1 - v0) * f; n++; }
+          if (n === 2) { out.push(ex[0], ey[0], ex[1], ey[1]); }
+          else if (n === 4) {
+            const centre = (a + b + c + d) * .25;
+            if ((centre < lvl) === (a < lvl)) {
+              out.push(ex[0], ey[0], ex[3], ey[3], ex[1], ey[1], ex[2], ey[2]);
+            } else {
+              out.push(ex[0], ey[0], ex[1], ey[1], ex[2], ey[2], ex[3], ey[3]);
+            }
+          }
+        }
+      }
+      levels.push({ lvl, major: li % 5 === 0, pts: new Float32Array(out) });
+    }
+    return levels;
+  }
+
+  const WIND_N = 220;
+  const windRnd = () => {
+    windSeed = (Math.imul(windSeed, 1664525) + 1013904223) >>> 0;
+    return windSeed / 4294967296;
+  };
+  function spawnWind(i, prefill) {
+    windP.u[i] = .025 + windRnd() * .95;
+    windP.v[i] = .025 + windRnd() * .95;
+    windP.age[i] = prefill ? windRnd() * 3.4 : 0;
+    windP.life[i] = 3.4 + windRnd() * 3.6;
+    windP.spd[i] = .68 + windRnd() * .64;
+  }
+  function resetWind() {
+    windSeed = 0x51f15e;
+    windP = { u: new Float32Array(WIND_N), v: new Float32Array(WIND_N), age: new Float32Array(WIND_N), life: new Float32Array(WIND_N), spd: new Float32Array(WIND_N) };
+    for (let i = 0; i < WIND_N; i++) spawnWind(i, true);
+  }
+  function windVector(stage) {
+    const b = (stage.dir + 180) * D2R;
+    return [Math.sin(b), -Math.cos(b)];
+  }
+  function stepWind(dt, stage) {
+    const [ux, vy] = windVector(stage);
+    for (let i = 0; i < WIND_N; i++) {
+      const p = windP;
+      p.age[i] += dt;
+      const sp = (stage.wind / 2850) * p.spd[i];
+      p.u[i] += ux * sp * dt;
+      p.v[i] += vy * sp * dt;
+      if (p.age[i] > p.life[i] || p.u[i] < .012 || p.v[i] < .012 || p.u[i] > .988 || p.v[i] > .988) spawnWind(i, false);
+    }
+  }
+  let lastWindT = 0;
+  function drawWind(ctx, t, still, q) {
+    const stage = state.stage;
+    if (!stage) return;
+    if (!windP) resetWind();
+    const dt = still ? 0 : (lastWindT ? Math.min(.12, Math.max(0, t - lastWindT)) : .033);
+    lastWindT = t;
+    if (dt > 0) stepWind(dt, stage);
+    const [ux, vy] = windVector(stage);
+    const n = Math.round(WIND_N * clamp(q || 1, .5, 1));
+    ctx.save(); ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(142,190,214,.23)'; ctx.lineWidth = .82;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const u = windP.u[i], v = windP.v[i];
+      const len = .0050 + .0034 * windP.spd[i];
+      const tailU = clamp(u - ux * len, 0, 1), tailV = clamp(v - vy * len, 0, 1);
+      const a = project(tailU, tailV, SP.sampleH(tailU, tailV) + .012);
+      const b = project(u, v, SP.sampleH(u, v) + .012);
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(199,230,247,.35)'; ctx.lineWidth = .52;
+    ctx.beginPath();
+    for (let i = 0; i < n; i += 2) {
+      const u = windP.u[i], v = windP.v[i];
+      const len = .0030 + .0020 * windP.spd[i];
+      const tailU = clamp(u - ux * len, 0, 1), tailV = clamp(v - vy * len, 0, 1);
+      const a = project(tailU, tailV, SP.sampleH(tailU, tailV) + .012);
+      const b = project(u, v, SP.sampleH(u, v) + .012);
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function buildPlate() {
+    setCamera();
+    if (!plate) plate = document.createElement('canvas');
+    const PR = DPR;
+    const PW = Math.max(1, Math.round(W * PR)), PH = Math.max(1, Math.round(H * PR));
+    plate.width = PW; plate.height = PH;
+    const ctx = plate.getContext('2d');
+    ctx.setTransform(PR, 0, 0, PR, 0, 0);
+    const t = state.terrain, GW = t.meta.width, GH = t.meta.height;
+
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#090102'); bg.addColorStop(.48, '#170304'); bg.addColorStop(1, '#0b0102');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    const glow = ctx.createRadialGradient(W * .43, H * .43, 10, W * .43, H * .43, W * .60);
+    glow.addColorStop(0, 'rgba(145,28,12,.20)'); glow.addColorStop(.52, 'rgba(83,12,6,.08)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+    let HGT = state.hSmooth;
+    if (!HGT) {
+      HGT = Float32Array.from(t.heights);
+      const tmp = new Float32Array(HGT.length);
+      for (let pass = 0; pass < 2; pass++) {
+        for (let y = 0; y < GH; y++) {
+          for (let x = 0; x < GW; x++) {
+            const xa = Math.max(0, x - 1), xb = Math.min(GW - 1, x + 1);
+            tmp[y * GW + x] = (HGT[y * GW + xa] + 2 * HGT[y * GW + x] + HGT[y * GW + xb]) * .25;
+          }
+        }
+        for (let y = 0; y < GH; y++) {
+          const ya = Math.max(0, y - 1), yb = Math.min(GH - 1, y + 1);
+          for (let x = 0; x < GW; x++) {
+            HGT[y * GW + x] = (tmp[ya * GW + x] + 2 * tmp[y * GW + x] + tmp[yb * GW + x]) * .25;
+          }
+        }
+      }
+      state.hSmooth = HGT;
+      state.topo = buildTopoData(GW, GH, HGT);
+    }
+
+    const VN = GW * GH, NQ = (GW - 1) * (GH - 1);
+    const SX = new Float32Array(VN), SY = new Float32Array(VN), SD = new Float32Array(VN);
+    for (let j = 0; j < GH; j++) {
+      const v = j / (GH - 1);
+      for (let i = 0; i < GW; i++) {
+        const k = j * GW + i, p = project(i / (GW - 1), v, HGT[k]);
+        SX[k] = p.x; SY[k] = p.y; SD[k] = p.d;
+      }
+    }
+
+    const LAZ = 292 * D2R, LEL = 26 * D2R;
+    const LX = Math.sin(LAZ) * Math.cos(LEL), LY = Math.cos(LAZ) * Math.cos(LEL), LZ = Math.sin(LEL);
+    const dX = 34 / (GW - 1), dY = 25 / (GH - 1);
+    const qDepth = new Float32Array(NQ), qShade = new Uint8Array(NQ);
+    let dmin = Infinity, dmax = -Infinity;
+    for (let j = 0; j < GH - 1; j++) {
+      for (let i = 0; i < GW - 1; i++) {
+        const q = j * (GW - 1) + i, k = j * GW + i;
+        const depth = (SD[k] + SD[k + 1] + SD[k + GW] + SD[k + GW + 1]) * .25;
+        qDepth[q] = depth;
+        if (depth < dmin) dmin = depth;
+        if (depth > dmax) dmax = depth;
+        const gx = ((HGT[k + 1] + HGT[k + GW + 1]) - (HGT[k] + HGT[k + GW])) * .5 / dX * 2.4;
+        const gy = ((HGT[k] + HGT[k + 1]) - (HGT[k + GW] + HGT[k + GW + 1])) * .5 / dY * 2.4;
+        const nl = Math.hypot(gx, gy, 1);
+        const light = (-gx * LX - gy * LY + LZ) / nl;
+        qShade[q] = Math.round(clamp(1.32 * light - .015, 0, 1) * 255);
+      }
+    }
+
+    const SHADES = 20, FOGS = 8, NCOL = SHADES * FOGS, NBANDS = 80;
+    const PAL = new Array(NCOL);
+    for (let f = 0; f < FOGS; f++) {
+      for (let s = 0; s < SHADES; s++) {
+        const shade = (s + .5) / SHADES;
+        const fog = ((f + .5) / FOGS) * .60;
+        let r = 11 + 61 * shade, g = 2.5 + 13.5 * shade, b = 3.5 + 12 * shade;
+        r = r * (1 - fog) + 8 * fog;
+        g = g * (1 - fog) + 2 * fog;
+        b = b * (1 - fog) + 3 * fog;
+        PAL[f * SHADES + s] = 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
+      }
+    }
+    const span = Math.max(.001, dmax - dmin), qKey = new Int32Array(NQ);
+    for (let q = 0; q < NQ; q++) {
+      const ratio = clamp((qDepth[q] - dmin) / span, 0, .999);
+      const fogIdx = Math.min(FOGS - 1, Math.floor(smoothstep(.20, 1, ratio) * FOGS));
+      const shadeIdx = Math.min(SHADES - 1, Math.floor((qShade[q] / 255) * SHADES));
+      const band = NBANDS - 1 - Math.min(NBANDS - 1, Math.floor(ratio * NBANDS));
+      qKey[q] = band * NCOL + fogIdx * SHADES + shadeIdx;
+    }
+
+    const order = Array.from({ length: NQ }, (_, i) => i);
+    order.sort((a, b) => qKey[a] - qKey[b]);
+
+    let curKey = -1, openPath = false;
+    for (let oi = 0; oi < NQ; oi++) {
+      const q = order[oi], key = qKey[q];
+      if (key !== curKey) {
+        if (openPath) ctx.fill();
+        curKey = key; openPath = true;
+        ctx.fillStyle = PAL[key % NCOL];
+        ctx.beginPath();
+      }
+      const i = q % (GW - 1), j = (q / (GW - 1)) | 0, k = j * GW + i;
+      const ax = SX[k], ay = SY[k], bx = SX[k + 1], by = SY[k + 1];
+      const cx = SX[k + GW + 1], cy = SY[k + GW + 1], dx = SX[k + GW], dy = SY[k + GW];
+      const mx = (ax + bx + cx + dx) * .25, my = (ay + by + cy + dy) * .25;
+      const ex = 1 + .9 / Math.max(2, Math.abs(cx - ax) + Math.abs(cy - ay));
+      ctx.moveTo(mx + (ax - mx) * ex, my + (ay - my) * ex);
+      ctx.lineTo(mx + (bx - mx) * ex, my + (by - my) * ex);
+      ctx.lineTo(mx + (cx - mx) * ex, my + (cy - my) * ex);
+      ctx.lineTo(mx + (dx - mx) * ex, my + (dy - my) * ex);
+      ctx.closePath();
+    }
+    if (openPath) ctx.fill();
+
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const topo = state.topo || [];
+    for (let ti = 0; ti < topo.length; ti++) {
+      const lev = topo[ti], pts = lev.pts;
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i += 4) {
+        const a = project(pts[i], pts[i + 1], lev.lvl + .004);
+        const b = project(pts[i + 2], pts[i + 3], lev.lvl + .004);
+        ctx.moveTo(a.x, a.y - .4); ctx.lineTo(b.x, b.y - .4);
+      }
+      ctx.strokeStyle = lev.major ? 'rgba(234,132,108,.33)' : 'rgba(214,108,88,.18)';
+      ctx.lineWidth = lev.major ? .74 : .48;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    t.creek.forEach((p, i) => { const q = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .003); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
+    ctx.strokeStyle = 'rgba(28,75,102,.18)'; ctx.lineWidth = 4.2; ctx.stroke();
+    ctx.strokeStyle = 'rgba(91,177,232,.46)'; ctx.lineWidth = 1.05; ctx.stroke();
+    ctx.strokeStyle = 'rgba(205,238,255,.20)'; ctx.lineWidth = .42; ctx.stroke();
+
+    ctx.beginPath();
+    t.road.forEach((p, i) => { const q = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .006); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
+    ctx.strokeStyle = 'rgba(166,116,96,.18)'; ctx.lineWidth = 1.1; ctx.setLineDash([4, 8]); ctx.stroke(); ctx.setLineDash([]);
+
+    ctx.beginPath();
+    t.line.forEach((p, i) => { const q = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .008); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
+    ctx.strokeStyle = 'rgba(255,186,62,.55)'; ctx.lineWidth = 1.1; ctx.setLineDash([2.5, 5]); ctx.stroke(); ctx.setLineDash([]);
+    t.line.forEach((p, i) => {
+      if (i % 4) return;
+      const q = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .008);
+      ctx.strokeStyle = 'rgba(255,194,74,.34)'; ctx.lineWidth = .7;
+      ctx.beginPath(); ctx.moveTo(q.x - 2.5, q.y - 2.5); ctx.lineTo(q.x + 2.5, q.y + 2.5); ctx.stroke();
+    });
+
+    const town = project(.76, .15, SP.sampleH(.76, .15));
+    for (let i = 0; i < 19; i++) {
+      const a = i * 2.4, rr = 3 + (i % 5) * 2.4;
+      ctx.fillStyle = i % 3 ? 'rgba(255,194,74,.26)' : 'rgba(188,230,255,.42)';
+      ctx.fillRect(town.x + Math.cos(a) * rr, town.y + Math.sin(a) * rr * .68, 1.6, 1.6);
+    }
+
+    ctx.font = '600 8.5px ' + FONT;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    t.labels.forEach((l) => {
+      const p = project(l.u, l.v, SP.sampleH(l.u, l.v));
+      ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 3;
+      ctx.fillStyle = l.kind === 'fire' ? 'rgba(255,124,88,.88)' : l.kind === 'line' ? 'rgba(255,196,78,.82)' : 'rgba(210,234,246,.54)';
+      ctx.fillText(l.name, p.x, p.y - 7);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255,114,82,.25)'; ctx.lineWidth = .6;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - 4); ctx.lineTo(p.x, p.y + 1); ctx.stroke();
+    });
+    ctx.textAlign = 'left';
+    const edge = 'PLUMAS BLOCK · 39.93N 120.95W · GRID 34 × 25 KM · SYNTHETIC DEM';
+    ctx.fillStyle = 'rgba(216,240,255,.24)'; ctx.font = '7px ' + FONT;
+    ctx.fillText(edge, W * .50 - ctx.measureText(edge).width / 2, H * .925);
+  }
+
+  function drawWorld(t, still) {
+    if (!liveCtx || !plate) return;
+    const ctx = liveCtx, stage = state.stage;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#080102'; ctx.fillRect(0, 0, W, H);
+    if (!stage) return;
+    ctx.drawImage(plate, 0, 0, W, H);
+    const cur = stage.front, prev = SP.stageAt(Math.max(0, state.min - 15)).front, q = state.quality;
+    drawWind(ctx, t, still, q);
+
+    ctx.beginPath(); frontPath(ctx, cur, .001);
+    for (let i = prev.length - 1; i >= 0; i--) {
+      const p = prev[i], pt = project(p[0], p[1], SP.sampleH(p[0], p[1])); ctx.lineTo(pt.x, pt.y);
+    }
+    ctx.closePath(); ctx.fillStyle = 'rgba(14,0,1,.52)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(7,0,0,.34)'; ctx.lineWidth = 18; ctx.stroke();
+
+    for (let k = 1; k <= 2; k++) {
+      const iso = SP.stageAt(Math.max(0, state.min - k * 30));
+      ctx.beginPath(); frontPath(ctx, iso.front, .004);
+      ctx.strokeStyle = 'rgba(255,194,74,' + (k === 1 ? .19 : .10) + ')'; ctx.lineWidth = .85; ctx.setLineDash([4, 7]); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    const wAng = (stage.dir + 180) * SP.rad, wx = Math.sin(wAng), wy = -Math.cos(wAng);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    for (let i = 0; i < Math.round(22 * q); i++) {
+      const p = pointOnFront(cur, (i * .618 + .08) % 1);
+      const base = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .02);
+      const len = 16 + (i % 6) * 6;
+      ctx.strokeStyle = 'rgba(92,192,255,' + (.026 + (i % 4) * .008) + ')'; ctx.lineWidth = .6;
+      ctx.beginPath(); ctx.moveTo(base.x, base.y);
+      ctx.quadraticCurveTo(base.x + wx * len * .5 + Math.sin(t + i) * 2, base.y + wy * len * .5, base.x + wx * len, base.y + wy * len);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    if (!smokeSprite) {
+      smokeSprite = document.createElement('canvas'); smokeSprite.width = smokeSprite.height = 128;
+      const sc = smokeSprite.getContext('2d');
+      const sg = sc.createRadialGradient(64, 64, 2, 64, 64, 62);
+      sg.addColorStop(0, 'rgba(81,48,42,.40)'); sg.addColorStop(.42, 'rgba(60,29,25,.18)'); sg.addColorStop(1, 'rgba(40,16,13,0)');
+      sc.fillStyle = sg; sc.fillRect(0, 0, 128, 128);
+    }
+    if (!fireSprite) {
+      fireSprite = document.createElement('canvas'); fireSprite.width = fireSprite.height = 128;
+      const fc2 = fireSprite.getContext('2d');
+      const fg = fc2.createRadialGradient(64, 64, 1, 64, 64, 62);
+      fg.addColorStop(0, 'rgba(255,246,222,.98)'); fg.addColorStop(.14, 'rgba(255,196,104,.82)');
+      fg.addColorStop(.40, 'rgba(255,86,26,.36)'); fg.addColorStop(1, 'rgba(255,40,8,0)');
+      fc2.fillStyle = fg; fc2.fillRect(0, 0, 128, 128);
+    }
+
+    if (q > .55) {
+      ctx.save();
+      for (let i = 0; i < 11; i++) {
+        const p = pointOnFront(cur, (i / 11 + t * .005) % 1), base = project(p[0], p[1], SP.sampleH(p[0], p[1]));
+        const life = .5 + .5 * Math.sin(t * .7 + i * 1.7), rad = (26 + life * 30) * (1 + i % 3 * .20);
+        ctx.globalAlpha = .075 + life * .045;
+        ctx.drawImage(smokeSprite, base.x - rad + wx * rad * .24, base.y - 26 - rad - wy * rad * .22, rad * 2, rad * 2.4);
+      }
+      ctx.restore();
+    }
+
+    ctx.beginPath(); frontPath(ctx, cur, .006);
+    ctx.strokeStyle = 'rgba(79,2,1,.38)'; ctx.lineWidth = 13; ctx.stroke();
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(168,12,4,.06)'; ctx.lineWidth = 30; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,44,12,.12)'; ctx.lineWidth = 13; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,102,38,.20)'; ctx.lineWidth = 5.5; ctx.stroke();
+
+    const hot = Math.round(82 * q), stageSalt = state.stageIndex || 0;
+    for (let i = 0; i < hot; i++) {
+      const qq = (i / hot + grain2(i + .5, stageSalt + .25) * .0035) % 1;
+      const p = pointOnFront(cur, qq), base = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .008);
+      const flick = .5 + .5 * Math.sin(t * 6.2 + i * 2.13);
+      const rad = (1.8 + 3.5 * flick) * (.72 + .58 * grain2(i * 3.1, t * .08));
+      ctx.globalAlpha = .18 + .26 * flick;
+      ctx.drawImage(fireSprite, base.x - rad, base.y - rad * .72, rad * 2, rad * 2.25);
+    }
+    ctx.globalAlpha = 1;
+
+    for (let i = 0; i < Math.round(10 * q); i++) {
+      const qq = (i * .137 + t * .0045) % 1;
+      const p = pointOnFront(cur, qq), base = project(p[0], p[1], SP.sampleH(p[0], p[1]) + .009);
+      const flick = .5 + .5 * Math.sin(t * 5.5 + i * 2.7), hgt = 8 + 14 * flick;
+      const rad = 2.0 + 2.4 * flick;
+      ctx.globalAlpha = .085 + .10 * flick;
+      ctx.drawImage(fireSprite, base.x - rad + Math.sin(t * 4 + i) * 1.5, base.y - hgt, rad * 2, hgt + rad);
+    }
+    ctx.restore();
+
+    ctx.beginPath(); frontPath(ctx, cur, .008);
+    ctx.strokeStyle = 'rgba(255,46,16,.86)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,215,166,.60)'; ctx.lineWidth = .35; ctx.stroke();
+
+    if (q > .55) {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < Math.round(78 * q); i++) {
+        const life = (t * (.075 + (i % 5) * .011) + i * .137) % 1;
+        const p = pointOnFront(cur, (i * .618) % 1), base = project(p[0], p[1], SP.sampleH(p[0], p[1]));
+        const flight = 24 + (i % 8) * 11;
+        const x = base.x + wx * flight * life + Math.sin(t * 2.4 + i) * 4 * life;
+        const y = base.y + wy * flight * life - Math.sin(life * Math.PI) * (10 + i % 6 * 4);
+        const a = Math.sin(life * Math.PI);
+        ctx.strokeStyle = 'rgba(255,129,54,' + (a * .52) + ')'; ctx.lineWidth = .8;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - wx * 2.8, y - wy * 2.8 + 1); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,219,158,' + (a * .72) + ')'; ctx.fillRect(x, y, 1, 1);
+        if (life > .88) {
+          ctx.strokeStyle = 'rgba(255,194,74,' + ((1 - life) * .9) + ')'; ctx.lineWidth = .6;
+          ctx.beginPath(); ctx.ellipse(x, y, 2.5 + life * 3, 1.2 + life * 1.6, 0, 0, TAU); ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    state.scenario.spots.forEach((sp) => {
+      if (state.min / 15 < sp.start) return;
+      const d = sp.d0 + sp.grow * (state.min / 15 - sp.start);
+      const p = project(sp.u, sp.v, SP.sampleH(sp.u, sp.v) + .01);
+      const r = 2.5 + d * .052, pulse = .5 + .5 * Math.sin(t * (sp.id === 3 ? 2.3 : 1.4) + sp.id);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = 'rgba(255,60,20,.10)'; ctx.beginPath(); ctx.arc(p.x, p.y, r * (3.1 + pulse * .5), 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,170,60,.20)'; ctx.beginPath(); ctx.arc(p.x, p.y, r * (1.8 + pulse * .3), 0, TAU); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = sp.id === 3 ? 'rgba(255,42,30,.8)' : 'rgba(255,194,74,.62)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * (1.2 + pulse * .2), 0, TAU); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,235,205,.9)'; ctx.beginPath(); ctx.arc(p.x, p.y, 1.4, 0, TAU); ctx.fill();
+      ctx.fillStyle = sp.id === 3 ? 'rgba(255,150,110,.92)' : 'rgba(255,210,160,.72)'; ctx.font = '7px ' + FONT;
+      ctx.textAlign = 'left'; ctx.fillText(sp.label + ' ' + Math.round(d) + 'M', p.x + 5, p.y - 4); ctx.textAlign = 'left';
+    });
+
+    const town = project(.76, .15, SP.sampleH(.76, .15) + .01), pulse = .5 + .5 * Math.sin(t * 1.2);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,194,74,' + (.18 + pulse * .15) + ')'; ctx.lineWidth = .9; ctx.setLineDash([5, 8]);
+    ctx.beginPath();
+    for (let a = 0; a <= 64; a++) {
+      const th = a / 64 * TAU, u = .76 + Math.cos(th) * (.038 + pulse * .002), v = .15 + Math.sin(th) * (.030 + pulse * .0016);
+      const p = project(u, v, SP.sampleH(u, v) + .006);
+      a ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,194,74,.72)'; ctx.font = '7px ' + FONT;
+    ctx.textAlign = 'center'; ctx.fillText('CLEAR-BY 17:02', town.x, town.y - 28); ctx.textAlign = 'left';
+    ctx.restore();
+
+    const fc = pointOnFront(cur, .43), fp = project(fc[0], fc[1], SP.sampleH(fc[0], fc[1]));
+    const tagX = Math.min(W - 190, fp.x + 88), tagY = fp.y - 62;
+    ctx.strokeStyle = 'rgba(255,120,80,.34)'; ctx.lineWidth = .8;
+    ctx.beginPath(); ctx.moveTo(fp.x + 12, fp.y - 14); ctx.lineTo(tagX - 5, tagY + 14); ctx.stroke();
+    mapTag(ctx, tagX, tagY, 'ACTIVE FLANK · ' + Math.round(stage.ros) + ' KM/H',
+      'WIND ' + Math.round(stage.wind) + ' / ' + Math.round(stage.gust) + ' · ' + Math.round(stage.dir) + '°',
+      'rgba(255,74,58,.95)');
+
+    if (!still) {
+      frames++;
+      const now = performance.now();
+      if (now - lastFps > 1000) {
+        state.fps = Math.round(frames * 1000 / (now - lastFps)); window.__spFps = state.fps;
+        frames = 0; lastFps = now;
+      }
+    }
+  }
+
+  function loop(ts) {
+    raf = requestAnimationFrame(loop);
+    const min = SP.nowMin();
+    const loopN = Math.floor((performance.now() - SP.startMs) * SP.SPEED / 60000 / 180);
+    if (loopN !== state.loop) {
+      state.loop = loopN; state.logExtras = []; state.logSig = '';
+      const cut = $('sp-cut'); cut.classList.remove('go'); void cut.offsetWidth; cut.classList.add('go');
+    }
+    state.min = min; state.stage = SP.stageAt(min); state.stageIndex = state.stage ? state.stage.i : 0;
+    const a = performance.now();
+    drawWorld(ts / 1000, false);
+    state.drawMs = Math.round((performance.now() - a) * 10) / 10;
+    state.rafMs = lastFrameTs ? Math.round((ts - lastFrameTs) * 10) / 10 : 0;
+    lastFrameTs = ts;
+    window.__spDrawMs = state.drawMs; window.__spRafMs = state.rafMs;
+    if (state.drawMs > 13 && state.quality > .6) { low++; if (low > 4) { state.quality = .6; low = 0; } }
+    else if (state.drawMs < 7 && state.quality < 1) { state.quality = 1; low = 0; }
+  }
+
+  function resizeWorld() {
+    const t = $('sp-terrain'), l = $('sp-live');
+    DPR = Math.min(2, Math.max(window.devicePixelRatio || 1, 1.5));
+    W = Math.max(1, window.innerWidth); H = Math.max(1, window.innerHeight);
+    [t, l].forEach((c) => { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); c.style.width = W + 'px'; c.style.height = H + 'px'; });
+    liveCtx = l.getContext('2d');
+    if (!state.terrain) return;
+    const bt = performance.now();
+    buildPlate();
+    state.buildMs = Math.round(performance.now() - bt);
+    window.__spBuildMs = state.buildMs;
+    if (!SP.MOTION) drawWorld(performance.now() / 1000, true);
+  }
+
+  function drawTrigger(ctx, w, h) {
+    const start = 13 * 60 + 20, end = 17 * 60 + 30;
+    const x = (m) => 4 + (m - start) / (end - start) * (w - 8), y = h * .58;
+    ctx.strokeStyle = 'rgba(255,74,58,.22)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(4, y); ctx.lineTo(w - 4, y); ctx.stroke();
+    for (let m = 14 * 60; m <= 17 * 60; m += 60) {
+      ctx.strokeStyle = 'rgba(255,74,58,.16)'; ctx.beginPath(); ctx.moveTo(x(m), y - 3); ctx.lineTo(x(m), y + 3); ctx.stroke();
+    }
+    const now = SP.scenarioDate(state.min), n = now.getUTCHours() * 60 + now.getUTCMinutes(), tx = x(17 * 60 + 2);
+    ctx.strokeStyle = 'rgba(255,194,74,.9)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(tx, 4); ctx.lineTo(tx, h - 4); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,194,74,.9)'; ctx.font = '7px ' + FONT; ctx.fillText('CLEAR', tx - 18, 10);
+    const px = clamp(x(n), 5, w - 5);
+    ctx.fillStyle = '#F6E6E0'; ctx.beginPath(); ctx.arc(px, y, 2.4, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,42,30,.8)'; ctx.beginPath(); ctx.arc(px, y, 4.5, 0, TAU); ctx.stroke();
+    ctx.fillStyle = 'rgba(216,240,255,.55)'; ctx.font = '7px ' + FONT;
+    ctx.fillText('13:20', 5, h - 3); ctx.fillText('17:30', w - 28, h - 3);
+  }
+  function drawForecast(ctx, w, h, t) {
+    const wd = state.weather;
+    if (!wd || !wd.next6 || !wd.next6.length) return;
+    const rows = wd.next6, n = rows.length;
+    const temps = rows.map((r) => r.temp), winds = rows.map((r) => r.wind);
+    const tMin = Math.min(...temps) - 1, tMax = Math.max(...temps) + 1, wMax = Math.max(...winds, 12) * 1.15;
+    const x = (i) => 8 + i / (n - 1) * (w - 16);
+    const yT = (v) => h - 15 - (v - tMin) / (tMax - tMin) * (h - 22);
+    const yW = (v) => h - 14 - (v / wMax) * (h - 23);
+    const title = $('fc-title'), meta = $('fc-meta');
+    if (title) title.innerHTML = '6-H FORECAST · ' + rows[0].t + '–' + rows[n - 1].t + ' <b>TEMP / WIND</b>';
+    if (meta) {
+      const rem = 100 - SP.nowMin();
+      if (rem > 0) {
+        const mm = Math.ceil(rem);
+        meta.textContent = 'SHIFT IN ' + Math.floor(mm / 60) + ':' + String(mm % 60).padStart(2, '0');
+      } else {
+        meta.textContent = 'SHIFTED · ' + Math.round(state.stage.dir) + '°';
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(255,74,58,.10)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(6, h - 14); ctx.lineTo(w - 6, h - 14); ctx.stroke();
+    for (let g = 1; g < 4; g++) {
+      const yy = 5 + g / 4 * (h - 20);
+      ctx.strokeStyle = 'rgba(255,74,58,.045)';
+      ctx.beginPath(); ctx.moveTo(6, yy); ctx.lineTo(w - 6, yy); ctx.stroke();
+    }
+
+    const startM = SP.hmMin(rows[0].t), endM = SP.hmMin(rows[n - 1].t), shiftM = 15 * 60;
+    if (shiftM > startM && shiftM < endM) {
+      const sx = 8 + (shiftM - startM) / (endM - startM) * (w - 16);
+      ctx.strokeStyle = 'rgba(255,194,74,.26)'; ctx.lineWidth = .8; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(sx, 4); ctx.lineTo(sx, h - 14); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,194,74,.58)'; ctx.font = '6px ' + FONT;
+      ctx.fillText('SHIFT', Math.min(w - 30, sx + 2), 7);
+    }
+
+    const grd = ctx.createLinearGradient(0, 4, 0, h - 14); grd.addColorStop(0, 'rgba(255,194,74,.28)'); grd.addColorStop(1, 'rgba(255,194,74,0)');
+    ctx.beginPath(); ctx.moveTo(x(0), h - 14); rows.forEach((r, i) => ctx.lineTo(x(i), yT(r.temp))); ctx.lineTo(x(n - 1), h - 14); ctx.closePath(); ctx.fillStyle = grd; ctx.fill();
+    ctx.beginPath(); rows.forEach((r, i) => i ? ctx.lineTo(x(i), yT(r.temp)) : ctx.moveTo(x(i), yT(r.temp)));
+    ctx.strokeStyle = '#FFC24A'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    const pulse = .5 + .5 * Math.sin(t * 2.4);
+    rows.forEach((r, i) => {
+      ctx.fillStyle = 'rgba(255,194,74,' + (.32 + pulse * .28) + ')';
+      ctx.beginPath(); ctx.arc(x(i), yT(r.temp), 1.25 + pulse * .55, 0, TAU); ctx.fill();
+    });
+
+    ctx.beginPath(); rows.forEach((r, i) => i ? ctx.lineTo(x(i), yW(r.wind)) : ctx.moveTo(x(i), yW(r.wind)));
+    ctx.strokeStyle = 'rgba(92,192,255,.72)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.lineDashOffset = -t * 10; ctx.stroke();
+    ctx.setLineDash([]); ctx.lineDashOffset = 0;
+
+    const scan = 8 + ((t * .11) % 1) * (w - 16);
+    const sg = ctx.createLinearGradient(scan - 18, 0, scan + 2, 0);
+    sg.addColorStop(0, 'rgba(255,194,74,0)'); sg.addColorStop(.82, 'rgba(255,194,74,.09)'); sg.addColorStop(1, 'rgba(255,194,74,.22)');
+    ctx.fillStyle = sg; ctx.fillRect(Math.max(8, scan - 18), 4, Math.min(20, w - scan), h - 18);
+    ctx.strokeStyle = 'rgba(255,194,74,.32)'; ctx.lineWidth = .7;
+    ctx.beginPath(); ctx.moveTo(scan, 4); ctx.lineTo(scan, h - 14); ctx.stroke();
+    const spos = clamp((scan - 8) / (w - 16), 0, 1) * (n - 1), si = Math.min(n - 2, Math.floor(spos)), sf = spos - si;
+    const sy = yT(SP.lerp(rows[si].temp, rows[si + 1].temp, sf));
+    const sw = yW(SP.lerp(rows[si].wind, rows[si + 1].wind, sf));
+    ctx.fillStyle = 'rgba(255,232,166,.95)'; ctx.beginPath(); ctx.arc(scan, sy, 2.1, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,194,74,.42)'; ctx.lineWidth = .7;
+    ctx.beginPath(); ctx.arc(scan, sy, 4.5 + pulse * 2, 0, TAU); ctx.stroke();
+    ctx.fillStyle = 'rgba(160,215,250,.75)'; ctx.beginPath(); ctx.arc(scan, sw, 1.2, 0, TAU); ctx.fill();
+
+    const nowM = (() => { const d = SP.scenarioDate(state.min); return d.getUTCHours() * 60 + d.getUTCMinutes(); })();
+    if (nowM >= startM && nowM <= endM) {
+      const pos = (nowM - startM) / (endM - startM) * (n - 1), i = Math.min(n - 2, Math.floor(pos)), f = pos - i;
+      const nx = x(i) + (x(i + 1) - x(i)) * f, ny = yT(SP.lerp(rows[i].temp, rows[i + 1].temp, f));
+      const np = .5 + .5 * Math.sin(t * 3.1);
+      ctx.strokeStyle = 'rgba(246,230,224,.24)'; ctx.lineWidth = .7;
+      ctx.beginPath(); ctx.moveTo(nx, 4); ctx.lineTo(nx, h - 14); ctx.stroke();
+      ctx.fillStyle = 'rgba(246,230,224,.85)'; ctx.beginPath(); ctx.arc(nx, ny, 1.5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(246,230,224,' + (.18 + np * .2) + ')'; ctx.lineWidth = .6;
+      ctx.beginPath(); ctx.arc(nx, ny, 3.5 + np * 3, 0, TAU); ctx.stroke();
+    }
+
+    ctx.font = '7px ' + FONT; ctx.fillStyle = 'rgba(216,240,255,.55)';
+    ctx.fillText(Math.round(rows[0].temp) + '°', 5, yT(rows[0].temp) - 4);
+    ctx.fillText(Math.round(rows[n - 1].temp) + '°', w - 22, yT(rows[n - 1].temp) - 4);
+    ctx.fillStyle = 'rgba(246,230,224,.38)';
+    rows.forEach((r, i) => { if (i % 2 === 0) ctx.fillText(r.t, x(i) - 7, h - 3); });
+  }
+  function drawAQ(ctx, w, h) {
+    const a = state.aq;
+    if (!a || !a.hourly || !a.hourly.length) return;
+    const arr = a.hourly, max = Math.max(...arr, 20) * 1.16;
+    const x = (i) => 2 + i / (arr.length - 1) * (w - 4), y = (v) => h - 3 - v / max * (h - 8);
+    ctx.beginPath(); ctx.moveTo(2, h - 2); arr.forEach((v, i) => ctx.lineTo(x(i), y(v))); ctx.lineTo(w - 2, h - 2); ctx.closePath();
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(92,192,255,.28)'); g.addColorStop(1, 'rgba(92,192,255,0)');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); arr.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)));
+    ctx.strokeStyle = a.european_aqi < 40 ? '#5CC0FF' : a.european_aqi < 60 ? '#FFC24A' : '#FF3B1E'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = 'rgba(216,240,255,.55)'; ctx.font = '7px ' + FONT;
+    ctx.fillText('24 H', 2, 8); ctx.fillText(Math.round(max) + ' MAX', w - 34, 8);
+  }
+  function drawThermal(ctx, w, h, t) {
+    const cx = w / 2, cy = h / 2 + 1, R = Math.min(w, h) * .42;
+    const grd = ctx.createRadialGradient(cx, cy, R * .1, cx, cy, R);
+    grd.addColorStop(0, 'rgba(34,9,8,.46)'); grd.addColorStop(1, 'rgba(5,1,2,.06)');
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,74,58,.20)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    for (let i = 1; i < 5; i++) {
+      const yy = cy - R + (i / 5) * R * 2, rr = Math.sqrt(Math.max(0, R * R - (yy - cy) ** 2));
+      ctx.strokeStyle = 'rgba(255,74,58,.10)'; ctx.beginPath(); ctx.ellipse(cx, yy, rr, rr * .12, 0, 0, TAU); ctx.stroke();
+    }
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * TAU;
+      ctx.strokeStyle = 'rgba(255,74,58,.08)'; ctx.beginPath(); ctx.ellipse(cx, cy, R * Math.abs(Math.cos(a)) + 1, R, 0, 0, TAU); ctx.stroke();
+    }
+    const rot = Math.sin(t * .06) * .12, lo = (-120 + rot * 30) * SP.rad, la = 39.93 * SP.rad;
+    const projectG = (lon, lat) => {
+      const l = lon * SP.rad, p = lat * SP.rad;
+      const x = Math.cos(p) * Math.sin(l - lo), y = Math.cos(la) * Math.sin(p) - Math.sin(la) * Math.cos(p) * Math.cos(l - lo);
+      return { x: cx + x * R, y: cy - y * R, vis: Math.sin(la) * Math.sin(p) + Math.cos(la) * Math.cos(p) * Math.cos(l - lo) > 0 };
+    };
+    const therm = state.thermal;
+    if (therm && therm.live) {
+      const step = Math.max(1, Math.ceil(therm.points.length / 900));
+      for (let pi = 0; pi < therm.points.length; pi += step) {
+        const p = therm.points[pi], q = projectG(p.lon, p.lat); if (!q.vis) continue;
+        const r = clamp(1 + p.frp / 220, 1, 3.4);
+        ctx.fillStyle = p.frp > 80 ? 'rgba(255,120,50,.75)' : p.frp > 20 ? 'rgba(255,194,74,.55)' : 'rgba(255,74,58,.32)';
+        ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, TAU); ctx.fill();
+      }
+      const pulse = .5 + .5 * Math.sin(t * 2.2);
+      ctx.strokeStyle = 'rgba(255,194,74,' + (.12 + .22 * pulse) + ')'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(cx, cy, 22 + pulse * 8, 0, TAU); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(216,240,255,.56)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - 4, cy); ctx.lineTo(cx + 4, cy); ctx.moveTo(cx, cy - 4); ctx.lineTo(cx, cy + 4); ctx.stroke();
+    ctx.fillStyle = 'rgba(216,240,255,.45)'; ctx.font = '7px ' + FONT; ctx.fillText('ANCHOR', cx + 7, cy + 9);
+    ctx.strokeStyle = 'rgba(255,74,58,.32)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(t * .6) * R * .92, cy + Math.sin(t * .6) * R * .92); ctx.stroke();
+    if (!therm || !therm.live) { ctx.fillStyle = 'rgba(255,194,74,.7)'; ctx.font = '8px ' + FONT; ctx.fillText('NO FEED', cx - 20, cy + R + 10); }
+  }
+  function drawSpot(ctx, w, h) {
+    const minStage = state.min / 15, maxD = 360, x = (i) => 4 + i / 12 * (w - 8), y = (d) => h - 3 - clamp(d / maxD, 0, 1) * (h - 8);
+    ctx.strokeStyle = 'rgba(255,74,58,.12)'; ctx.beginPath(); ctx.moveTo(3, h - 2); ctx.lineTo(w - 3, h - 2); ctx.stroke();
+    const cols = ['#5CC0FF', '#7F9EAA', '#FF3B1E', '#FFC24A'];
+    state.scenario.spots.forEach((sp, k) => {
+      ctx.beginPath(); let started = false;
+      for (let i = 0; i <= 12; i++) {
+        if (i < sp.start) continue;
+        const d = sp.d0 + sp.grow * (i - sp.start);
+        if (!started) { ctx.moveTo(x(i), y(d)); started = true; } else ctx.lineTo(x(i), y(d));
+      }
+      ctx.strokeStyle = cols[k]; ctx.lineWidth = k === 2 ? 1.5 : 1; ctx.stroke();
+      if (minStage >= sp.start) {
+        const d = sp.d0 + sp.grow * (minStage - sp.start);
+        ctx.fillStyle = cols[k]; ctx.beginPath(); ctx.arc(clamp(x(minStage), 3, w - 3), y(d), 2, 0, TAU); ctx.fill();
+      }
+    });
+    ctx.fillStyle = 'rgba(216,240,255,.45)'; ctx.font = '7px ' + FONT; ctx.fillText('GROWTH / M', 3, 8);
+  }
+
+  function initUI() {
+    U.canvas('#fc-box', drawForecast, { fps: 6 });
+    U.canvas('#aq-box', drawAQ, { fps: 1 });
+    U.canvas('#thermal-box', drawThermal, { fps: 8 });
+    U.canvas('#spot-box', drawSpot, { fps: 1 });
+    U.canvas('#trig-box', drawTrigger, { fps: 4 });
+  }
+
+  function fallbackWeather() {
+    const f = state.fallback, hr = f.hourly, target = f.current.time;
+    let idx = 0;
+    for (let i = 0; i < hr.time.length; i++) if (hr.time[i] <= target) idx = i;
+    const obs = [];
+    for (let k = 0; k < 6; k++) {
+      const i = Math.max(0, idx - k * 2);
+      obs.push({ t: hr.time[i].slice(11, 16), temp: Math.round(hr.temperature_2m[i]), rh: Math.round(hr.relative_humidity_2m[i]), wind: Math.round(hr.wind_speed_10m[i]), dir: Math.round(hr.wind_direction_10m[i]) });
+    }
+    const next6 = [];
+    for (let k = 1; k <= 6; k++) {
+      const i = Math.min(hr.time.length - 1, idx + k);
+      next6.push({ t: hr.time[i].slice(11, 16), temp: +hr.temperature_2m[i], wind: +hr.wind_speed_10m[i] });
+    }
+    let rain72 = 0; for (let i = Math.max(0, idx - 71); i <= idx; i++) rain72 += +(hr.precipitation[i] || 0);
+    return {
+      live: false, elevation: 1183, current: {
+        time: f.current.time, temperature_2m: f.current.temperature_2m, relative_humidity_2m: f.current.relative_humidity_2m,
+        dew_point_2m: f.current.dew_point_2m, apparent_temperature: f.current.temperature_2m, precipitation: 0,
+        wind_speed_10m: f.current.wind_speed_10m, wind_direction_10m: f.current.wind_direction_10m,
+        wind_gusts_10m: f.current.wind_gusts_10m, cloud_cover: f.current.cloud_cover
+      }, obs, next6, rain72, soil1: hr.soil_moisture_0_to_7cm[idx], soil2: hr.soil_moisture_7_to_28cm[idx]
+    };
+  }
+
+  async function loadWeather() {
+    try {
+      const raw = await U.fetchJSON('https://api.open-meteo.com/v1/forecast?latitude=39.93&longitude=-120.95&current=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,soil_moisture_0_to_7cm,soil_moisture_7_to_28cm&past_days=92&forecast_days=2&timezone=UTC&wind_speed_unit=kmh', { timeout: 12000 });
+      state.weather = SP.parseWeather(raw); state.weather.live = true;
+      SP.renderWeather();
+      if (!state.loggedWx) { state.loggedWx = true; SP.pushLog('WX', 'OPEN-METEO LIVE · 92 D HISTORY · MODEL GRID'); }
+    } catch (e) {
+      state.weather = fallbackWeather();
+      SP.renderWeather();
+      if (!state.loggedWx) { state.loggedWx = true; SP.pushLog('WX', 'WEATHER LIVE FAILED · AUTHORED FALLBACK', true); }
+    }
+  }
+  async function loadAQ() {
+    try {
+      const raw = await U.fetchJSON('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=39.93&longitude=-120.95&current=pm10,pm2_5,european_aqi,us_aqi&hourly=pm2_5,pm10&past_days=2&forecast_days=2&timezone=UTC', { timeout: 12000 });
+      state.aq = SP.parseAQ(raw); state.aq.live = true; SP.renderAQ();
+      if (!state.loggedAq) { state.loggedAq = true; SP.pushLog('AIR', 'OPEN-METEO AQ LIVE · PM2.5 MODEL'); }
+    } catch (e) {
+      const a = state.fallback.aq;
+      state.aq = { live: false, pm2_5: a.pm2_5, pm10: a.pm10, european_aqi: a.european_aqi, us_aqi: a.us_aqi, hourly: a.hourly_pm2_5 };
+      SP.renderAQ();
+      if (!state.loggedAq) { state.loggedAq = true; SP.pushLog('AIR', 'AQ LIVE FAILED · AUTHORED FALLBACK', true); }
+    }
+  }
+  async function loadAlerts() {
+    try {
+      const raw = await U.fetchJSON('https://api.weather.gov/alerts/active?point=39.93,-120.95', { timeout: 12000, headers: { Accept: 'application/geo+json' } });
+      state.alerts = SP.parseAlerts(raw); SP.renderAlerts();
+      if (!state.loggedAl) { state.loggedAl = true; SP.pushLog('ALERT', raw.features && raw.features.length ? raw.features.length + ' ACTIVE NWS ALERT' : 'NWS · NO ACTIVE FIRE WEATHER ALERTS'); }
+    } catch (e) {
+      state.alerts = { live: false, features: [] }; SP.renderAlerts();
+      if (!state.loggedAl) { state.loggedAl = true; SP.pushLog('ALERT', 'NWS UNAVAILABLE · NOT A CLEARANCE', true); }
+    }
+  }
+  async function loadThermal() {
+    try {
+      const raw = await U.fetchJSON('https://kanari.io/api/events?hours=6&full=1', { timeout: 14000 });
+      state.thermal = SP.parseThermal(raw); SP.renderThermal();
+      if (!state.loggedTh) { state.loggedTh = true; SP.pushLog('THERM', 'KANARI · ' + state.thermal.clusters + ' CLUSTERS / ' + state.thermal.total + ' DETECTIONS'); }
+    } catch (e) {
+      state.thermal = { live: false, clusters: 0, total: 0, points: [], near: null, localCount: 0, rows: [] };
+      SP.renderThermal();
+      if (!state.loggedTh) { state.loggedTh = true; SP.pushLog('THERM', 'THERMAL FEED UNAVAILABLE · NO FABRICATED FIRES', true); }
+    }
+  }
+
+  async function boot() {
+    try {
+      const [terrain, scenario, fallback] = await Promise.all([
+        U.fetchJSON(SP.DATA + 'terrain.json', { timeout: 12000 }),
+        U.fetchJSON(SP.DATA + 'scenario.json', { timeout: 12000 }),
+        U.fetchJSON(SP.DATA + 'fallback.json', { timeout: 12000 })
+      ]);
+      state.terrain = terrain; state.scenario = scenario; state.fallback = fallback;
+      state.stage = SP.stageAt(SP.INITIAL_MIN);
+      SP.buildRes();
+      SP.updateTop(); SP.updateSpots();
+      resizeWorld();
+      initUI();
+      if (SP.SIM) {
+        state.weather = fallbackWeather(); state.weather.live = false;
+        state.aq = { live: false, pm2_5: fallback.aq.pm2_5, pm10: fallback.aq.pm10, european_aqi: fallback.aq.european_aqi, us_aqi: fallback.aq.us_aqi, hourly: fallback.aq.hourly_pm2_5 };
+        state.alerts = { live: false, sim: true, features: [] };
+        state.thermal = { live: false, sim: true, clusters: 0, total: 0, points: [], near: null, localCount: 0, rows: [] };
+        SP.renderWeather(); SP.renderAQ(); SP.renderAlerts(); SP.renderThermal();
+        SP.pushLog('SIM', 'AUTHORED OFFLINE FALLBACK ACTIVE · NO LIVE FEEDS', true);
+      } else {
+        state.weather = fallbackWeather(); SP.renderWeather();
+        state.aq = { live: false, pm2_5: fallback.aq.pm2_5, pm10: fallback.aq.pm10, european_aqi: fallback.aq.european_aqi, us_aqi: fallback.aq.us_aqi, hourly: fallback.aq.hourly_pm2_5 };
+        state.alerts = { live: false, features: [] };
+        state.thermal = { live: false, clusters: 0, total: 0, points: [], near: null, localCount: 0, rows: [] };
+        loadWeather(); loadAQ(); loadAlerts(); loadThermal();
+        setInterval(loadWeather, 600000); setInterval(loadAQ, 900000); setInterval(loadAlerts, 900000); setInterval(loadThermal, 300000);
+      }
+      SP.renderLog();
+      setInterval(SP.tickUI, 200);
+      SP.tickUI();
+      if (SP.MOTION) { lastFps = performance.now(); raf = requestAnimationFrame(loop); }
+      else { drawWorld(performance.now() / 1000, true); window.__spFps = 0; }
+    } catch (e) {
+      const f = $('sp-fatal'); f.textContent = 'SPOTFIRE DATA UNAVAILABLE · CHECK shared/data/spotfire/'; f.classList.add('on');
+    }
+  }
+
+  const modal = $('sp-modal'), open = $('sp-data'), close = $('sp-close');
+  open.addEventListener('click', () => modal.classList.add('on'));
+  close.addEventListener('click', () => modal.classList.remove('on'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('on'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('on'); });
+  window.addEventListener('resize', () => { clearTimeout(state._rz); state._rz = setTimeout(resizeWorld, 120); });
+  initMapZoom();
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+{
+    "time":  1794202948,
+    "dishes":  {
+                   "63":  {
+                              "az":  145,
+                              "el":  59,
+                              "ws":  17,
+                              "sigs":  [
+
+                                       ],
+                              "tgts":  {
+
+                                       },
+                              "act":  "JUNO/JUPITER",
+                              "desc":  "Science Radar Astronomy",
+                              "user":  "GBRA"
+                          },
+                   "56":  {
+                              "az":  90,
+                              "el":  90,
+                              "ws":  17,
+                              "sigs":  [
+                                           {
+                                               "active":  false,
+                                               "band":  "X",
+                                               "dir":  "up",
+                                               "pwr":  0,
+                                               "tgt":  "M01O",
+                                               "uid":  "56"
+                                           },
+                                           {
+                                               "active":  false,
+                                               "band":  "X",
+                                               "dir":  "down",
+                                               "pwr":  -480,
+                                               "rate":  14220,
+                                               "tgt":  "M01O",
+                                               "uid":  "8"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "M01O":  {
+                                                        "rng":  204000000,
+                                                        "rtlt":  1360
+                                                    }
+                                       },
+                              "act":  "MF13",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "M01O"
+                          },
+                   "14":  {
+                              "az":  "NaN",
+                              "el":  "NaN",
+                              "ws":  "NaN",
+                              "sigs":  [
+
+                                       ],
+                              "tgts":  {
+
+                                       },
+                              "act":  "COOLING UPGRADE",
+                              "desc":  "Engineering Upgrades",
+                              "user":  "DSN"
+                          },
+                   "55":  {
+                              "az":  "NaN",
+                              "el":  "NaN",
+                              "ws":  "NaN",
+                              "sigs":  [
+
+                                       ],
+                              "tgts":  {
+
+                                       },
+                              "act":  "SERVO RPL",
+                              "desc":  "Engineering Upgrades",
+                              "user":  "DSN"
+                          },
+                   "23":  {
+                              "az":  114,
+                              "el":  43,
+                              "ws":  0,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "up",
+                                               "pwr":  0.2,
+                                               "tgt":  "ESCG",
+                                               "uid":  "23"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "down",
+                                               "pwr":  -100,
+                                               "rate":  8000,
+                                               "tgt":  "ESCG",
+                                               "uid":  "3"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "ESCG":  {
+                                                        "rng":  74800,
+                                                        "rtlt":  0.5
+                                                    }
+                                       },
+                              "act":  "TMI L3",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "ESCG"
+                          },
+                   "53":  {
+                              "az":  146,
+                              "el":  62,
+                              "ws":  17,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "down",
+                                               "pwr":  -120,
+                                               "rate":  2400000,
+                                               "tgt":  "MRO",
+                                               "uid":  "6"
+                                           },
+                                           {
+                                               "active":  false,
+                                               "band":  "S",
+                                               "dir":  "up",
+                                               "pwr":  0,
+                                               "tgt":  "MRO",
+                                               "uid":  "53"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "MRO":  {
+                                                       "rng":  204000000,
+                                                       "rtlt":  1360
+                                                   }
+                                       },
+                              "act":  "TKG PASS",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "MRO"
+                          },
+                   "35":  {
+                              "az":  294,
+                              "el":  70,
+                              "ws":  4,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "up",
+                                               "pwr":  18,
+                                               "tgt":  "SPP",
+                                               "uid":  "35"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "Ka",
+                                               "dir":  "down",
+                                               "pwr":  -120,
+                                               "rate":  454500,
+                                               "tgt":  "SPP",
+                                               "uid":  "3"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "SPP":  {
+                                                       "rng":  143000000,
+                                                       "rtlt":  952
+                                                   }
+                                       },
+                              "act":  "KR DENSE SSR /UT",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "SPP"
+                          },
+                   "65":  {
+                              "az":  122,
+                              "el":  35,
+                              "ws":  17,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "S",
+                                               "dir":  "up",
+                                               "pwr":  9.7,
+                                               "tgt":  "STA",
+                                               "uid":  "65"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "down",
+                                               "pwr":  -120,
+                                               "rate":  480000,
+                                               "tgt":  "STA",
+                                               "uid":  "9"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "STA":  {
+                                                       "rng":  172000000,
+                                                       "rtlt":  1150
+                                                   }
+                                       },
+                              "act":  "SSR PB/UNATT 480",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "STA"
+                          },
+                   "34":  {
+                              "az":  267,
+                              "el":  35,
+                              "ws":  4,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "S",
+                                               "dir":  "up",
+                                               "pwr":  0.2,
+                                               "tgt":  "LRO",
+                                               "uid":  "34"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "S",
+                                               "dir":  "down",
+                                               "pwr":  -110,
+                                               "rate":  146400,
+                                               "tgt":  "LRO",
+                                               "uid":  "5"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "K",
+                                               "dir":  "down",
+                                               "pwr":  -100,
+                                               "rate":  28550000,
+                                               "tgt":  "LRO",
+                                               "uid":  "13"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "LRO":  {
+                                                       "rng":  394000,
+                                                       "rtlt":  2.63
+                                                   }
+                                       },
+                              "act":  "TR3 S/K TKG PASS",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "LRO"
+                          },
+                   "24":  {
+                              "az":  114,
+                              "el":  42,
+                              "ws":  0,
+                              "sigs":  [
+                                           {
+                                               "active":  false,
+                                               "band":  "X",
+                                               "dir":  "up",
+                                               "pwr":  0,
+                                               "tgt":  "ESCG",
+                                               "uid":  "24"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "down",
+                                               "pwr":  -100,
+                                               "rate":  8000,
+                                               "tgt":  "ESCG",
+                                               "uid":  "2"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "ESCG":  {
+                                                        "rng":  74800,
+                                                        "rtlt":  0.5
+                                                    }
+                                       },
+                              "act":  "TMI L3 B/U",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "ESCG"
+                          },
+                   "43":  {
+                              "az":  158,
+                              "el":  63,
+                              "ws":  4,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "X",
+                                               "dir":  "down",
+                                               "pwr":  -160,
+                                               "rate":  160,
+                                               "tgt":  "VGR2",
+                                               "uid":  "2"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "VGR2":  {
+                                                        "rng":  21700000000,
+                                                        "rtlt":  144000
+                                                    }
+                                       },
+                              "act":  "BLF D/L",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "VGR2"
+                          },
+                   "36":  {
+                              "az":  286,
+                              "el":  54,
+                              "ws":  4,
+                              "sigs":  [
+                                           {
+                                               "active":  true,
+                                               "band":  "S",
+                                               "dir":  "up",
+                                               "pwr":  0.1,
+                                               "tgt":  "WIND",
+                                               "uid":  "36"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "S",
+                                               "dir":  "down",
+                                               "pwr":  -130,
+                                               "rate":  73510,
+                                               "tgt":  "WIND",
+                                               "uid":  "10"
+                                           },
+                                           {
+                                               "active":  true,
+                                               "band":  "S",
+                                               "dir":  "down",
+                                               "pwr":  -130,
+                                               "rate":  6400,
+                                               "tgt":  "WIND",
+                                               "uid":  "4"
+                                           }
+                                       ],
+                              "tgts":  {
+                                           "WIND":  {
+                                                        "rng":  1610000,
+                                                        "rtlt":  10.7
+                                                    }
+                                       },
+                              "act":  "TR DUMP",
+                              "desc":  "Spacecraft Telemetry, Tracking, and Command",
+                              "user":  "WIND"
+                          }
+               }
+}

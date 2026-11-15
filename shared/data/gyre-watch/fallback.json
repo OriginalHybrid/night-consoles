@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "mode": "ARCHIVE",
+    "note": "Hurricane Ian, 27 September 2022. Satellite IR reconstruction; not a live observation.",
+    "source": "NOAA/NASA GIBS VIIRS NOAA-20 brightness temperature, 2022-09-27",
+    "date": "2022-09-27T18:00:00Z",
+    "image": "../assets/gyre-watch/ian-2022-ir.png"
+  },
+  "weather": {
+    "time": "2022-09-27T18:00:00Z",
+    "tempC": 27.5,
+    "rh": 85,
+    "windKmh": 72.6,
+    "gustKmh": 100.8,
+    "pressureHpa": 1000.1,
+    "cloud": 100,
+    "source": "OPEN-METEO ARCHIVE"
+  },
+  "storm": {
+    "name": "IAN",
+    "basin": "AL",
+    "status": "hurricane",
+    "category": "CAT 3",
+    "lat": 23.6,
+    "lon": -83.2,
+    "windKt": 105,
+    "pressureHpa": 955,
+    "movementBearing": 350,
+    "movementSpeedKt": 10,
+    "advisory": "ARCHIVE / 2022-09-27 18:00Z"
+  },
+  "bbox": [-89.5, 20.5, -77.5, 27.0],
+  "track": [
+    { "time": "2022-09-26T12:00:00Z", "lat": 20.9, "lon": -84.0, "windKt": 70, "tau": -30, "kind": "past" },
+    { "time": "2022-09-27T00:00:00Z", "lat": 22.0, "lon": -83.8, "windKt": 90, "tau": -18, "kind": "past" },
+    { "time": "2022-09-27T12:00:00Z", "lat": 23.0, "lon": -83.5, "windKt": 100, "tau": -6, "kind": "past" },
+    { "time": "2022-09-27T18:00:00Z", "lat": 23.6, "lon": -83.2, "windKt": 105, "tau": 0, "kind": "current" },
+    { "time": "2022-09-28T00:00:00Z", "lat": 24.3, "lon": -83.1, "windKt": 115, "tau": 6, "kind": "forecast" },
+    { "time": "2022-09-28T12:00:00Z", "lat": 25.8, "lon": -82.6, "windKt": 125, "tau": 18, "kind": "forecast" },
+    { "time": "2022-09-28T19:00:00Z", "lat": 26.7, "lon": -82.2, "windKt": 120, "tau": 25, "kind": "forecast" },
+    { "time": "2022-09-29T00:00:00Z", "lat": 27.5, "lon": -81.5, "windKt": 90, "tau": 30, "kind": "forecast" },
+    { "time": "2022-09-29T12:00:00Z", "lat": 29.2, "lon": -80.2, "windKt": 70, "tau": 42, "kind": "forecast" },
+    { "time": "2022-09-30T12:00:00Z", "lat": 32.5, "lon": -77.0, "windKt": 55, "tau": 66, "kind": "forecast" },
+    { "time": "2022-10-01T12:00:00Z", "lat": 35.5, "lon": -73.0, "windKt": 45, "tau": 90, "kind": "forecast" },
+    { "time": "2022-10-02T12:00:00Z", "lat": 38.0, "lon": -68.0, "windKt": 40, "tau": 114, "kind": "forecast" }
+  ],
+  "windRadii": [
+    { "thresholdKt": 34, "ne": 140, "se": 160, "sw": 120, "nw": 130 },
+    { "thresholdKt": 50, "ne": 70, "se": 90, "sw": 60, "nw": 70 },
+    { "thresholdKt": 64, "ne": 30, "se": 40, "sw": 25, "nw": 30 }
+  ]
+}

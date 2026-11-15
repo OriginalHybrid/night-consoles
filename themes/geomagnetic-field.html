@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Geomagnetic Field - DECLINATION</title>
+<meta name="description" content="DECLINATION: a geomagnetic observatory display built around a live blue Earth, IGRF-14 field lines, two magnetic dip poles, SWPC solar-wind drivers and OVATION aurora.">
+<meta name="theme-color" content="#04061A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/u-base.css">
+<style>
+:root{--rule:rgba(176,198,245,.28);--rule2:rgba(214,228,255,.11);--ink2:rgba(238,241,255,.80);--ink3:rgba(176,198,245,.72);--k1:#5A8CFF;--k2:#2F4FE8;--k3:#6FD0FF;--flux:#3A2E9E;--pin:#E4ECFF;--mono:'Space Mono',ui-monospace,monospace;--sans:'Space Grotesk',system-ui,sans-serif}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text)}body{font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}button{font:inherit;color:inherit}::selection{background:rgba(90,140,255,.32);color:#fff}
+.dc-root{position:fixed;inset:0;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 42% 44%,#0A1234 0%,#050A20 42%,#02030D 100%)}
+.dc-root::after{content:'';position:absolute;inset:0;z-index:30;pointer-events:none;background:radial-gradient(ellipse 82% 80% at 40% 46%,transparent 58%,rgba(2,3,13,.55) 100%)}
+#dc-hero{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block;cursor:grab;touch-action:none}#dc-hero.dragging{cursor:grabbing}
+.dc-top{position:absolute;left:0;right:0;top:0;height:48px;z-index:20;display:flex;align-items:stretch;min-width:0;background:linear-gradient(180deg,rgba(7,11,31,.98),rgba(5,8,24,.9));border-bottom:1px solid var(--rule);box-shadow:0 8px 24px rgba(0,0,0,.34)}
+.dc-top::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;opacity:.45;background:repeating-linear-gradient(90deg,rgba(138,143,192,.65) 0 1px,transparent 1px 10px),repeating-linear-gradient(90deg,rgba(214,228,255,.7) 0 1px,transparent 1px 100px)}
+.tc{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:0 12px;border-right:1px solid var(--rule2);white-space:nowrap;overflow:hidden}
+.tc .r1{font-size:10px;line-height:1.1;letter-spacing:.1em;font-weight:600;color:var(--text)}.tc .r1 b{color:var(--accent);font-weight:700}.tc .r2{font-family:var(--mono);font-size:8px;line-height:1.15;letter-spacing:.03em;color:var(--dim);font-variant-numeric:tabular-nums}
+.t-id{flex-shrink:0;padding-left:16px}.t-num{flex-direction:row;align-items:center;gap:8px}.t-num .v{font-family:var(--mono);font-size:17px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}.t-num .u{font-size:8px;letter-spacing:.12em;color:var(--ink2);font-weight:600}
+.t-bz .v{color:var(--cool)}.t-kp .v{color:var(--data)}.t-dst .v{color:var(--k1,#5A8CFF)}.t-clock{margin-left:auto;border-right:0;border-left:1px solid var(--rule2);text-align:right}.t-clock .v{font-family:var(--mono);font-size:16px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}
+.pip{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(214,228,255,.9);animation:dc-pulse .8s ease-in-out infinite alternate;vertical-align:1px}.pip.amber{background:var(--alarm);box-shadow:0 0 7px rgba(255,32,22,.7)}
+@keyframes dc-pulse{from{opacity:1}to{opacity:.2}}
+.dc-ov{position:absolute;z-index:7;pointer-events:none;background:rgba(4,6,26,.70);border:1px solid var(--rule2);padding:5px 8px}.dc-ov .o1{font-size:9px;letter-spacing:.12em;font-weight:600;color:var(--text);white-space:nowrap}.dc-ov .o2{font-family:var(--mono);font-size:8px;letter-spacing:.02em;color:var(--ink3);white-space:nowrap;margin-top:2px;font-variant-numeric:tabular-nums}
+.hp{left:14px;top:58px}.cu{right:378px;top:58px;text-align:right}.leg{left:14px;bottom:272px;width:250px;display:flex;flex-direction:column;gap:3px}.lg-hd{font-size:8px;letter-spacing:.13em;color:var(--ink2);font-weight:600}.lg-ramp{height:5px;border:1px solid var(--rule2);background:linear-gradient(90deg,var(--flux,#3A2E9E),var(--accent),var(--text))}.lg-tk{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:var(--dim)}.lg-it{display:flex;align-items:center;gap:7px;font-size:8px;letter-spacing:.08em;color:var(--ink2);white-space:nowrap}.lg-it i{display:inline-block;flex:none;width:14px;height:2px;background:var(--text)}.lg-it i.in{background:var(--k2,#2F4FE8)}.lg-it i.aur{background:var(--cool);height:3px;box-shadow:0 0 5px rgba(176,124,255,.8)}.lg-it i.pin{width:2px;height:10px;background:var(--pin)}
+.cap{right:378px;bottom:272px;max-width:min(430px,26vw);font-size:8px;line-height:1.45;color:var(--ink3);white-space:normal}.cap b{color:var(--text);letter-spacing:.1em}
+.dc-right{position:absolute;right:0;top:48px;bottom:260px;width:360px;z-index:12;display:flex;flex-direction:column;border-left:1px solid var(--rule);background:linear-gradient(270deg,rgba(5,8,24,.95),rgba(5,8,24,.84));overflow:hidden}
+.dc-sec{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px 5px;border-bottom:1px solid var(--rule2);font-size:8px;letter-spacing:.13em;font-weight:600;color:var(--ink2);white-space:nowrap}.dc-sec b{color:var(--text)}.dc-sec .u-src{font-size:7px}
+.dc-table{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:1px 0}
+.drow{flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) 8.8ch 6.8ch minmax(28px,1fr) 4ch;gap:7px;align-items:center;padding:0 11px;font-family:var(--mono);font-size:8.5px;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums;border-bottom:1px dashed rgba(176,198,245,.07);transition:background .45s ease,color .45s ease}
+.drow:last-child{border-bottom:0}.drow .name{font-family:var(--sans);font-size:8px;font-weight:600;letter-spacing:.04em;color:var(--text);overflow:hidden;text-overflow:clip}.drow .d{text-align:right;color:var(--data)}.drow .dr{text-align:right;color:var(--dim);font-size:7.5px}.drow .bar{position:relative;height:3px;background:rgba(214,228,255,.09);overflow:hidden}.drow .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--k1,#5A8CFF);opacity:.8}.drow .bar b{position:absolute;left:12.5%;top:-2px;bottom:-2px;width:1px;background:rgba(238,241,255,.55)}.drow .st{text-align:right;font-size:7px;color:var(--dim)}
+.drow.rule .d,.drow.rule .st{color:var(--alarm);text-shadow:0 0 8px rgba(255,32,22,.55)}.drow.rule .bar i{background:var(--alarm);opacity:1}.drow.scan{background:rgba(214,228,255,.08);box-shadow:inset 2px 0 0 var(--text)}
+.dc-compass{flex:none;height:78px;position:relative;border-bottom:1px solid var(--rule2)}.dc-compass canvas{position:absolute;inset:0;width:100%;height:100%}
+.dc-adv{flex:none;min-height:70px;padding:7px 12px 9px;border-top:1px solid var(--rule2);background:rgba(255,32,22,.025)}.dc-adv .a1{font-size:9px;line-height:1.35;color:var(--text);letter-spacing:.05em}.dc-adv .a1 b{color:var(--alarm)}.dc-adv .a2{font-family:var(--mono);font-size:8px;line-height:1.45;color:var(--ink3);margin-top:3px}.dc-adv .a3{font-family:var(--mono);font-size:7.5px;color:var(--dim);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.caret{display:inline-block;width:.5em;height:1em;margin-left:3px;vertical-align:-.18em;background:var(--text);animation:dc-pulse .55s ease-in-out infinite alternate}
+.dc-bot{position:absolute;left:0;right:0;bottom:0;height:260px;z-index:12;display:grid;grid-template-columns:1.22fr .78fr .86fr .98fr;background:linear-gradient(0deg,rgba(5,8,24,.98),rgba(5,8,24,.88));border-top:1px solid var(--rule)}
+.bz{min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--rule2);overflow:hidden}.bz:last-child{border-right:0}.bz-hd{flex:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 10px 2px;white-space:nowrap;overflow:hidden;font-size:8px;letter-spacing:.11em;font-weight:600;color:var(--ink2)}.bz-hd b{color:var(--text)}.bz-hd span:last-child{font-family:var(--mono);font-size:7.5px;letter-spacing:.02em;color:var(--dim);font-weight:400}
+.bz-cv{position:relative;flex:1 1 auto;min-height:0}.bz-cv canvas{position:absolute;inset:0;width:100%;height:100%}
+.lines{flex:1 1 auto;min-height:0;overflow:hidden;padding:1px 0}.ln{display:grid;grid-template-columns:4.4ch 5.2em minmax(0,1fr);gap:7px;padding:0 10px;align-items:center;font-family:var(--mono);font-size:8px;line-height:1.55;color:var(--ink2);white-space:nowrap;overflow:hidden;border-bottom:1px dashed rgba(176,198,245,.06)}.ln .ts{color:var(--dim)}.ln .tg{font-family:var(--sans);font-size:7px;letter-spacing:.12em;font-weight:700;color:var(--dim)}.ln .tx{overflow:hidden;text-overflow:clip}.ln.hot .tg{color:var(--accent)}.ln.alm .tg{color:var(--alarm)}
+.dc-fatal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;display:none;padding:12px 18px;border:1px solid var(--alarm);background:rgba(4,6,26,.96);font-size:10px;letter-spacing:.1em;color:var(--alarm)}.dc-fatal.on{display:block}
+.dc-modal{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:rgba(2,3,13,.76);backdrop-filter:blur(7px)}.dc-modal.on{display:grid}.dc-card{width:min(760px,92vw);max-height:84vh;overflow:auto;padding:22px 25px;border:1px solid var(--rule);background:linear-gradient(180deg,rgba(11,16,42,.98),rgba(4,6,26,.99));box-shadow:0 30px 100px rgba(0,0,0,.7)}.dc-card h2{margin:0 0 8px;font-size:22px;letter-spacing:.12em;font-weight:500}.dc-card h3{margin:16px 0 5px;font-size:9px;letter-spacing:.16em;color:var(--accent);font-weight:600}.dc-card p,.dc-card li{font-size:10px;line-height:1.6;color:var(--ink2)}.dc-card p{margin:6px 0}.dc-card ul{margin:0;padding-left:15px}.dc-card a{color:var(--data)}.dc-x{position:absolute;right:12px;top:10px;border:1px solid var(--rule2);background:transparent;width:26px;height:26px;cursor:pointer;color:var(--dim)}
+.dc-data-btn{appearance:none;border:1px solid var(--rule2);background:transparent;color:var(--dim);font-family:var(--mono);font-size:8px;letter-spacing:.12em;padding:0 7px;cursor:pointer}.dc-data-btn:hover{color:var(--text);border-color:var(--rule)}
+@media(max-width:1660px){.dc-right{width:330px}.cu,.cap{right:346px}.dc-top .hide-16{display:none}.drow{grid-template-columns:minmax(0,1.25fr) 8.2ch 6.2ch minmax(24px,1fr) 3.4ch}}
+@media(max-width:1450px){.dc-right{width:310px}.cu,.cap{right:326px}.dc-top .hide-14{display:none}.dc-bot{grid-template-columns:1.12fr .72fr .8fr .92fr}.leg{width:230px}}
+@media(max-width:1180px){.dc-right{width:276px}.cu,.cap{right:292px}.dc-top .hide-12{display:none}.dc-bot{height:224px;grid-template-columns:1.35fr .9fr 1fr}.dc-bot .b-log{display:none}.dc-right{bottom:224px}.leg,.cap{bottom:236px}.dc-ov.cu{top:56px}}
+@media(max-height:820px){.drow:nth-child(n+13){display:none}.dc-right{bottom:224px}.dc-bot{height:224px}.leg,.cap{bottom:236px}.dc-compass{height:64px}.dc-adv{min-height:60px}}
+@media(prefers-reduced-motion:reduce){.pip,.caret{animation:none}.drow{transition:none}}
+</style>
+</head>
+<body>
+<main class="dc-root" id="dc-root">
+  <canvas id="dc-hero" aria-label="Blue Earth with IGRF-14 magnetic field lines, two dip poles and live auroral ovals"></canvas>
+
+  <header class="dc-top" id="dc-top">
+    <div class="tc t-id"><div class="r1">GEOMAGNETIC <b>OBS 1</b></div><div class="r2">BOULDER · 40.1° N 105.2° W</div></div>
+    <div class="tc"><div class="r1">FIELD <b>IGRF-14</b></div><div class="r2">EPOCH 2025.0 · 2 DIP POLES</div></div>
+    <div class="tc t-num t-bz"><div class="v" id="t-bz">--</div><div class="u">BZ<br><span class="r2" id="t-bz2">nT · GSM</span></div></div>
+    <div class="tc t-num t-kp"><div class="v" id="t-kp">--</div><div class="u">KP<br><span class="r2" id="t-kp2">PLANETARY</span></div></div>
+    <div class="tc t-num t-dst"><div class="v" id="t-dst">--</div><div class="u">DST<br><span class="r2">nT · RING</span></div></div>
+    <div class="tc hide-16"><div class="r1">SOLAR WIND</div><div class="r2"><b id="t-speed">--</b> KM/S · <span id="t-bt">--</span> nT</div></div>
+    <div class="tc hide-14"><div class="r1">DIP N <b id="t-pn">--</b></div><div class="r2">DIP S <span id="t-ps">--</span></div></div>
+    <div class="tc hide-12"><div class="r1">SOLVE <b id="t-solve">0872</b></div><div class="r2">LIVE DRIVER · <span id="t-mode">SWPC</span></div></div>
+    <div class="tc hide-16"><div class="r1">FEEDS <span class="u-src live" id="sw-badge">SWPC</span></div><div class="r2"><span class="u-src" id="obs-badge">OBS</span> <span class="u-src" id="aur-badge">AUR</span></div></div>
+    <div class="tc t-clock"><div class="r1c"><span class="pip" aria-hidden="true"></span><span class="r1" id="t-utc">--:--:--</span></div><div class="r2"><span id="t-src">LOADING</span> <button class="dc-data-btn" id="dc-data">DATA</button></div></div>
+  </header>
+
+  <div class="dc-ov hp"><div class="o1" id="hp1">FIELD LINES · IGRF-14 · RK4</div><div class="o2" id="hp2">260 FOOTPOINTS · TWO DIP POLES</div><div class="o2">SCROLL ZOOM · DRAG PAN · DOUBLE-CLICK RESET</div></div>
+  <div class="dc-ov cu"><div class="o1" id="cu1">CURSOR · DIP N</div><div class="o2" id="cu2">--</div><div class="o2" id="cu3">--</div></div>
+  <div class="dc-ov leg" aria-hidden="true"><div class="lg-hd">|B| AT FOOTPOINT · nT · LOG</div><div class="lg-ramp"></div><div class="lg-tk"><span>20,000</span><span>65,000</span></div><div class="lg-it"><i></i>OUTBOUND · FIELD OUT</div><div class="lg-it"><i class="in"></i>INBOUND · FIELD IN</div><div class="lg-it"><i class="aur"></i>AURORA · OVATION OVAL</div><div class="lg-it"><i class="pin"></i>DIP POLE · 2025 MODEL</div></div>
+  <div class="dc-ov cap"><b>SOLVE <span id="cap-solve">0872</span></b> — field lines from the IGRF-14 internal model; the outer cage is a visual magnetosphere driven by live SWPC solar wind. Brightness follows log |B| at the footpoint. The aurora is OVATION where available; the ring is Kp-derived when it is not. Earth texture: NASA Blue Marble.</div>
+
+  <aside class="dc-right" aria-label="Declination table, compass and advisory">
+    <div class="dc-sec"><span><b>DECLINATION TABLE</b> · 18 PORTS</span><span class="u-src snap" id="model-badge">MODEL</span></div>
+    <div class="dc-table" id="decl-table"></div>
+    <div class="dc-sec"><span><b>OBS 1 COMPASS</b> · DECL °E</span><span id="cmp-meta">MODEL --</span></div>
+    <div class="dc-compass" id="cmp-cv"></div>
+    <div class="dc-sec"><span><b>ADVISORY</b> · DRAFT</span><span class="u-src sim" id="adv-badge">NOT ISSUED</span></div>
+    <div class="dc-adv" id="adv"><div class="a1" id="adv1">NO ACTIVE WATCH</div><div class="a2" id="adv2">Waiting for SWPC scales.</div><div class="a3" id="adv3">ARMED · NEVER ISSUED <span class="caret"></span></div></div>
+  </aside>
+
+  <footer class="dc-bot">
+    <section class="bz b-mag"><div class="bz-hd"><span><b>MAGNETOGRAM</b> · OBS 1 · H / D / Z</span><span><span id="mag-rate">--</span> · <span class="pip" aria-hidden="true"></span> <span id="mag-win">180 MIN</span></span></div><div class="bz-cv" id="mag-cv"></div></section>
+    <section class="bz b-kp"><div class="bz-hd"><span><b>STORM</b> · KP / DST</span><span id="kp-meta">--</span></div><div class="bz-cv" id="kp-cv"></div></section>
+    <section class="bz b-trk"><div class="bz-hd"><span><b>POLE TRACKS</b> · 2</span><span>1900–2025 · MODEL</span></div><div class="bz-cv" id="trk-cv"></div></section>
+    <section class="bz b-log"><div class="bz-hd"><span><b>LOG</b> · OBS 1</span><span id="log-sub">BOOT</span></div><div class="lines" id="lines"></div></section>
+  </footer>
+
+  <div class="dc-fatal" id="dc-fatal">DECLINATION DATA UNAVAILABLE · CHECK shared/data/declination/</div>
+  <div class="dc-modal" id="dc-modal"><div class="dc-card"><button class="dc-x" id="dc-close" aria-label="Close">×</button><h2>DECLINATION / DATA</h2><p>A clean-room geomagnetic observatory scene. The field geometry is IGRF-14; the storm animation is driven by live NOAA SWPC data.</p><h3>LIVE / SNAPSHOT</h3><ul><li>NOAA SWPC solar-wind magnetic field and speed summaries</li><li>NOAA SWPC Kp, Dst, R/S/G scales and alerts</li><li>NOAA SWPC OVATION aurora probability</li><li>USGS Geomagnetism observatory BOU: H, D, Z, F</li></ul><h3>MODEL</h3><ul><li>IGRF-14 coefficients, epoch 2025.0 (IAGA / NOAA NCEI)</li><li>Dip poles and port declinations computed from IGRF-14</li><li>260 field lines traced with RK4 and baked into the scene</li></ul><h3>ASSETS</h3><p>Earth texture: NASA Blue Marble / Visible Earth (public domain). Field-line cage is a visual magnetosphere, not a full MHD simulation.</p><p>Flags: <code>?sim=1</code> uses the baked snapshot; <code>?motion=off</code> freezes the animated hero and panels.</p></div></div>
+</main>
+<script src="../shared/palettes.js"></script>
+<script src="../shared/u-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  const U = window.U;
+  U.page('declination', { scan: false });
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = (t) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+  const TAU = Math.PI * 2, DEG = Math.PI / 180;
+  const params = new URLSearchParams(location.search);
+  const SIM = params.get('sim') === '1';
+  const MOTION = params.get('motion') !== 'off' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = {
+    model: null, lines: null, fallback: null, earth: null, tex: null,
+    swpc: null, obs: null, aurora: null, scales: null, alerts: [],
+    sim: SIM, motion: MOTION, solve: 872, activity: 0, actSmooth: 0,
+    log: [], live: { swpc: false, obs: false, aurora: false },
+    t0: performance.now(), raf: 0, W: 0, H: 0, DPR: 1,
+    frameCx: 0, frameCy: 0, view: { x: 0, y: 0, zoom: 1, drag: false, lastX: 0, lastY: 0 }
+  };
+  window.__dc = state; window.__dcErr = [];
+  const COL = {
+    bg: '#04061A', text: '#EEF1FF', dim: '#8A8FC0', data: '#B0C6F5',
+    accent: '#D6E4FF', k1: '#5A8CFF', k2: '#2F4FE8', k3: '#6FD0FF',
+    cool: '#B07CFF', flux: '#3A2E9E', alarm: '#FF2016', pin: '#E4ECFF'
+  };
+  const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; };
+  const hm = (d) => String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+  const hms = (d) => hm(d) + ':' + String(d.getUTCSeconds()).padStart(2, '0');
+  const wrap180 = (d) => ((d % 360) + 540) % 360 - 180;
+  const fmtD = (d) => Math.abs(d).toFixed(1) + '° ' + (d >= 0 ? 'E' : 'W');
+  const fmtLat = (v) => Math.abs(v).toFixed(1) + '° ' + (v >= 0 ? 'N' : 'S');
+  const fmtLon = (v) => { v = wrap180(v); return Math.abs(v).toFixed(1) + '° ' + (v >= 0 ? 'E' : 'W'); };
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const n3 = (v) => { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / m, v[1] / m, v[2] / m]; };
+  const llv = (lat, lon, r = 1) => { const a = lat * DEG, b = lon * DEG, c = Math.cos(a); return [c * Math.cos(b) * r, c * Math.sin(b) * r, Math.sin(a) * r]; };
+
+  // --- camera / projection -----------------------------------------------------------------
+  const cam = { pos: [0, 0, 0], f: [0, 0, 0], r: [0, 0, 0], up: [0, 0, 0], F: 1, cx: 0, cy: 0, dist: 8.5, R: 0, az: 0, el: 0 };
+  const D0 = 8.5, DISC_FRAC = .094;
+  function camera(t) {
+    const swing = 7.5 * Math.sin(TAU * t / 18);
+    const az = (-30 + 20 * Math.sin(TAU * t / 140) + swing) * DEG;
+    const el = (16 + 5 * Math.sin(TAU * t / 95 + .6)) * DEG;
+    const dist = D0 * (1 + .05 * Math.sin(TAU * t / 40));
+    const ce = Math.cos(el), se = Math.sin(el), ca = Math.cos(az), sa = Math.sin(az);
+    cam.pos = [dist * ce * ca, dist * ce * sa, dist * se];
+    cam.f = [-ce * ca, -ce * sa, -se];
+    const rn = Math.hypot(cam.f[1], cam.f[0]) || 1;
+    cam.r = [cam.f[1] / rn, -cam.f[0] / rn, 0];
+    cam.up = [cam.r[1] * cam.f[2] - cam.r[2] * cam.f[1], cam.r[2] * cam.f[0] - cam.r[0] * cam.f[2], cam.r[0] * cam.f[1] - cam.r[1] * cam.f[0]];
+    cam.F = ((DISC_FRAC * state.H) / Math.tan(Math.asin(1 / D0))) * state.view.zoom;
+    cam.cx = state.frameCx + state.view.x; cam.cy = state.frameCy + state.view.y;
+    cam.dist = dist; cam.az = az / DEG; cam.el = el / DEG;
+    cam.R = cam.F * Math.tan(Math.asin(1 / dist));
+  }
+  const PJ = [0, 0, 0];
+  function project(p) {
+    const dx = p[0] - cam.pos[0], dy = p[1] - cam.pos[1], dz = p[2] - cam.pos[2];
+    const z = cam.f[0] * dx + cam.f[1] * dy + cam.f[2] * dz;
+    const iz = 1 / Math.max(.05, z);
+    PJ[0] = cam.cx + cam.F * (cam.r[0] * dx + cam.r[1] * dy + cam.r[2] * dz) * iz;
+    PJ[1] = cam.cy - cam.F * (cam.up[0] * dx + cam.up[1] * dy + cam.up[2] * dz) * iz;
+    PJ[2] = z;
+    return PJ;
+  }
+  function facing(p) { return p[0] * (cam.pos[0] - p[0]) + p[1] * (cam.pos[1] - p[1]) + p[2] * (cam.pos[2] - p[2]) > 0; }
+  function occluded(p) {
+    const dx = p[0] - cam.pos[0], dy = p[1] - cam.pos[1], dz = p[2] - cam.pos[2], L = Math.hypot(dx, dy, dz) || 1;
+    const b = -(dx * cam.pos[0] + dy * cam.pos[1] + dz * cam.pos[2]) / L;
+    const c = cam.pos[0] * cam.pos[0] + cam.pos[1] * cam.pos[1] + cam.pos[2] * cam.pos[2] - 1;
+    const disc = b * b - c;
+    return disc > 0 && (b - Math.sqrt(disc)) < L - 1e-3;
+  }
+
+  // --- data ---------------------------------------------------------------------------------
+  function pushLog(tag, text, hot, alm) {
+    const d = new Date();
+    state.log.unshift({ at: hm(d), tag, text, hot: !!hot, alm: !!alm });
+    state.log = state.log.slice(0, 9);
+    renderLog();
+  }
+  function renderLog() {
+    const box = $('lines'); if (!box) return;
+    box.innerHTML = state.log.map((l) => '<div class="ln ' + (l.alm ? 'alm' : l.hot ? 'hot' : '') + '"><span class="ts">' + l.at + '</span><span class="tg">' + l.tag + '</span><span class="tx">' + l.text + '</span></div>').join('');
+    $('log-sub').textContent = state.log.length + ' SHOWN';
+  }
+  async function boot() {
+    try {
+      const [model, lines, fallback] = await Promise.all([
+        U.fetchJSON('../shared/data/declination/model.json', { timeout: 12000 }),
+        U.fetchJSON('../shared/data/declination/field-lines.json', { timeout: 12000 }),
+        U.fetchJSON('../shared/data/declination/fallback.json', { timeout: 12000 })
+      ]);
+      state.model = model; state.lines = lines.lines; state.fallback = fallback;
+      state.earth = await loadImage('../assets/declination/earth-blue-marble.jpg');
+      if (state.earth) buildTexture();
+      buildTable();
+      initCanvases();
+      applyFallback();
+      pushLog('MODEL', 'IGRF-14 2025.0 · 2 DIP POLES', false);
+      pushLog('POLE', 'N ' + fmtLat(state.model.poles.north[0]) + ' ' + fmtLon(state.model.poles.north[1]) + ' · S ' + fmtLat(state.model.poles.south[0]) + ' ' + fmtLon(state.model.poles.south[1]), false);
+      pushLog('PORT', state.model.ports.length + ' MODEL DECLINATIONS · 2026.0', false);
+      if (SIM) {
+        state.live = { swpc: false, obs: false, aurora: false };
+        setTop(); setBadges(); pushLog('SIM', 'AUTHORED SNAPSHOT · NO LIVE FEEDS', true);
+      } else {
+        pushLog('BOOT', 'IGRF-14 2025.0 · 2 DIP POLES', false);
+        loadAllLive();
+        setInterval(loadSwpc, 60000);
+        setInterval(loadObs, 60000);
+        setInterval(loadAurora, 600000);
+      }
+      setInterval(tickClock, 1000);
+      tickClock();
+      resizeHero();
+      startHero();
+    } catch (e) {
+      $('dc-fatal').classList.add('on');
+      console.error(e);
+    }
+  }
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+  function buildTexture() {
+    const c = document.createElement('canvas');
+    c.width = state.earth.width; c.height = state.earth.height;
+    const x = c.getContext('2d'); x.drawImage(state.earth, 0, 0);
+    state.tex = x.getImageData(0, 0, c.width, c.height);
+  }
+  function fallbackSeries(center, n, amp, phase) {
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(center + Math.sin(i / n * TAU * 2.2 + phase) * amp + Math.sin(i / n * TAU * 7.3 + phase * 2) * amp * .18);
+    return out;
+  }
+  function applyFallback() {
+    const f = state.fallback;
+    if (!f) return;
+    state.swpc = { bt: f.swpc.bt, bz: f.swpc.bz, speed: f.swpc.speed, kp: f.swpc.kp, dst: f.swpc.dst, time: f.swpc.time };
+    const hs = fallbackSeries(f.obs.H, 180, 9, .4), ds = fallbackSeries(f.obs.D_deg, 180, .09, 1.4), zs = fallbackSeries(f.obs.Z, 180, 12, 2.2);
+    state.obs = { station: f.obs.station, time: f.obs.time, H: f.obs.H, D: f.obs.D_deg, Z: f.obs.Z, F: f.obs.F, rate: 0, series: { times: [], H: hs, D: ds, Z: zs } };
+    state.kpSeries = fallbackSeries(f.swpc.kp, 24, .7, .8);
+    state.dstSeries = fallbackSeries(f.swpc.dst, 60, 4, 1.2);
+    state.aurora = { points: f.aurora.points, source: 'OVATION SNAPSHOT' };
+    state.scales = f.scales; state.alerts = f.alerts || [];
+    state.activity = activityFrom(state.swpc);
+    $('mag-rate').textContent = 'dH/dt 0.0 nT/MIN';
+    setTop(); setBadges(); setAdvisory(); setCompassMeta();
+  }
+  function activityFrom(s) {
+    if (!s) return 0;
+    return clamp((+s.kp || 0) / 9 * .46 + clamp(-(+s.bz || 0) / 20, 0, 1) * .34 + clamp(-(+s.dst || 0) / 80, 0, 1) * .20, 0, 1);
+  }
+  async function loadAllLive() {
+    await Promise.all([loadSwpc(), loadObs(), loadAurora()]);
+  }
+  async function loadSwpc() {
+    try {
+      const get = async (u) => {
+        for (let i = 0; i < 2; i++) {
+          try { return await U.fetchJSON(u, { timeout: 10000 }); } catch (e) { if (i) return null; }
+        }
+        return null;
+      };
+      const [mag, speed, kp, dst, scales, alerts] = await Promise.all([
+        get('https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json'),
+        get('https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json'),
+        get('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+        get('https://services.swpc.noaa.gov/json/geospace/geospace_dst_1_hour.json'),
+        get('https://services.swpc.noaa.gov/products/noaa-scales.json'),
+        get('https://services.swpc.noaa.gov/products/alerts.json')
+      ]);
+      if (!Array.isArray(mag) || !mag.length || !Array.isArray(speed) || !speed.length) throw new Error('SWPC solar-wind summary unavailable');
+      const m = mag[mag.length - 1], sp = speed[0];
+      const k = kp && kp.length ? kp[kp.length - 1] : null;
+      const d = dst && dst.length ? dst[dst.length - 1] : null;
+      const prev = state.swpc || state.fallback.swpc;
+      state.swpc = {
+        bt: m.bt, bz: m.bz_gsm, speed: sp.proton_speed,
+        kp: k ? +k.Kp : +prev.kp, dst: d ? +d.dst : +prev.dst,
+        time: m.time_tag, kpTime: k ? k.time_tag : null, dstTime: d ? d.time_tag : null
+      };
+      if (kp && kp.length) state.kpSeries = kp.slice(-24).map((r) => +r.Kp);
+      if (dst && dst.length) state.dstSeries = dst.slice(-60).map((r) => +r.dst);
+      if (scales) state.scales = scales;
+      if (alerts) state.alerts = alerts.slice(-4);
+      state.live.swpc = true; state.activity = activityFrom(state.swpc);
+      setTop(); setBadges(); setAdvisory();
+      pushLog('WX', 'SWPC LIVE · BZ ' + signed(state.swpc.bz) + ' nT · KP ' + (+state.swpc.kp).toFixed(1), Math.abs(+state.swpc.bz) > 10);
+    } catch (e) {
+      state.live.swpc = false;
+      pushLog('WX', 'SWPC UNAVAILABLE · SNAPSHOT', true);
+      setBadges();
+    }
+  }
+  async function loadObs() {
+    try {
+      const j = await U.fetchJSON('https://geomag.usgs.gov/ws/data/?id=BOU&format=json&elements=H,D,Z,F&sampling_period=60', { timeout: 20000 });
+      const elems = Object.fromEntries(j.values.map((e) => [e.id, e.values]));
+      const D = elems.D.map((v) => v == null ? null : v / 60);
+      const n = j.times.length;
+      const hvals = elems.H.filter((v) => v != null);
+      state.obs = { station: 'BOU', time: j.times[n - 1], H: lastNum(elems.H), D: lastNum(D), Z: lastNum(elems.Z), F: lastNum(elems.F), rate: hvals.length > 1 ? hvals[hvals.length - 1] - hvals[hvals.length - 2] : 0, series: { times: j.times, H: elems.H, D: D, Z: elems.Z } };
+      state.live.obs = true;
+      $('mag-rate').textContent = 'dH/dt ' + (state.obs.rate >= 0 ? '+' : '') + state.obs.rate.toFixed(1) + ' nT/MIN';
+      setTop(); setBadges(); setCompassMeta();
+      pushLog('OBS', 'BOU LIVE · D ' + fmtD(state.obs.D), false);
+    } catch (e) {
+      state.live.obs = false; pushLog('OBS', 'USGS UNAVAILABLE · SNAPSHOT', true); setBadges();
+    }
+  }
+  async function loadAurora() {
+    try {
+      const j = await U.fetchJSON('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json', { timeout: 20000 });
+      const pts = [];
+      for (const [lon, lat, v] of j.coordinates || []) if (v > 0 && Math.round(lon) % 4 === 0 && Math.round(lat) % 4 === 0) pts.push([lon, lat, v]);
+      state.aurora = { points: pts, source: 'OVATION', observation: j['Observation Time'] };
+      state.live.aurora = true; setBadges();
+      pushLog('AUR', 'OVATION LIVE · ' + pts.length + ' GRID POINTS', false);
+    } catch (e) {
+      state.live.aurora = false; pushLog('AUR', 'OVATION UNAVAILABLE · KP OVAL', true); setBadges();
+    }
+  }
+  function lastNum(a) { for (let i = a.length - 1; i >= 0; i--) if (a[i] != null) return a[i]; return null; }
+  function signed(v) { return (v >= 0 ? '+' : '') + (+v).toFixed(1); }
+
+  // --- top / table / badges -----------------------------------------------------------------
+  function setTop() {
+    const s = state.swpc, m = state.model;
+    if (!s || !m) return;
+    $('t-bz').textContent = signed(s.bz);
+    $('t-bz2').textContent = (s.bt != null ? 'Bt ' + (+s.bt).toFixed(1) : 'nT') + ' · GSM';
+    $('t-kp').textContent = (+s.kp).toFixed(1);
+    $('t-kp2').textContent = +s.kp >= 5 ? 'STORM' : +s.kp >= 4 ? 'ACTIVE' : 'QUIET';
+    $('t-dst').textContent = Math.round(s.dst);
+    $('t-speed').textContent = Math.round(s.speed);
+    $('t-bt').textContent = (+s.bt).toFixed(1);
+    $('kp-meta').textContent = 'Kp ' + (+s.kp).toFixed(1) + ' · Dst ' + Math.round(s.dst);
+    $('t-pn').textContent = fmtLat(m.poles.north[0]) + ' ' + fmtLon(m.poles.north[1]);
+    $('t-ps').textContent = fmtLat(m.poles.south[0]) + ' ' + fmtLon(m.poles.south[1]);
+    $('t-solve').textContent = String(state.solve).padStart(4, '0');
+    $('t-mode').textContent = state.live.swpc ? 'SWPC' : (state.sim ? 'SIM' : 'SNAPSHOT');
+    $('hp2').textContent = (state.lines ? state.lines.length : 0) + ' FOOTPOINTS · TWO DIP POLES';
+    $('cap-solve').textContent = String(state.solve).padStart(4, '0');
+    $('cu1').textContent = 'DIP N · ' + fmtLat(m.poles.north[0]) + ' ' + fmtLon(m.poles.north[1]);
+    $('cu2').textContent = 'DIP S · ' + fmtLat(m.poles.south[0]) + ' ' + fmtLon(m.poles.south[1]);
+    $('cu3').textContent = 'Bz ' + signed(s.bz) + ' nT · Kp ' + (+s.kp).toFixed(1);
+  }
+  function badge(id, kind, text) {
+    const el = $(id); if (!el) return;
+    el.className = 'u-src ' + kind;
+    el.innerHTML = '<i></i>' + text;
+  }
+  function setBadges() {
+    badge('model-badge', 'snap', 'MODEL');
+    badge('sw-badge', state.live.swpc ? 'live' : (state.sim ? 'sim' : 'snap'), 'SWPC');
+    badge('obs-badge', state.live.obs ? 'live' : (state.sim ? 'sim' : 'snap'), 'OBS');
+    badge('aur-badge', state.live.aurora ? 'live' : (state.sim ? 'sim' : 'snap'), 'AUR');
+    $('t-src').textContent = state.live.swpc ? 'SWPC LIVE' : (state.sim ? 'SIM' : 'SNAPSHOT');
+  }
+  function setCompassMeta() { $('cmp-meta').textContent = state.obs ? 'OBS ' + fmtD(state.obs.D) : 'MODEL --'; }
+  function setAdvisory() {
+    const s = state.swpc, sc = state.scales;
+    const kp = s ? +s.kp : 0, dst = s ? +s.dst : 0;
+    const g = sc && sc['0'] && sc['0'].G ? sc['0'].G : null;
+    const alert = state.alerts && state.alerts.length ? state.alerts[state.alerts.length - 1] : null;
+    let text = 'NO ACTIVE WATCH';
+    if (kp >= 7 || dst <= -100) text = 'SEVERE GEOMAGNETIC STORM';
+    else if (kp >= 5 || dst <= -50) text = 'GEOMAGNETIC STORM WATCH';
+    else if (kp >= 4) text = 'ACTIVE CONDITIONS';
+    $('adv1').textContent = text;
+    $('adv1').innerHTML = '<b>' + text + '</b>';
+    $('adv2').textContent = alert ? String(alert.message || '').split('\n').filter(Boolean)[2] || 'SWPC alert in effect.' : (g ? 'NOAA scale G' + g.Scale + ' · ' + g.Text : 'Waiting for SWPC scales.');
+    $('adv3').innerHTML = 'ARMED · NEVER ISSUED <span class="caret"></span>';
+    badge('adv-badge', kp >= 5 ? 'degraded' : 'sim', kp >= 5 ? 'WATCH' : 'NOT ISSUED');
+  }
+  function buildTable() {
+    const box = $('decl-table');
+    box.innerHTML = state.model.ports.map((p) => {
+      const rule = Math.abs(p.declination) > 5;
+      const w = clamp(Math.abs(p.declination) / 40 * 100, 2, 100);
+      return '<div class="drow' + (rule ? ' rule' : '') + '"><span class="name">' + p.name + '</span><span class="d">' + fmtD(p.declination) + '</span><span class="dr">' + signed(p.drift) + '°</span><span class="bar"><i style="width:' + w + '%"></i><b></b></span><span class="st">' + (rule ? 'RULE' : 'OK') + '</span></div>';
+    }).join('');
+    setInterval(() => {
+      if (!state.motion) return;
+      const rows = box.children;
+      if (!rows.length) return;
+      const i = (state.solve + Math.floor(performance.now() / 2400)) % rows.length;
+      for (const r of rows) r.classList.remove('scan');
+      rows[i].classList.add('scan');
+    }, 700);
+  }
+  function tickClock() {
+    const d = new Date();
+    $('t-utc').textContent = hms(d);
+    if (state.swpc && state.swpc.time) $('t-src').textContent = state.live.swpc ? 'SWPC LIVE' : (state.sim ? 'SIM' : 'SNAPSHOT');
+  }
+
+  // --- canvas panels ------------------------------------------------------------------------
+  function initCanvases() {
+    const safe = (name, fn) => (ctx, w, h, t) => {
+      try { fn(ctx, w, h, state.motion ? t : 0); }
+      catch (e) { if (window.__dcErr.length < 12) window.__dcErr.push(name + ': ' + (e && e.message ? e.message : e)); }
+    };
+    U.canvas('#cmp-cv', safe('compass', drawCompass), { fps: 8 });
+    U.canvas('#mag-cv', safe('magnetogram', drawMagnetogram), { fps: 4 });
+    U.canvas('#kp-cv', safe('storm', drawStorm), { fps: 4 });
+    U.canvas('#trk-cv', safe('tracks', drawTracks), { fps: 2 });
+  }
+  function drawCompass(ctx, w, h, t) {
+    const cx = w / 2, cy = h / 2 + 2, R = Math.min(w, h) * .38;
+    ctx.strokeStyle = rgba(COL.dim, .25); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    for (let i = 0; i < 72; i++) {
+      const a = i / 72 * TAU, long = i % 6 === 0;
+      ctx.strokeStyle = rgba(COL.data, long ? .55 : .18);
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (R - (long ? 6 : 3)), cy + Math.sin(a) * (R - (long ? 6 : 3))); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke();
+    }
+    ctx.fillStyle = rgba(COL.dim, .7); ctx.font = '7px ' + getComputedStyle(document.body).fontFamily; ctx.textAlign = 'center'; ctx.fillText('N', cx, cy - R - 5);
+    const d = state.obs && state.obs.D != null ? state.obs.D : 0;
+    const a = (-90 + d + Math.sin(t * .8) * .35) * DEG;
+    ctx.strokeStyle = rgba(COL.k1, .9); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - Math.cos(a) * R * .7, cy - Math.sin(a) * R * .7); ctx.lineTo(cx + Math.cos(a) * R * .7, cy + Math.sin(a) * R * .7); ctx.stroke();
+    ctx.fillStyle = COL.text; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * R * .7, cy + Math.sin(a) * R * .7, 2.2, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(COL.alarm, .65); ctx.beginPath(); ctx.arc(cx, cy, R * .5, 0, TAU); ctx.stroke();
+  }
+  function drawMagnetogram(ctx, w, h, t) {
+    const o = state.obs; if (!o) return;
+    const series = o.series && o.series.H ? o.series : null;
+    ctx.strokeStyle = rgba(COL.dim, .18); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, h * .5); ctx.lineTo(w, h * .5); ctx.stroke();
+    const n = series ? Math.min(180, series.H.length) : 0;
+    if (!n) {
+      ctx.fillStyle = rgba(COL.dim, .7); ctx.font = '8px ' + getComputedStyle(document.body).fontFamily; ctx.fillText('AWAITING OBS 1 SERIES', 10, h / 2 - 8); return;
+    }
+    const draw = (arr, color, norm) => {
+      const vals = arr.filter((v) => v != null).slice(-n); let mn = Infinity, mx = -Infinity;
+      for (const v of vals) { if (v < mn) mn = v; if (v > mx) mx = v; }
+      const span = Math.max(1, mx - mn);
+      ctx.beginPath();
+      for (let i = 0; i < vals.length; i++) {
+        const x = i / Math.max(1, vals.length - 1) * w, y = h - 6 - (vals[i] - mn) / span * (h - 14) * norm;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = 1.1; ctx.stroke();
+    };
+    draw(series.H, rgba(COL.k3, .72), .92);
+    draw(series.D, rgba(COL.k1, .8), .45);
+    draw(series.Z, rgba(COL.accent, .55), .35);
+    const scan = (t * .07 % 1) * w;
+    ctx.strokeStyle = rgba(COL.text, .18); ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(scan, 2); ctx.lineTo(scan, h - 2); ctx.stroke();
+    ctx.fillStyle = rgba(COL.dim, .6); ctx.font = '7px ' + getComputedStyle(document.body).fontFamily;
+    ctx.fillText('H', 6, 10); ctx.fillText('D', 6, 20); ctx.fillText('Z', 6, 30);
+  }
+  function drawStorm(ctx, w, h, t) {
+    const s = state.swpc; if (!s) return;
+    const kp = clamp(+s.kp, 0, 9), dst = +s.dst;
+    const kps = state.kpSeries && state.kpSeries.length ? state.kpSeries : [kp];
+    const dsts = state.dstSeries && state.dstSeries.length ? state.dstSeries : [dst];
+    const font = getComputedStyle(document.body).fontFamily;
+    ctx.strokeStyle = rgba(COL.dim, .14); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, h * .48); ctx.lineTo(w, h * .48); ctx.stroke();
+    ctx.strokeStyle = rgba(COL.alarm, .55); ctx.beginPath(); ctx.moveTo(w * 5 / 9, 2); ctx.lineTo(w * 5 / 9, h * .46); ctx.stroke();
+    const kx = (i) => i / Math.max(1, kps.length - 1) * w, ky = (v) => h * .45 - clamp(v, 0, 9) / 9 * (h * .38);
+    ctx.beginPath(); kps.forEach((v, i) => i ? ctx.lineTo(kx(i), ky(v)) : ctx.moveTo(kx(i), ky(v)));
+    ctx.strokeStyle = rgba(COL.k1, .82); ctx.lineWidth = 1.2; ctx.stroke();
+    kps.forEach((v, i) => { if (i === kps.length - 1) { ctx.fillStyle = COL.text; ctx.beginPath(); ctx.arc(kx(i), ky(v), 2.4 + Math.sin(t * 2) * .5, 0, TAU); ctx.fill(); } });
+    let mn = Infinity, mx = -Infinity;
+    for (const v of dsts) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    const span = Math.max(1, mx - mn), dx = (i) => i / Math.max(1, dsts.length - 1) * w, dy = (v) => h - 8 - (v - mn) / span * (h * .35);
+    ctx.beginPath(); dsts.forEach((v, i) => i ? ctx.lineTo(dx(i), dy(v)) : ctx.moveTo(dx(i), dy(v)));
+    ctx.strokeStyle = rgba(COL.k3, .8); ctx.lineWidth = 1.1; ctx.stroke();
+    ctx.fillStyle = COL.text; ctx.font = '10px ' + font; ctx.fillText('Kp ' + kp.toFixed(1), 6, 13);
+    ctx.fillStyle = rgba(COL.k3, .9); ctx.font = '8px ' + font; ctx.fillText('Dst ' + Math.round(dst) + ' nT', 6, h - 4);
+    ctx.fillStyle = rgba(COL.dim, .7); ctx.fillText(kp >= 5 ? 'STORM' : kp >= 4 ? 'ACTIVE' : 'QUIET', w - 48, 13);
+  }
+  function drawTracks(ctx, w, h, t) {
+    const m = state.model; if (!m || !m.poleHistory) return;
+    const hx = (lon) => 8 + (wrap180(lon) + 180) / 360 * (w - 16);
+    const hy = (lat) => h - 10 - (lat + 90) / 180 * (h - 20);
+    ctx.strokeStyle = rgba(COL.dim, .10); ctx.lineWidth = 1;
+    for (const lat of [-60, 0, 60]) { ctx.beginPath(); ctx.moveTo(0, hy(lat)); ctx.lineTo(w, hy(lat)); ctx.stroke(); }
+    for (const lon of [-180, -90, 0, 90, 180]) { ctx.beginPath(); ctx.moveTo(hx(lon), 2); ctx.lineTo(hx(lon), h - 2); ctx.stroke(); }
+    const draw = (arr, col) => {
+      ctx.beginPath(); arr.forEach((p, i) => i ? ctx.lineTo(hx(p[1]), hy(p[0])) : ctx.moveTo(hx(p[1]), hy(p[0]))); ctx.strokeStyle = col; ctx.lineWidth = 1.35; ctx.stroke();
+      arr.forEach((p, i) => {
+        const last = i === arr.length - 1;
+        ctx.fillStyle = last ? COL.text : rgba(col, .6);
+        ctx.beginPath(); ctx.arc(hx(p[1]), hy(p[0]), last ? 2.4 : 1.3, 0, TAU); ctx.fill();
+        if (last) { ctx.strokeStyle = rgba(col, .55); ctx.lineWidth = .7; ctx.beginPath(); ctx.arc(hx(p[1]), hy(p[0]), 6, 0, TAU); ctx.stroke(); }
+      });
+    };
+    draw(m.poleHistory.north, rgba(COL.k1, .9));
+    draw(m.poleHistory.south, rgba(COL.cool, .85));
+    const n = m.poles.north, s = m.poles.south;
+    ctx.font = '7px ' + getComputedStyle(document.body).fontFamily; ctx.textAlign = 'left';
+    ctx.fillStyle = COL.k1; ctx.fillText('N ' + Math.abs(n[0]).toFixed(1) + '°', 5, 10);
+    ctx.fillStyle = COL.cool; ctx.fillText('S ' + Math.abs(s[0]).toFixed(1) + '°', 5, 20);
+    ctx.fillStyle = rgba(COL.dim, .65); ctx.textAlign = 'left'; ctx.fillText('1900', 5, h - 3); ctx.textAlign = 'right'; ctx.fillText('2025', w - 5, h - 3); ctx.textAlign = 'left';
+  }
+
+  // --- hero ---------------------------------------------------------------------------------
+  function resizeHero() {
+    const cv = $('dc-hero');
+    state.DPR = Math.min(window.devicePixelRatio || 1, 2);
+    state.W = Math.max(1, window.innerWidth); state.H = Math.max(1, window.innerHeight);
+    cv.width = Math.round(state.W * state.DPR); cv.height = Math.round(state.H * state.DPR);
+    cv.style.width = state.W + 'px'; cv.style.height = state.H + 'px';
+    const top = $('dc-top').getBoundingClientRect().height || 48;
+    const right = document.querySelector('.dc-right').getBoundingClientRect();
+    const bottom = document.querySelector('.dc-bot').getBoundingClientRect();
+    state.frameCx = (state.W - right.width) / 2;
+    state.frameCy = top + (state.H - top - bottom.height) / 2;
+    earthDirty = true;
+  }
+  let earthBuf = null, earthData = null, earthSize = 0, earthDirty = true, auroraSprite = null;
+  function makeAuroraSprite() {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 1, 32, 32, 31);
+    g.addColorStop(0, 'rgba(235,225,255,.72)'); g.addColorStop(.2, 'rgba(176,124,255,.42)'); g.addColorStop(.65, 'rgba(90,140,255,.10)'); g.addColorStop(1, 'rgba(58,46,158,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64); auroraSprite = c;
+  }
+  function drawEarth(ctx, frame) {
+    const R = cam.R, cx = cam.cx, cy = cam.cy;
+    if (!state.tex) {
+      const g = ctx.createRadialGradient(cx - R * .3, cy - R * .3, R * .1, cx, cy, R);
+      g.addColorStop(0, '#17407A'); g.addColorStop(.7, '#07112E'); g.addColorStop(1, '#02030D');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
+      return;
+    }
+    const size = Math.max(160, Math.min(360, Math.round(state.H * DISC_FRAC * 2 * state.DPR * 1.12)));
+    if (!earthBuf || earthSize !== size) {
+      earthBuf = document.createElement('canvas'); earthBuf.width = earthBuf.height = size;
+      earthData = earthBuf.getContext('2d').createImageData(size, size); earthSize = size; earthDirty = true;
+    }
+    if (earthDirty || (frame & 1) === 0) {
+      const d = earthData.data, half = size / 2, tex = state.tex, tw = tex.width, th = tex.height, td = tex.data;
+      const sun = n3([.86, .24, .30]);
+      for (let y = 0; y < size; y++) {
+        const ny = -(y + .5 - half) / half;
+        for (let x = 0; x < size; x++) {
+          const nx = (x + .5 - half) / half, o = (y * size + x) * 4;
+          const rr = nx * nx + ny * ny;
+          if (rr >= 1) { d[o + 3] = 0; continue; }
+          const nz = Math.sqrt(1 - rr);
+          const wx = cam.r[0] * nx + cam.up[0] * ny - cam.f[0] * nz;
+          const wy = cam.r[1] * nx + cam.up[1] * ny - cam.f[1] * nz;
+          const wz = cam.r[2] * nx + cam.up[2] * ny - cam.f[2] * nz;
+          const lat = Math.asin(clamp(wz, -1, 1)), lon = Math.atan2(wy, wx);
+          let u = (lon / TAU + .5) % 1; if (u < 0) u += 1;
+          const v = clamp((Math.PI / 2 - lat) / Math.PI, 0, .999);
+          const tx = (u * tw) | 0, ty = (v * th) | 0, ti = (ty * tw + tx) * 4;
+          const shade = Math.max(0, wx * sun[0] + wy * sun[1] + wz * sun[2]);
+          const lit = .13 + .92 * shade;
+          const night = 1 - shade;
+          let r = td[ti] * .40 * lit + 6 * night;
+          let g = td[ti + 1] * .58 * lit + 13 * night;
+          let b = td[ti + 2] * .86 * lit + 38 * night;
+          const rim = smooth((1 - nz) * 9);
+          r += 13 * rim; g += 30 * rim; b += 62 * rim;
+          d[o] = clamp(r, 0, 255); d[o + 1] = clamp(g, 0, 255); d[o + 2] = clamp(b, 0, 255); d[o + 3] = 255;
+        }
+      }
+      earthBuf.getContext('2d').putImageData(earthData, 0, 0);
+      earthDirty = false;
+    }
+    ctx.drawImage(earthBuf, cx - R, cy - R, R * 2, R * 2);
+    const atmo = ctx.createRadialGradient(cx, cy, R * .96, cx, cy, R * 1.28);
+    atmo.addColorStop(0, 'rgba(90,140,255,0)'); atmo.addColorStop(.10, 'rgba(90,140,255,.16)'); atmo.addColorStop(.48, 'rgba(58,46,158,.08)'); atmo.addColorStop(1, 'rgba(4,6,26,0)');
+    ctx.fillStyle = atmo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.28, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(COL.data, .35); ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+  }
+  function warpPoint(p, act) {
+    const r = Math.hypot(p[0], p[1], p[2]);
+    if (r < 1.02 || act <= 0) return p;
+    const sun = n3([.86, .24, .30]);
+    const ds = (p[0] * sun[0] + p[1] * sun[1] + p[2] * sun[2]) / r;
+    const f = r - 1;
+    const scale = 1 + act * (.11 * Math.max(0, -ds) - .06 * Math.max(0, ds)) * f;
+    const tail = act * .18 * Math.max(0, -ds) * f;
+    return [p[0] * scale - sun[0] * tail, p[1] * scale - sun[1] * tail, p[2] * scale - sun[2] * tail];
+  }
+  const FX = new Float32Array(360), FY = new Float32Array(360), FD = new Float32Array(360), FO = new Uint8Array(360);
+  function drawFieldLines(ctx, t, act) {
+    if (!state.lines) return;
+    const paths = Array.from({ length: 6 }, () => [new Path2D(), new Path2D(), new Path2D()]);
+    const levelA = [.10, .16, .24, .34, .48, .66];
+    const nLines = state.lines.length;
+    const highlight = new Set();
+    for (let i = 0; i < 12; i++) highlight.add((state.solve * 17 + i * 11) % nLines);
+    const reveal = clamp(((t * 1000) % 9000) / 1400, 0, 1);
+    const hiPath = new Path2D();
+    for (let li = 0; li < nLines; li++) {
+      const line = state.lines[li], pts = line.p, n = Math.min(360, pts.length / 3), apex = line.a, lev = line.l || 0;
+      const hi = highlight.has(li), lim = hi ? Math.max(2, Math.round(n * reveal)) : n;
+      let hiStarted = false;
+      for (let i = 0; i < n; i++) {
+        const p = warpPoint([pts[i * 3], pts[i * 3 + 1], pts[i * 3 + 2]], act);
+        if (occluded(p)) { FO[i] = 0; continue; }
+        const s = project(p);
+        if (s[2] < .4) { FO[i] = 0; continue; }
+        FX[i] = s[0]; FY[i] = s[1]; FD[i] = s[2]; FO[i] = 1;
+      }
+      for (let i = 0; i < lim - 1; i++) {
+        if (!FO[i] || !FO[i + 1]) continue;
+        const rr = Math.hypot(pts[i * 3], pts[i * 3 + 1], pts[i * 3 + 2]);
+        const bucket = rr > 3.4 ? 2 : (i < apex ? 0 : 1);
+        const path = paths[lev][bucket];
+        path.moveTo(FX[i], FY[i]); path.lineTo(FX[i + 1], FY[i + 1]);
+        if (hi) {
+          if (!hiStarted) { hiPath.moveTo(FX[i], FY[i]); hiStarted = true; }
+          hiPath.lineTo(FX[i + 1], FY[i + 1]);
+        }
+      }
+    }
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let lev = 0; lev < 6; lev++) {
+      const alpha = levelA[lev] * (.75 + .25 * act);
+      ctx.strokeStyle = rgba(COL.accent, alpha); ctx.lineWidth = 1.1;
+      ctx.stroke(paths[lev][0]);
+      ctx.strokeStyle = rgba(COL.k2, alpha * .82); ctx.lineWidth = 1.1;
+      ctx.stroke(paths[lev][1]);
+      ctx.strokeStyle = rgba(COL.flux, alpha * .75); ctx.lineWidth = 1.0;
+      ctx.stroke(paths[lev][2]);
+    }
+    ctx.strokeStyle = rgba(COL.text, .55); ctx.lineWidth = 1.5; ctx.stroke(hiPath);
+    ctx.restore();
+  }
+  function drawAurora(ctx, t, act) {
+    if (!auroraSprite) makeAuroraSprite();
+    const kp = state.swpc ? +state.swpc.kp : 3;
+    const ringLat = 67 - 2.2 * kp;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const sign of [1, -1]) {
+      for (const [latOff, width, alpha, color] of [[0, 6, .13, COL.cool], [0, 1.2, .38, '#8F5BFF'], [2.4, 3, .07, COL.cool]]) {
+        const path = new Path2D();
+        let started = false;
+        for (let lon = -180; lon <= 180; lon += 2) {
+          const p = llv(sign * (ringLat + latOff), lon, 1.012);
+          if (!facing(p) || occluded(p)) { started = false; continue; }
+          const q = project(p);
+          if (!started) { path.moveTo(q[0], q[1]); started = true; } else path.lineTo(q[0], q[1]);
+        }
+        ctx.strokeStyle = rgba(color, alpha * (.75 + .65 * act));
+        ctx.lineWidth = width; ctx.stroke(path);
+      }
+    }
+    ctx.restore();
+    const pts = state.aurora && state.aurora.points ? state.aurora.points : [];
+    drawAuroraPoints(ctx, pts, act);
+  }
+  function drawAuroraPoints(ctx, pts, act) {
+    if (!pts.length) return;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < pts.length; i++) {
+      const lon = pts[i][0], lat = pts[i][1], v = pts[i][2];
+      if (!(v > 2)) continue;
+      const p = llv(lat, lon, 1.015);
+      if (!facing(p) || occluded(p)) continue;
+      const q = project(p);
+      const r = (3.5 + Math.sqrt(v) * 1.1) * (.85 + .45 * act);
+      ctx.globalAlpha = clamp((.18 + .012 * v) * (.75 + .5 * act), 0, .72);
+      ctx.drawImage(auroraSprite, q[0] - r, q[1] - r, r * 2, r * 2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = rgba(COL.cool, (.12 + .12 * act));
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i += 2) {
+      const lon = pts[i][0], lat = pts[i][1], v = pts[i][2];
+      if (!(v > 5)) continue;
+      const p0 = llv(lat, lon, 1.004), p1 = llv(lat, lon, 1.045);
+      if (!facing(p0) || occluded(p0)) continue;
+      const a = project(p0), b = project(p1);
+      if (a[2] < .4 || b[2] < .4) continue;
+      ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawPins(ctx) {
+    if (!state.model) return;
+    const items = state.model.ports.map((p) => ({ name: p.name, lat: p.lat, lon: p.lon, d: p.declination, obs: false }));
+    items.push({ name: 'OBS 1', lat: 40.137, lon: -105.237, d: state.obs && state.obs.D != null ? state.obs.D : null, obs: true });
+    const vis = [];
+    for (const it of items) {
+      const p = llv(it.lat, it.lon, 1.014);
+      if (!facing(p) || occluded(p)) continue;
+      const q = project(p);
+      vis.push({ ...it, x: q[0], y: q[1] });
+    }
+    vis.sort((a, b) => (b.obs ? 1 : 0) - (a.obs ? 1 : 0) || Math.abs(b.d || 0) - Math.abs(a.d || 0));
+    ctx.save(); ctx.font = '7px ' + getComputedStyle(document.body).fontFamily; ctx.textBaseline = 'middle';
+    const placed = [];
+    let labels = 0;
+    for (const it of vis) {
+      const ac = it.obs ? COL.text : Math.abs(it.d || 0) > 5 ? COL.alarm : COL.data;
+      ctx.strokeStyle = rgba(ac, .8); ctx.fillStyle = rgba(ac, .9); ctx.lineWidth = .8;
+      ctx.beginPath(); ctx.moveTo(it.x, it.y - 3.2); ctx.lineTo(it.x + 3.2, it.y); ctx.lineTo(it.x, it.y + 3.2); ctx.lineTo(it.x - 3.2, it.y); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(it.x, it.y, 6, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+      if (!it.obs && Math.abs(it.d || 0) <= 5) continue;
+      if (labels >= 6) continue;
+      const txt = it.name + (it.d != null ? ' · ' + fmtD(it.d) : '');
+      const tw = ctx.measureText(txt).width, bw = tw + 8, bh = 13;
+      const right = it.x > cam.cx, lx = clamp(right ? it.x + 12 : it.x - 12 - bw, 6, state.W - bw - 6);
+      let ly = clamp(it.y - bh / 2, 6, state.H - bh - 6);
+      let tries = 0;
+      while (tries < 4 && placed.some((r) => lx < r.x + r.w + 3 && lx + bw > r.x - 3 && ly < r.y + r.h + 2 && ly + bh > r.y - 2)) { ly += 15; tries++; }
+      if (tries === 4) continue;
+      placed.push({ x: lx, y: ly, w: bw, h: bh });
+      ctx.strokeStyle = rgba(ac, .38); ctx.lineWidth = .6;
+      ctx.beginPath(); ctx.moveTo(it.x + (right ? 6 : -6), it.y); ctx.lineTo(right ? lx : lx + bw, ly + bh / 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(4,6,26,.82)'; ctx.fillRect(lx, ly, bw, bh);
+      ctx.strokeStyle = rgba(ac, .45); ctx.strokeRect(lx + .3, ly + .3, bw - .6, bh - .6);
+      ctx.fillStyle = ac; ctx.textAlign = 'left'; ctx.fillText(txt, lx + 4, ly + bh / 2 + .4);
+      labels++;
+    }
+    ctx.restore();
+  }
+  function drawPoles(ctx) {
+    if (!state.model) return;
+    const poles = [['N', state.model.poles.north, COL.accent], ['S', state.model.poles.south, COL.k1]];
+    ctx.save(); ctx.font = '600 8px ' + getComputedStyle(document.body).fontFamily; ctx.textBaseline = 'middle';
+    for (const [tag, ll, col] of poles) {
+      const p = llv(ll[0], ll[1], 1.005);
+      if (!facing(p) || occluded(p)) continue;
+      const q = project(p);
+      ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(q[0], q[1] - 5); ctx.lineTo(q[0] + 5, q[1]); ctx.lineTo(q[0], q[1] + 5); ctx.lineTo(q[0] - 5, q[1]); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = .3; ctx.beginPath(); ctx.arc(q[0], q[1], 9, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+      const label = 'DIP ' + tag + ' · ' + fmtLat(ll[0]) + ' ' + fmtLon(ll[1]);
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(4,6,26,.8)'; ctx.fillRect(q[0] + 9, q[1] - 10, tw + 7, 14);
+      ctx.strokeStyle = rgba(col, .45); ctx.strokeRect(q[0] + 9, q[1] - 10, tw + 7, 14);
+      ctx.fillStyle = col; ctx.fillText(label, q[0] + 13, q[1] - 3);
+    }
+    ctx.restore();
+  }
+  function drawRings(ctx, t) {
+    ctx.save(); ctx.setLineDash([2, 5]); ctx.lineDashOffset = -t * 3; ctx.lineWidth = .8;
+    ctx.font = '8px ' + getComputedStyle(document.body).fontFamily; ctx.fillStyle = rgba(COL.data, .7);
+    for (const n of [2, 3, 4]) {
+      const r = cam.F * n / cam.dist;
+      ctx.strokeStyle = rgba(COL.data, .12); ctx.beginPath(); ctx.arc(cam.cx, cam.cy, r, 0, TAU); ctx.stroke();
+      ctx.fillText(n + ' R', cam.cx + r * .7 + 4, cam.cy - r * .7);
+    }
+    ctx.restore();
+  }
+  function drawHero(now) {
+    const t0 = performance.now();
+    const cv = $('dc-hero'), ctx = cv.getContext('2d');
+    const t = (now - state.t0) / 1000;
+    const tt = state.motion ? t : 0;
+    state.frame = (state.frame || 0) + 1;
+    state.actSmooth += (state.activity - state.actSmooth) * .06;
+    camera(tt);
+    ctx.setTransform(state.DPR, 0, 0, state.DPR, 0, 0);
+    ctx.clearRect(0, 0, state.W, state.H);
+    const bg = ctx.createRadialGradient(state.W * .43, state.H * .43, 10, state.W * .43, state.H * .43, state.W * .62);
+    bg.addColorStop(0, '#0A1234'); bg.addColorStop(.45, '#050A20'); bg.addColorStop(1, '#02030D');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, state.W, state.H);
+    let a = performance.now(); drawRings(ctx, tt); const ringsMs = performance.now() - a;
+    a = performance.now(); drawEarth(ctx, state.frame); const earthMs = performance.now() - a;
+    a = performance.now(); drawFieldLines(ctx, tt, state.actSmooth); const linesMs = performance.now() - a;
+    a = performance.now(); drawAurora(ctx, tt, state.actSmooth); const auroraMs = performance.now() - a;
+    a = performance.now(); drawPins(ctx); drawPoles(ctx); const pinsMs = performance.now() - a;
+    window.__dcParts = { rings: +ringsMs.toFixed(1), earth: +earthMs.toFixed(1), lines: +linesMs.toFixed(1), aurora: +auroraMs.toFixed(1), pins: +pinsMs.toFixed(1) };
+    window.__dcDrawMs = Math.round((performance.now() - t0) * 10) / 10;
+  }
+  function startHero() {
+    const step = (now) => {
+      state.raf = requestAnimationFrame(step);
+      if (!state.motion) return;
+      drawHero(now);
+      const solve = 872 + Math.floor((now - state.t0) / 9000);
+      if (solve !== state.solve) {
+        state.solve = solve;
+        setTop();
+        if (state.swpc) pushLog('SOLVE', 'FIELD BUNDLE RE-TRACED · Kp ' + (+state.swpc.kp).toFixed(1) + ' · Bz ' + signed(state.swpc.bz), true);
+      }
+    };
+    if (state.motion) state.raf = requestAnimationFrame(step);
+    else drawHero(state.t0);
+  }
+
+  // --- hero navigation ----------------------------------------------------------------------
+  function clampView() {
+    const top = $('dc-top').getBoundingClientRect().height || 48;
+    const right = document.querySelector('.dc-right').getBoundingClientRect();
+    const bottom = document.querySelector('.dc-bot').getBoundingClientRect();
+    const mx = (state.W - right.width) * .55, my = (state.H - top - bottom.height) * .55;
+    state.view.x = clamp(state.view.x, -mx, mx);
+    state.view.y = clamp(state.view.y, -my, my);
+  }
+  function initHeroInteraction() {
+    const cv = $('dc-hero');
+    cv.addEventListener('wheel', (e) => {
+      if (!state.lines) return;
+      e.preventDefault();
+      const old = state.view.zoom;
+      const next = clamp(old * Math.exp(-e.deltaY * .0015), 1, 3.2);
+      if (Math.abs(next - old) < 1e-4) return;
+      const k = next / old;
+      const cx = state.frameCx + state.view.x, cy = state.frameCy + state.view.y;
+      state.view.x = cx + (1 - k) * (e.clientX - cx) - state.frameCx;
+      state.view.y = cy + (1 - k) * (e.clientY - cy) - state.frameCy;
+      state.view.zoom = next;
+      if (next <= 1.001) { state.view.zoom = 1; state.view.x = 0; state.view.y = 0; }
+      clampView();
+      if (!state.motion) drawHero(performance.now());
+    }, { passive: false });
+    cv.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !state.lines) return;
+      state.view.drag = true; state.view.lastX = e.clientX; state.view.lastY = e.clientY;
+      cv.classList.add('dragging');
+      try { cv.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!state.view.drag) return;
+      state.view.x += e.clientX - state.view.lastX;
+      state.view.y += e.clientY - state.view.lastY;
+      state.view.lastX = e.clientX; state.view.lastY = e.clientY;
+      clampView();
+      if (!state.motion) drawHero(performance.now());
+    });
+    const end = (e) => {
+      if (!state.view.drag) return;
+      state.view.drag = false; cv.classList.remove('dragging');
+      try { cv.releasePointerCapture(e.pointerId); } catch {}
+    };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+    cv.addEventListener('dblclick', () => {
+      state.view.zoom = 1; state.view.x = 0; state.view.y = 0;
+      if (!state.motion) drawHero(performance.now());
+    });
+  }
+
+  // --- UI wiring ----------------------------------------------------------------------------
+  const modal = $('dc-modal');
+  $('dc-data').addEventListener('click', () => modal.classList.add('on'));
+  $('dc-close').addEventListener('click', () => modal.classList.remove('on'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('on'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('on'); });
+  window.addEventListener('resize', () => { clearTimeout(state._rz); state._rz = setTimeout(() => { resizeHero(); drawHero(performance.now()); }, 120); });
+  initHeroInteraction();
+  boot();
+})();
+</script>
+</body>
+</html>

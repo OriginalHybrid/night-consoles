@@ -43,7 +43,11 @@
     'declination':      { bg:'#04061A', panel:'#0A0E28', text:'#EEF1FF', dim:'#8A8FC0', accent:'#D6E4FF', data:'#B0C6F5', cool:'#B07CFF', alarm:'#FF2016' },
     'spotfire':         { bg:'#0C0305', panel:'#180608', text:'#F6E6E0', dim:'#9A6A66', accent:'#FF2A1E', data:'#D8F0FF', cool:'#5CC0FF', alarm:'#FFC24A' },
     'rotor':            { bg:'#060E09', panel:'#0B1911', text:'#EDF5FF', dim:'#79BB95', accent:'#FF7E3B', data:'#66FF92', cool:'#2F56CA', alarm:'#FF1500' },
-    'the-cauldron':     { bg:'#0D0F08', panel:'#181B0E', text:'#F4F7DC', dim:'#8C9270', accent:'#D7F23A', data:'#D7F23A', cool:'#4FD6C8', alarm:'#FF4A2E' }
+    'the-cauldron':     { bg:'#0D0F08', panel:'#181B0E', text:'#F4F7DC', dim:'#8C9270', accent:'#D7F23A', data:'#D7F23A', cool:'#4FD6C8', alarm:'#FF4A2E' },
+    'lapidary-health':  { bg:'#0A0D10', panel:'#11161D', text:'#E2E8F0', dim:'#64748B', accent:'#FF3D7E', data:'#3FE0A0', cool:'#38BDF8', alarm:'#EF4444' },
+    'market-deck':      { bg:'#010308', panel:'#050A12', text:'#DCE6F2', dim:'#6B7C93', accent:'#F2B441', data:'#5CC8F0', cool:'#4C6EA6', alarm:'#FF3B5C' },
+    'helix-9':          { bg:'#050506', panel:'#0A0908', text:'#F2E8DC', dim:'#8A7A68', accent:'#F07800', data:'#C04800', cool:'#F2E8DC', alarm:'#FF3B30' },
+    'flight-tracking':  { bg:'#020704', panel:'#050E08', text:'#F5EFE0', dim:'#79BB7F', accent:'#C1FF37', data:'#52E3FF', cool:'#358954', alarm:'#FF1500' }
   };
 
   // Short labels + scene classification used by index + per-page meta.
@@ -87,7 +91,11 @@
     'declination':      { label:'DECLINATION',      kind:'Geomagnetic observatory',     gen:2 },
     'spotfire':         { label:'SPOTFIRE',         kind:'Fire spotting across the line', gen:2 },
     'rotor':            { label:'ROTOR',            kind:'Atrial phase mapping',        gen:2 },
-    'the-cauldron':     { label:'THE CAULDRON',     kind:'Regional volcano monitor',    gen:2 }
+    'the-cauldron':     { label:'THE CAULDRON',     kind:'Regional volcano monitor',    gen:2 },
+    'lapidary-health':  { label:'LAPIDARY HEALTH',  kind:'Preventive-lab diagnostic HUD', gen:2 },
+    'market-deck':      { label:'MARKET DECK',     kind:'US equities trading terminal', gen:2 },
+    'helix-9':          { label:'HELIX-9',         kind:'Genome analysis deck',        gen:2 },
+    'flight-tracking':  { label:'FLIGHT TRACKING', kind:'Live airspace operations',    gen:2 }
   };
 
   g.UISPACE = g.UISPACE || {};
