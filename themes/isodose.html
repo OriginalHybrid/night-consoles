@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="ISODOSE — a radiotherapy plan drawn as nested surfaces. A translucent head, a 3.1 cm³ target wrapped around the left optic nerve, isodose shells re-forming after every sweep of three arcs, and a nerve at 54.4 Gy against a 54.0 limit. A Night Consoles FUI study.">
+  <meta name="keywords" content="radiotherapy treatment planning UI, isodose surfaces, dose-volume histogram, VMAT arcs, medical physics figure, 3D volume rendering, sci-fi medical interface, FUI, fictional user interface, ambient screensaver, Night Consoles, Annas Rahman">
+  <meta name="author" content="Annas Rahman">
+  <meta name="theme-color" content="#060E0C">
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="canonical" href="https://uispace.org/isodose.html">
+  <!-- seo-metadata-v1 -->
+  <link rel="alternate" hreflang="en" href="https://uispace.org/isodose.html">
+  <link rel="alternate" hreflang="x-default" href="https://uispace.org/isodose.html">
+  <link rel="prev" href="https://uispace.org/dayseam.html">
+  <link rel="next" href="https://uispace.org/declination.html">
+
+  <meta property="og:site_name" content="Night Consoles">
+  <meta property="og:title" content="ISODOSE — Cinematic FUI Scene · Night Consoles">
+  <meta property="og:description" content="Revision 13 put 57.2 on the nerve, which is an eye. Revision 14 is three arcs and 2,317 iterations in, and Nandita Rao is still watching it fall before nine o'clock.">
+  <meta property="og:type" content="video.other">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://uispace.org/isodose.html">
+  <meta property="og:image" content="https://uispace.org/assets/images/og/isodose.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ISODOSE — a translucent head with nested coloured isodose shells around a red target, three beam arcs and a dose-volume histogram.">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@annasrahman">
+  <meta name="twitter:creator" content="@annasrahman">
+  <meta name="twitter:title" content="ISODOSE — Cinematic FUI Scene · Night Consoles">
+  <meta name="twitter:description" content="Revision 13 put 57.2 on the nerve, which is an eye. Nandita Rao is still watching revision 14 fall.">
+  <meta name="twitter:image" content="https://uispace.org/assets/images/og/isodose.jpg">
+  <meta name="twitter:image:alt" content="ISODOSE — radiotherapy plan as nested surfaces in a translucent head.">
+
+  <title>ISODOSE - Night Consoles</title>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": "ISODOSE",
+    "alternateName": "Night Consoles",
+    "headline": "A radiotherapy plan as nested surfaces — the nerve at 54.4 Gy against a 54.0 limit",
+    "description": "ISODOSE — a radiotherapy plan drawn as nested surfaces. A translucent head, a 3.1 cm³ target wrapped around the left optic nerve, isodose shells re-forming after every sweep of three arcs, and a nerve at 54.4 Gy against a 54.0 limit. A Night Consoles FUI study.",
+    "url": "https://uispace.org/isodose.html",
+    "image": "https://uispace.org/assets/images/og/isodose.jpg",
+    "creator": { "@type": "Person", "name": "Annas Rahman", "url": "https://annasrahman.com/" },
+    "isPartOf": { "@id": "https://uispace.org/#collection" },
+    "genre": ["Fictional User Interface", "Science Fiction", "Cinematic Interface"],
+    "keywords": "FUI, radiotherapy planning, isodose, DVH, VMAT, medical physics, volume rendering, ambient display, Night Consoles",
+    "inLanguage": "en"
+  }
+  </script>
+
+
+  <style>
+    /* ============================================================
+       ISODOSE — Kellan Institute, Radiation Oncology, planning WS 2.
+       Paradigm: a treatment-planning system drawn as a figure from a
+       medical-physics paper. Shape: the head volume fills the centre
+       (a software-rendered 3-D body in a measured axis box, the
+       isodose shells nested inside it, three arc fans around it);
+       the DVH, its detail inset and the convergence plot are the
+       right margin; beams, constraints and the optimiser log are a
+       low band. Dark ground, cool translucent shells, one warm colour
+       for the target, the nerve in bone-white. 1-px shared rules.
+       ============================================================ */
+    :root {
+      --p-bg: #020806; --p-panel: #06100D; --p-text: #F5EFE0; --p-dim: #79BBB0;
+      --p-accent: #FF1500; --p-data: #9DFEEB; --p-cool: #43AAEB; --p-alarm: #FF1500;
+      --p-iso95: #FF9C10; --p-iso80: #FFE047; --p-iso50: #55DEA3; --p-iso20: #43AAEB; --p-nerve: #F5F5EC;
+      --arc: var(--p-k2);
+      --rule: rgba(121, 187, 176, 0.36);
+      --rule2: rgba(121, 187, 176, 0.2);
+      --ink2: rgba(245, 239, 224, 0.74);
+      --ink3: rgba(245, 239, 224, 0.52);
+      --dim2: #A9D2CA;
+      --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      --sans: 'Inter', system-ui, sans-serif;
+      --fs-ghost: 8px;
+      --fs-lab: clamp(9px, 0.5vw, 10px);
+      --fs-body: clamp(9.5px, 0.56vw, 11px);
+      --fs-num: clamp(10px, 0.6vw, 12px);
+      --fs-title: clamp(10.5px, 0.62vw, 12px);
+      --fs-mid: clamp(13px, 0.86vw, 16.5px);
+      --fs-hero: clamp(22px, 1.46vw, 28px);
+      --fs-pin: clamp(11px, 0.6vw, 12px);
+      --pak-bg: #020806; --pak-color: #F5EFE0; --pak-font: 'IBM Plex Mono', monospace; --pak-size: 12px;
+    }
+    html, body {
+      background: var(--p-bg); color: var(--p-text); font-family: var(--sans);
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow: hidden;
+    }
+    canvas { display: block; }
+    .m { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .dim { color: var(--p-dim); }
+    .alm { color: var(--p-alarm); }
+
+    /* Height-derived sizes read the scene ROOT (--rootH, written by the module's
+       ResizeObserver), never the viewport: on a portrait phone chrome.css pins
+       #iso-root to 768 px while the layout viewport is much taller. */
+    .iso {
+      --rH: var(--rootH, 100vh);
+      --tH: clamp(40px, calc(var(--rH) * 0.046), 52px);
+      position: fixed; inset: 0; display: grid; gap: 1px; background: var(--rule);
+      grid-template-rows: var(--tH) minmax(0, 74fr) minmax(0, 26fr);
+    }
+    .iso > * { min-width: 0; min-height: 0; }
+    .iso, .iso *, .iso *::before, .iso *::after { box-sizing: border-box; }
+    .iso::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 30;
+      background-image: var(--grain, none); background-size: 180px 180px; opacity: 0.025;
+    }
+    /* (no blend mode on the grain: it lies over the animated canvases and rows, and a blend would recomposite them every frame) */
+    .zlab { font-size: var(--fs-lab); letter-spacing: 0.16em; color: var(--ink2); white-space: nowrap; font-weight: 500; }
+    .zlab b { color: var(--p-text); font-weight: 600; }
+    .zsub { font-family: var(--mono); font-size: var(--fs-ghost); letter-spacing: 0.04em; color: var(--dim2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .pl { display: inline-block; font-family: var(--sans); font-weight: 700; font-size: var(--fs-title); color: var(--p-text); margin-right: 6px; letter-spacing: 0; }
+
+    /* ---------------- T · identity strip ---------------- */
+    .t { display: flex; align-items: stretch; background: var(--p-panel); gap: 1px; }
+    .t .tc { display: flex; flex-direction: column; justify-content: center; padding: 0 12px; min-width: 0; background: var(--p-panel); white-space: nowrap; }
+    .t .tc + .tc { box-shadow: -1px 0 0 var(--rule2); }
+    .t .r1 { font-size: var(--fs-title); letter-spacing: 0.12em; color: var(--p-text); font-weight: 600; line-height: 1.25; }
+    .t .r2 { font-family: var(--mono); font-size: var(--fs-ghost); letter-spacing: 0.05em; color: var(--dim2); line-height: 1.3; font-variant-numeric: tabular-nums; }
+    .t .wm { font-size: var(--fs-hero); letter-spacing: 0.06em; font-weight: 600; color: var(--p-text); line-height: 1; }
+    .t .kv { flex-direction: row; align-items: center; gap: 9px; }
+    .t .kv .k { display: flex; flex-direction: column; font-size: var(--fs-lab); letter-spacing: 0.14em; color: var(--ink2); line-height: 1.25; }
+    .t .kv .k small { font-family: var(--mono); font-size: var(--fs-ghost); letter-spacing: 0.04em; color: var(--dim2); }
+    .t .big { font-family: var(--mono); font-size: var(--fs-hero); font-weight: 500; line-height: 1; color: var(--p-text); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+    /* the alarm numeral keeps its alarm colour through every retype: status is a held colour, nothing blinks */
+    .t .big.alm { color: var(--p-alarm); text-shadow: 0 0 9px rgba(255, 21, 0, 0.55); }
+    #t-cov { color: var(--p-iso95); text-shadow: 0 0 10px rgba(255, 156, 16, 0.55), 0 0 22px rgba(255, 156, 16, 0.25); }
+    #t-iter { color: var(--p-k1); text-shadow: 0 0 10px rgba(255, 226, 86, 0.5), 0 0 22px rgba(255, 226, 86, 0.22); }
+    .t .u .dl { display: block; font-size: var(--fs-ghost); color: var(--p-nerve); opacity: 0; transition: opacity 0.9s ease; line-height: 1.2; }
+    .t .u .dl.on { opacity: 1; }
+    .t .u { font-family: var(--mono); font-size: var(--fs-num); color: var(--ink2); font-variant-numeric: tabular-nums; align-self: flex-end; padding-bottom: 2px; }
+    .t .clk { font-family: var(--mono); font-size: var(--fs-mid); color: var(--p-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .t .grow { flex: 1 1 auto; }
+    .pill { display: inline-block; font-family: var(--mono); font-size: clamp(9.5px, 0.52vw, 10.5px); letter-spacing: 0.12em; padding: 1px 7px; border: 1px solid var(--ink3); color: var(--ink2); line-height: 1.35; white-space: nowrap; }
+    .pill.fail { border-color: var(--p-alarm); color: var(--p-alarm); background: rgba(255, 21, 0, 0.16); font-weight: 600; }
+    .pill.pass { border-color: rgba(85, 222, 163, 0.55); color: var(--p-iso50); }
+    .pill.warn { border-color: rgba(255, 21, 0, 0.7); color: var(--p-alarm); }
+
+    /* ---------------- middle: hero + margin ---------------- */
+    .mid { display: grid; grid-template-columns: minmax(0, 68fr) minmax(0, 32fr); gap: 1px; background: var(--rule); }
+    .mid > * { min-width: 0; min-height: 0; }
+    .hero { position: relative; overflow: hidden; background: radial-gradient(ellipse 22% 26% at 51% 54%, rgba(255, 90, 50, 0.07) 0%, rgba(255, 90, 50, 0) 100%), radial-gradient(ellipse 60% 70% at 50% 52%, #06100E 0%, #020806 72%); }
+    .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    /* the hero's header marginalia sit on plates like the pins: the dolly and the arcs pass under them */
+    .h-cap { position: absolute; left: 7px; top: 7px; z-index: 3; pointer-events: none; padding: 3px 7px; background: rgba(2, 8, 6, 0.74); }
+    .h-cap .zsub { display: block; margin-top: 2px; }
+    .h-pins { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+    .pin { position: absolute; left: 0; top: 0; padding: 3px 7px 4px; background: rgba(2, 8, 6, 0.82); border-left: 1px solid var(--pc, var(--ink3)); transition: opacity 0.8s ease, background-color 0.35s ease, border-color 0.35s ease; white-space: nowrap; will-change: transform; }
+    .pin.r { border-left: 0; border-right: 1px solid var(--pc, var(--ink3)); text-align: right; }
+    .pin .pt { display: block; font-size: var(--fs-pin); letter-spacing: 0.13em; color: var(--ink2); font-weight: 600; line-height: 1.3; transition: color 0.35s ease; }
+    .pin .pv { display: block; font-family: var(--mono); font-size: var(--fs-body); color: var(--p-text); line-height: 1.3; font-variant-numeric: tabular-nums; transition: color 1.2s ease; }
+    .pin .pv .l { color: var(--dim2); }
+    .pin.hero-pin { padding: 5px 9px 6px; border-width: 2px; }
+    .pin.hero-pin .pt { color: var(--p-nerve); font-size: var(--fs-title); }
+    .pin.hero-pin .pv { font-size: var(--fs-mid); }
+    .pin.hero-pin .pv b { color: var(--p-alarm); font-weight: 500; }
+    .pin.lit .pv { color: #F4FFFD; }
+    .pin.off { opacity: 0; }
+    /* the review's selection: the structure being read has its pin lit (a lighter plate, its colour at full strength) */
+    .pin.rv { background: rgba(15, 16, 21, 0.88); border-left-color: var(--pch, var(--ink2)); }
+    .pin.r.rv { border-right-color: var(--pch, var(--ink2)); }
+    .pin.rv .pt { color: var(--p-text); }
+    .pin.hero-pin.rv .pt { color: var(--p-nerve); }
+    .pin.rv .pv { color: #F4FFFD; transition-duration: 0.35s; }
+    .h-leg { position: absolute; left: 14px; bottom: 12px; z-index: 3; pointer-events: none; padding: 6px 9px 7px; background: rgba(2, 8, 6, 0.8); border: 1px solid var(--rule2); }
+    .h-leg .lt { font-size: var(--fs-lab); letter-spacing: 0.14em; color: var(--ink2); font-weight: 600; margin-bottom: 3px; white-space: nowrap; }
+    .h-leg .lr { display: grid; grid-template-columns: 11px 3.1em 5.2em 5.4em; align-items: center; gap: 0 7px; font-family: var(--mono); font-size: var(--fs-body); line-height: 1.5; color: var(--ink2); font-variant-numeric: tabular-nums; white-space: nowrap; transition: color 0.9s ease; }
+    .h-leg .lr i { width: 11px; height: 8px; display: block; opacity: 1; }
+    .h-leg .lr.sel { color: var(--p-text); }
+    .h-leg .lr.sel i { outline: 1px solid #F4FFFD; outline-offset: 1px; }
+    .h-leg .lr .v { text-align: right; }
+    .h-leg .lx { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--rule2); font-family: var(--mono); font-size: var(--fs-ghost); color: var(--dim2); white-space: nowrap; }
+    .h-leg .lx i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin: 0 5px 0 0; }
+    .h-st { position: absolute; right: 7px; top: 7px; z-index: 3; text-align: right; pointer-events: none; padding: 3px 7px 4px; background: rgba(2, 8, 6, 0.74); }
+    .h-st .zlab { display: block; }
+    .h-st .bar { display: block; margin: 4px 0 0 auto; width: 150px; height: 3px; background: var(--rule2); position: relative; }
+    .h-st .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--arc); opacity: 0.8; width: 0; }
+
+    /* right margin: a · DVH, b · detail, c · convergence (a figure) */
+    .dvh { display: grid; grid-template-rows: auto minmax(0, 60fr) minmax(0, 40fr) auto; background: var(--p-panel); gap: 1px; }
+    .dvh > * { min-width: 0; min-height: 0; background: var(--p-bg); }
+    .p-hd { display: flex; align-items: baseline; gap: 8px; padding: 7px 12px 4px; }
+    .p-hd .sp { flex: 1; }
+    .p-cv { position: relative; }
+    .p-cv canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p-main { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+    .p-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1px; background: var(--p-panel); }
+    .p-sub { display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--p-bg); min-width: 0; min-height: 0; }
+    .p-sub .p-hd { padding: 6px 10px 2px; }
+    .p-ft { display: flex; gap: 12px; align-items: center; padding: 5px 12px 6px; font-family: var(--mono); font-size: var(--fs-body); color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .p-ft .sp { flex: 1; }
+    .p-ft b { color: var(--p-text); font-weight: 500; }
+
+    /* ---------------- bottom band: B beams · C constraints · D log ---------------- */
+    .bot { display: grid; grid-template-columns: minmax(0, 34fr) minmax(0, 40fr) minmax(0, 26fr); gap: 1px; background: var(--rule); }
+    .bot > * { min-width: 0; min-height: 0; background: var(--p-bg); display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+    .z-hd { display: flex; align-items: baseline; gap: 10px; padding: 7px 12px 4px; border-bottom: 1px solid var(--rule2); }
+    .z-hd .sp { flex: 1; }
+    .tbl { display: flex; flex-direction: column; padding: 2px 0 0; min-height: 0; }
+    .tr { display: grid; align-items: center; gap: 0 8px; padding: 0 12px; font-family: var(--mono); font-size: var(--fs-body); color: var(--ink2); font-variant-numeric: tabular-nums; white-space: nowrap; flex: 1 1 0; min-height: 0; max-height: 34px; border-bottom: 1px solid rgba(121, 187, 176, 0.12); position: relative; transition: background 1.6s ease; }
+    .tr > span { overflow: hidden; text-overflow: clip; }
+    .tr.th { flex: 0 0 auto; font-family: var(--sans); color: var(--dim2); padding-top: 3px; padding-bottom: 3px; border-bottom: 1px solid var(--rule2); }
+    .tr.th > span { font-size: var(--fs-ghost); letter-spacing: 0.12em; }
+    .tr .r { text-align: right; }
+    .tr .nm { color: var(--p-text); font-family: var(--sans); font-size: var(--fs-body); letter-spacing: 0.06em; font-weight: 500; }
+    .tr.hot { background: rgba(113, 156, 255, 0.07); }
+    .tr.fail { box-shadow: inset 2px 0 0 var(--p-alarm); }
+    .tr.fail .nm, .tr.fail .cur { color: var(--p-alarm); }
+    .tr.rs { background: rgba(245, 239, 224, 0.06); }
+    .bm .tr { grid-template-columns: 3.6em 2.8em 6.4em 3.8em 3.3em 2.6em 4.2em 3.6em minmax(0, 1fr); }
+    .bm .gl { color: var(--arc); }
+    .bm .tr:not(.th) > span:nth-child(7) { color: var(--p-k1); }
+    .bm .glyph { display: inline-block; width: 26px; height: 14px; vertical-align: middle; margin-right: 6px; }
+    .cs .tr { grid-template-columns: minmax(0, 8.6em) 4.2em 3.8em 4.6em 4.6em minmax(0, 1fr) 4.4em; }
+    .cs .bar { position: relative; height: 5px; background: rgba(121, 187, 176, 0.12); }
+    .cs .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--p-iso50); opacity: 0.9; transition: width 1.2s ease, opacity 0.35s ease; }
+    .cs .bar u { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--p-text); left: 90.9%; }
+    .cs .tr.fail .bar i { background: var(--p-alarm); opacity: 0.8; }
+    .cs .st { text-align: right; }
+    /* the review's selection: the structure being read has its row lit — a neutral plate under the row's
+       text; the FAIL row's red rule, red text and red pill keep their held colour */
+    .cs .tr { z-index: 0; transition: background 1.6s ease, color 0.35s ease; }
+    .cs .tr::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: rgba(245, 239, 224, 0.12); opacity: 0; transition: opacity 0.35s ease; }
+    .cs .tr.fail::before { left: 2px; }
+    .cs .tr.sel::before { opacity: 1; }
+    .cs .tr.sel { color: var(--p-text); }
+    .cs .tr.sel .bar i { opacity: 0.95; }
+    .cs .tr.fail.sel .bar i { opacity: 0.8; }
+    .lg .lines { position: relative; overflow: hidden; }
+    .lg .ln { position: absolute; left: 0; right: 0; padding: 0 12px; display: flex; gap: 9px; font-family: var(--mono); font-size: var(--fs-body); color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; transition: opacity 0.3s ease; }
+    .lg .ln .ts { color: var(--dim2); }
+    .lg .ln .tg { font-family: var(--sans); font-size: var(--fs-ghost); letter-spacing: 0.14em; color: var(--dim2); min-width: 3.4em; font-weight: 600; align-self: center; }
+    .lg .ln .tl { margin-left: -4px; color: var(--dim2); }
+    .iso.w-narrow .lg .ln .tl { display: none; }
+    .lg .ln.new { color: var(--p-text); }
+    .lg .ln.alm .tg { color: var(--p-alarm); }
+    .lg .ln.sys { color: var(--dim2); }
+
+    .iso-cut { position: absolute; inset: 0; z-index: 40; background: var(--p-bg); opacity: 0; pointer-events: none; }
+
+    /* ---------------- narrower / shorter roots (1366 × 768 and 1366 × 630) ---------------- */
+    .nar { display: none; }
+    .iso.w-narrow .opt { display: none !important; }
+    .iso.w-narrow .nar { display: inline; }
+    .iso.w-narrow .t .tc { padding: 0 9px; }
+    .iso.h-short .p-hd { padding: 5px 10px 2px; }
+    .iso.h-short .z-hd { padding: 4px 10px 3px; }
+    .iso.h-short .p-ft { padding: 3px 10px 4px; }
+    .iso.h-short .h-leg { padding: 4px 7px 5px; bottom: 8px; }
+    .iso.h-short .h-leg .lx { display: none; }
+    .iso.h-short .tr.th { padding-top: 2px; padding-bottom: 2px; }
+    .iso.h-xshort .p-ft .opt2 { display: none; }
+    .iso.h-xshort .h-cap .zsub + .zsub { display: none; }
+
+    .nc-back{color:var(--p-text);text-decoration:none;border-bottom:1px solid var(--rule)}
+    .nc-back:hover{color:var(--p-accent)}
+    .scan-toggles{position:absolute;right:7px;top:58px;z-index:5;display:flex;gap:4px;pointer-events:auto}
+    .scan-toggle{display:flex;align-items:center;gap:7px;background:rgba(2,8,6,.86);border:1px solid var(--rule2);color:var(--ink2);font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:4px 7px;cursor:pointer;line-height:1}
+    .scan-toggle b{font-weight:500;color:var(--p-dim);font-size:9px}
+    .scan-toggle[aria-pressed="true"]{border-color:var(--p-data);color:var(--p-text);box-shadow:inset 0 0 0 1px rgba(157,254,235,.18)}
+    .scan-toggle[aria-pressed="true"] b{color:var(--p-data)}
+    .scan-toggle.busy{opacity:.55;cursor:progress}
+    .scan-toggle.fail{border-color:var(--p-alarm);color:var(--p-alarm)}
+    @media(max-width:1180px){.scan-toggles{display:none}}
+    .scenescapes-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  </style>
+  <!-- Night Consoles SEO breadcrumbs -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Night Consoles", "item": "https://uispace.org/" },
+      { "@type": "ListItem", "position": 2, "name": "ISODOSE", "item": "https://uispace.org/isodose.html" }
+    ]
+  }
+  </script>
+
+  <!-- vercel-analytics-v1 -->
+</head>
+<body>
+  <!-- Night Consoles SEO crawler text — kept hidden, indexed -->
+  <h1 class="scenescapes-sr-only">ISODOSE — Radiotherapy Plan as Nested Surfaces</h1>
+  <p class="scenescapes-sr-only">ISODOSE — a radiotherapy plan drawn as nested surfaces. A translucent head, a 3.1 cm³ target wrapped around the left optic nerve, isodose shells re-forming after every sweep of three arcs, and a nerve at 54.4 Gy against a 54.0 limit. A Night Consoles FUI study.</p>
+
+  <main class="scene iso" id="iso-root">
+    <!-- ======================= T · identity strip ======================= -->
+    <header class="t" id="t-strip">
+      <div class="tc t-id">
+        <div class="r1">KELLAN INSTITUTE</div>
+        <div class="r2"><a class="nc-back" href="../index.html">NIGHT CONSOLES</a> ? ISODOSE / PLANNING WS 2</div>
+      </div>
+      <div class="tc">
+        <div class="r1">K-3311 · REV 14</div>
+        <div class="r2"><span class="opt">66 GY / 33 FX · 2.00 GY/FX · VMAT 3 ARCS</span><span class="nar">66 GY / 33 FX</span></div>
+      </div>
+      <div class="tc kv">
+        <div class="k">ITER<small id="t-obj">OBJ 0.0412</small></div>
+        <div class="big" id="t-iter">2,317</div>
+      </div>
+      <div class="tc kv">
+        <div class="k">L OPTIC NERVE<small>MAX · GY</small></div>
+        <div class="big alm" id="t-nerve">54.40</div>
+        <div class="u">/ 54.0<span class="dl" id="t-delta">▼0.020</span></div>
+      </div>
+      <div class="tc kv">
+        <div class="k">COVERAGE<small>V95 · PTV</small></div>
+        <div class="big" id="t-cov">96.8%</div>
+        <div class="u opt">≥ 95.0</div>
+      </div>
+      <div class="tc grow"></div>
+      <div class="tc">
+        <div class="r1">SIGN 09:00</div>
+        <div class="r2" id="t-left">T−19:00 · ONCOLOGIST</div>
+      </div>
+      <div class="tc">
+        <div class="clk" id="t-clock">08:41:00</div>
+        <div class="r2"><span class="opt">PLANNER </span>N. RAO</div>
+      </div>
+      <div class="tc">
+        <div><span class="pill fail" id="t-pill">NOT APPROVABLE</span></div>
+        <div class="r2 opt">REV 13 · NERVE 57.2 · REJECTED</div>
+      </div>
+    </header>
+
+    <!-- ======================= middle ======================= -->
+    <section class="mid">
+      <div class="hero" id="hero">
+        <canvas id="h-cv" title="Drag to orbit ? Wheel to zoom ? Double-click to reset"></canvas>
+        <div class="h-cap">
+          <div class="zlab"><span class="pl">a</span><b>PLAN VOLUME</b> · 3-D · DOSE GRID 2.0 MM · REV 14</div>
+          <span class="zsub" id="h-view">VIEW AZ 18.0° · EL 12.0° · ×1.00</span>
+          <span class="zsub" id="h-iso">ISO (21.3, 36.5, 1.6) MM · CT 1.0 MM · 212 SLICES</span>
+        </div>
+        <div class="h-st">
+          <span class="zlab" id="h-calc">OPTIMISER · ITER 2,318 IN 1.5 s</span>
+          <span class="zsub" id="h-calc2">VMAT · 3 ARCS · 302 CP · 2° SPACING</span>
+          <span class="bar"><i id="h-bar"></i></span>
+        </div>
+        
+        <div class="scan-toggles" id="scan-toggles">
+          <button class="scan-toggle" id="tg-brain" type="button" aria-pressed="false"><span>HOLO BRAIN</span><b>OFF</b></button>
+          <button class="scan-toggle" id="tg-skull" type="button" aria-pressed="false"><span>SCAN SKULL</span><b>OFF</b></button>
+          <button class="scan-toggle" id="tg-eyes" type="button" aria-pressed="true"><span>EYES</span><b>ON</b></button>
+        </div>
+<div class="h-pins" id="h-pins"></div>
+        <div class="h-leg" id="h-leg"></div>
+      </div>
+
+      <aside class="dvh" id="dvh">
+        <div class="p-hd">
+          <span class="zlab"><span class="pl">b</span><b>DVH</b> · CUMULATIVE · 7 STRUCTURES</span>
+          <span class="sp"></span>
+          <span class="zsub" id="d-sub">ITER 2,317 · 1.0 MM SAMPLING</span>
+        </div>
+        <div class="p-cv"><canvas id="d-cv"></canvas></div>
+        <div class="p-row">
+          <div class="p-sub">
+            <div class="p-hd"><span class="zlab"><span class="pl">c</span><b>DETAIL</b> · 53.0–55.0 GY</span></div>
+            <div class="p-cv"><canvas id="z-cv"></canvas></div>
+          </div>
+          <div class="p-sub">
+            <div class="p-hd"><span class="zlab"><span class="pl">d</span><b>CONVERGENCE</b> · NERVE MAX</span></div>
+            <div class="p-cv"><canvas id="c-cv"></canvas></div>
+          </div>
+        </div>
+        <div class="p-ft" id="d-ft">
+          <span id="d-cur">CURSOR · L OPTIC NERVE · D 51.8 GY · V 6.1 %</span>
+          <span class="sp"></span>
+          <span class="opt2"><span class="opt" id="d-proj">LINEAR PROJ 54.0 AT ITER 2,336</span><span class="nar" id="d-proj-n">PROJ 54.0 @ 2,336</span></span>
+        </div>
+      </aside>
+    </section>
+
+    <!-- ======================= bottom band ======================= -->
+    <footer class="bot">
+      <div class="bm" id="zb">
+        <div class="z-hd"><span class="zlab"><b>BEAMS</b> · VMAT · 3 ARCS</span><span class="sp"></span><span class="zsub" id="b-sub">6 MV · 600 MU/MIN · ISO 1</span></div>
+        <div class="tbl" id="b-tbl"></div>
+      </div>
+      <div class="cs" id="zc">
+        <div class="z-hd"><span class="zlab"><b>CONSTRAINTS</b> · 7 OAR</span><span class="sp"></span><span class="zsub" id="c-sub">6 PASS · 1 FAIL · SCORED 08:41:00</span></div>
+        <div class="tbl" id="c-tbl"></div>
+      </div>
+      <div class="lg" id="zd">
+        <div class="z-hd"><span class="zlab"><b>OPTIMISER</b> · LOG</span><span class="sp"></span><span class="zsub" id="l-sub">OBJ · NERVE · COV</span></div>
+        <div class="lines" id="l-lines"></div>
+      </div>
+    </footer>
+    <div class="iso-cut" id="iso-cut" aria-hidden="true"></div>
+  </main>
+
+  <script src="../shared/palettes.js"></script>
+<script type="module" src="../shared/isodose.js"></script>
+<script nomodule>
+/* Browsers without ES-module support get a readable message instead of a
+   blank screen. ES5-only; built with createElement/textContent. */
+(function () {
+  function show() {
+    var m = document.createElement('div');
+    m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;'
+      + 'display:flex;align-items:center;justify-content:center;background:#071110;'
+      + 'color:#E1E4D7;font-family:sans-serif;font-size:16px;line-height:1.6;'
+      + 'text-align:center;padding:8%';
+    m.appendChild(document.createTextNode('This live interface needs a current version of Chrome, Edge, Firefox, or Safari. The browser you are using does not support the graphics features it relies on.'));
+    if (document.body) { document.body.appendChild(m); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else { show(); }
+})();
+</script>
+</body>
+</html>

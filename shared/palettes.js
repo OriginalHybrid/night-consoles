@@ -39,7 +39,7 @@
     'overturn':         { bg:'#020504', panel:'#050A08', text:'#F5EFE0', dim:'#A3D3BF', accent:'#FFA049', data:'#8CFFCE', cool:'#8CCEFC', alarm:'#FF1500' },
     'skein':            { bg:'#0E0607', panel:'#190B0D', text:'#F5EFE0', dim:'#D38896', accent:'#FF3B5F', data:'#F5EAD1', cool:'#42E1BD', alarm:'#FFDC2B' },
     'dayseam':          { bg:'#090705', panel:'#100D08', text:'#FFF4DF', dim:'#CFC8B8', accent:'#FFC646', data:'#9FD4FF', cool:'#376FB0', alarm:'#FF1500' },
-    'isodose':          { bg:'#020806', panel:'#06100D', text:'#F5EFE0', dim:'#79BBB0', accent:'#FF1500', data:'#9DFEEB', cool:'#43AAEB', alarm:'#FF1500' },
+    'isodose':          { bg:'#020806', panel:'#06100D', text:'#F5EFE0', dim:'#79BBB0', accent:'#FF4A3A', data:'#9DFEEB', cool:'#43AAEB', alarm:'#FF1500', iso95:'#FF9C10', iso80:'#FFE047', iso50:'#55DEA3', iso20:'#43AAEB', nerve:'#F5F5EC', k1:'#FFE256', k2:'#56A5FF', k3:'#FFA151' },
     'declination':      { bg:'#04061A', panel:'#0A0E28', text:'#EEF1FF', dim:'#8A8FC0', accent:'#D6E4FF', data:'#B0C6F5', cool:'#B07CFF', alarm:'#FF2016' },
     'spotfire':         { bg:'#0C0305', panel:'#180608', text:'#F6E6E0', dim:'#9A6A66', accent:'#FF2A1E', data:'#D8F0FF', cool:'#5CC0FF', alarm:'#FFC24A' },
     'rotor':            { bg:'#060E09', panel:'#0B1911', text:'#EDF5FF', dim:'#79BB95', accent:'#FF7E3B', data:'#66FF92', cool:'#2F56CA', alarm:'#FF1500' },

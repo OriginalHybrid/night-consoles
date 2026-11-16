@@ -1,6 +1,6 @@
 # Night Consoles
 
-Nine self-contained, large-format data interfaces built with HTML, CSS, Canvas, and WebGL. The project is a static site with no build step and no package manager required.
+Ten self-contained, large-format data interfaces built with HTML, CSS, Canvas, and WebGL. The project is a static site with no build step and no package manager required.
 
 ## Themes
 
@@ -15,8 +15,9 @@ Nine self-contained, large-format data interfaces built with HTML, CSS, Canvas, 
 | Storm Forecast | Storm track, pressure, wind, rain, forecast | `themes/storm-forecast.html` |
 | Wildfire Spread | Fire weather, terrain, spot fires, containment | `themes/wildfire-spread.html` |
 | Live Flights | Regional AvioADSB aircraft, world map, flight ladder, altitude profile, 3D aircraft hologram | `themes/flight-tracking.html` |
+| Radiotherapy Planning | Isodose shells, DVH, VMAT arcs, constraints, optional MRI/CT/PET hologram | `themes/isodose.html` |
 
-The root `index.html` is the animated preview index for all nine themes.
+The root `index.html` is the animated preview index for all ten themes.
 
 ## Requirements
 
@@ -85,7 +86,7 @@ The repository includes `.nojekyll`, so the static folders and assets are served
 
 ```text
 index.html                 animated theme index
-themes/                    the eight standalone theme pages
+themes/                    the ten standalone theme pages
 assets/previews/           animated WebP preview loops
 assets/                    theme-specific images and frame sequences
 shared/                    shared CSS, canvas helpers, palettes, and vendored Three.js
@@ -108,6 +109,17 @@ All clinical, financial, and operational values are research/demo data. Nothing 
 ## Live flights
 
 `flight-tracking` calls AvioADSB directly from the browser. Anonymous limits are 1 request every 10 seconds and 100 requests per day, with 100 nm point queries. The world map remains simulated outside the selected region. No Worker or proxy is required.
+
+
+## ISODOSE scan assets
+
+`isodose` ships with the exact procedural head as the default view. The optional `HOLO BRAIN`, `SCAN SKULL`, and `EYES` toggles load or hide precomputed assets derived from open data. Drag the hero to orbit; use the wheel to zoom; double-click to reset.
+
+- Brain surface: OpenNeuro `ds003563` (CC0), FreeSurfer pial surface.
+- FDG PET: OpenNeuro `ds006917` (CC0), subject 004.
+- Skull/eyes: Zenodo `3374839` cranial CT (CC BY 4.0).
+
+Raw DICOM/NIfTI files are not committed. See `assets/isodose/README.md` for provenance, processing, and attribution. The scan layers are illustrative and are not medical software.
 
 ## Verification
 
