@@ -1,28 +1,28 @@
 # Night Consoles
 
-Ten self-contained, large-format data interfaces built with HTML, CSS, Canvas, and WebGL. The project is a static site with no build step and no package manager required.
+A growing collection of self-contained, large-format "night console" data interfaces built with HTML, CSS, Canvas, and WebGL. The project is a static site with no build step and no package manager required.
 
-## Themes
+## Consoles
 
-| Theme | Data displayed | Entry point |
-| --- | --- | --- |
-| Genome Analysis | DNA structure, sequence, variants, proteins, 3D helix | `themes/genome-analysis.html` |
-| Preventive Lab | Blood panel, vitals, risk flags, anatomy, ECG | `themes/preventive-lab.html` |
-| Market Data | Equities watchlist, candles, forecast, news, order book | `themes/market-data.html` |
-| Geomagnetic Field | IGRF-14 field lines, dip poles, solar wind, aurora | `themes/geomagnetic-field.html` |
-| Asteroid Operations | Hull EVA, Bennu ephemeris, DSN telemetry, stars | `themes/asteroid-operations.html` |
-| Neural Telemetry | Model DAG, loss, gradients, weights, inference | `themes/neural-telemetry.html` |
-| Storm Forecast | Storm track, pressure, wind, rain, forecast | `themes/storm-forecast.html` |
-| Wildfire Spread | Fire weather, terrain, spot fires, containment | `themes/wildfire-spread.html` |
-| Live Flights | Regional AvioADSB aircraft, world map, flight ladder, altitude profile, 3D aircraft hologram | `themes/flight-tracking.html` |
-| Radiotherapy Planning | Isodose shells, DVH, VMAT arcs, constraints, optional MRI/CT/PET hologram | `themes/isodose.html` |
+| Console | Interface | Data displayed | Entry point |
+| --- | --- | --- | --- |
+| HELIX-9 | Genome Analysis | DNA structure, sequence, variants, proteins, 3D helix | `themes/genome-analysis.html` |
+| LAPIDARY HEALTH | Preventive Lab | Blood panel, vitals, risk flags, anatomy, ECG | `themes/preventive-lab.html` |
+| MARKET DECK | Market Data | Equities watchlist, candles, forecast, news, order book | `themes/market-data.html` |
+| DECLINATION | Geomagnetic Field | IGRF-14 field lines, dip poles, solar wind, aurora | `themes/geomagnetic-field.html` |
+| HARROW | Asteroid Operations | Hull EVA, Bennu ephemeris, DSN telemetry, stars | `themes/asteroid-operations.html` |
+| TIDAL-3 | Neural Telemetry | Model DAG, loss, gradients, weights, inference | `themes/neural-telemetry.html` |
+| GYRE WATCH | Storm Forecast | Storm track, pressure, wind, rain, forecast | `themes/storm-forecast.html` |
+| SPOTFIRE | Wildfire Spread | Fire weather, terrain, spot fires, containment | `themes/wildfire-spread.html` |
+| Live Flights | Flight Tracking | Regional AvioADSB aircraft, world map, flight ladder, altitude profile, 3D aircraft hologram | `themes/flight-tracking.html` |
+| ISODOSE | Radiotherapy Planning | Isodose shells, DVH, VMAT arcs, constraints, optional MRI/CT/PET hologram | `themes/isodose.html` |
 
-The root `index.html` is the animated preview index for all ten themes.
+The root `index.html` is the animated preview index. Each console is a standalone page in `themes/`; new consoles can be added without changing the build setup.
 
 ## Requirements
 
 - A modern browser with JavaScript enabled
-- WebGL for the 3D DNA viewport in `helix-9`
+- WebGL for the 3D DNA helix and flight hologram
 - Python 3 or Node.js for a local static server
 
 No install or build step is required. Three.js is vendored under `shared/vendor/`.
@@ -30,8 +30,8 @@ No install or build step is required. Three.js is vendored under `shared/vendor/
 ## Clone and run locally
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/night-console.git
-cd night-console
+git clone https://github.com/OriginalHybrid/night-consoles.git
+cd night-consoles
 ```
 
 Start a static server from the repository root.
@@ -66,18 +66,18 @@ Open:
 http://localhost:8123/
 ```
 
-Do not open the files directly with `file://`. The themes use ES modules, local JSON fetches, and canvas assets, so a local HTTP server is required.
+Do not open the files directly with `file://`. The consoles use ES modules, local JSON fetches, and canvas assets, so a local HTTP server is required.
 
 ## GitHub Pages
 
-1. Push the repository to GitHub as `night-console`.
+1. Push the repository to GitHub as `night-consoles`.
 2. Open **Settings > Pages**.
 3. Set **Source** to **Deploy from a branch**.
 4. Select the `main` branch and the `/ (root)` folder.
 5. Save. The site will publish at:
 
 ```text
-https://YOUR-USERNAME.github.io/night-console/
+https://originalhybrid.github.io/night-consoles/
 ```
 
 The repository includes `.nojekyll`, so the static folders and assets are served directly.
@@ -85,10 +85,10 @@ The repository includes `.nojekyll`, so the static folders and assets are served
 ## Project layout
 
 ```text
-index.html                 animated theme index
-themes/                    the ten standalone theme pages
-assets/previews/           animated WebP preview loops
-assets/                    theme-specific images and frame sequences
+index.html                 animated console index
+themes/                    standalone console pages
+assets/previews/           animated WebP preview loops for the index
+assets/                    per-console images, geometry, and frame sequences
 shared/                    shared CSS, canvas helpers, palettes, and vendored Three.js
 shared/data/               baked fallback data and data notes
 specs/                     reference captures, screenshots, and generation/verification scripts
@@ -96,20 +96,24 @@ specs/                     reference captures, screenshots, and generation/verif
 
 ## Data and network behavior
 
-Several themes attempt keyless live feeds and fall back to deterministic simulated data when a feed is unavailable:
+Several consoles attempt keyless live feeds and fall back to deterministic simulated data when a feed is unavailable:
 
 - **Genome Analysis:** Ensembl REST and UCSC, with baked fallback and `?live=off`
 - **Market Data:** CoinGecko and GDELT where available, with simulated equities and forecasts
-- **Geomagnetic Field:** SWPC and model data, with a model fallback
-- **Storm Forecast / Wildfire Spread:** live feeds where available, with scenario fallbacks
-- **Live Flights:** AvioADSB regional live aircraft with a simulated global background; no key, proxy, or separate deployment
+- **Geomagnetic Field:** SWPC, USGS geomagnetism, and model data, with a model fallback
+- **Asteroid Operations:** NASA DSN Now and NOAA SWPC, with baked Bennu, Horizons, NEO, and star data
+- **Storm Forecast:** Maverick WX, NASA GIBS, and Open-Meteo, with scenario fallbacks
+- **Wildfire Spread:** Open-Meteo, NWS alerts, and Kanari events, with authored scenario fallbacks
+- **Live Flights:** AvioADSB regional live aircraft with a simulated global background, and callsign lookups from adsbdb; `?live=off` forces the baked dataset
+- **Neural Telemetry:** deterministic simulated training telemetry
+- **Preventive Lab:** baked mock patient data
+- **Radiotherapy Planning:** procedural anatomy and dose model, with optional baked scan layers
 
 All clinical, financial, and operational values are research/demo data. Nothing here is medical, investment, or operational advice.
 
 ## Live flights
 
 `flight-tracking` calls AvioADSB directly from the browser. Anonymous limits are 1 request every 10 seconds and 100 requests per day, with 100 nm point queries. The world map remains simulated outside the selected region. No Worker or proxy is required.
-
 
 ## ISODOSE scan assets
 
@@ -121,7 +125,7 @@ All clinical, financial, and operational values are research/demo data. Nothing 
 
 Raw DICOM/NIfTI files are not committed. See `assets/isodose/README.md` for provenance, processing, and attribution. The scan layers are illustrative and are not medical software.
 
-## Verification
+## Verification and regeneration
 
 Check theme encoding:
 
@@ -134,3 +138,5 @@ Regenerate the baked genome fallback:
 ```bash
 node specs/_tests/make-helix-9-data.mjs
 ```
+
+Additional generators for the baked data and assets live in `specs/_tests/`.
