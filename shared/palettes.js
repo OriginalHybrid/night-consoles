@@ -1,5 +1,5 @@
-/* uispace — clean-room palette registry.
- * Colour relationships follow the scene briefs from uispace.org (credited in README).
+/* Night Consoles — clean-room palette registry.
+ * Colour relationships follow the scene briefs for each console.
  * No source CSS or markup is copied. Free for personal / study use.
  */
 (function (g) {
@@ -98,7 +98,7 @@
     'flight-tracking':  { label:'FLIGHT TRACKING', kind:'Live airspace operations',    gen:2 }
   };
 
-  g.UISPACE = g.UISPACE || {};
-  g.UISPACE.PALETTES = P;
-  g.UISPACE.META = META;
+  g.NIGHTCONSOLES = g.NIGHTCONSOLES || {};
+  g.NIGHTCONSOLES.PALETTES = P;
+  g.NIGHTCONSOLES.META = META;
 })(window);

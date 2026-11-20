@@ -53,7 +53,7 @@
 
 // --- Boot ------------------------------------------------------------------
 
-const NC = window.UISPACE || {};
+const NC = window.NIGHTCONSOLES || {};
 const SLUG = 'isodose';
 const PAL = Object.assign({
   bg: '#020806', panel: '#06100D', text: '#F5EFE0', dim: '#79BBB0',

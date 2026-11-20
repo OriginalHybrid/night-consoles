@@ -6,8 +6,9 @@
 // This script has no network dependency; it reads the committed coefficient table.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = 'D:/Work/project-plans/uispace';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DATA = path.join(ROOT, 'shared/data/declination');
 const RAW = path.join(DATA, 'igrf14coeffs.txt');
 const DEG = Math.PI / 180;

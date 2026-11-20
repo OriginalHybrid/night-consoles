@@ -1,5 +1,8 @@
 import fs from 'node:fs';
-const dir = 'D:/Work/project-plans/uispace/themes';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../themes');
 const pats = ['\u00e2\u20ac\u201d', '\u00e2\u20ac\u201c', '\u00e2\u20ac\u2122', '\u00e2\u20ac\u0153',
   '\u00e2\u20ac', '\u00c2\u00b7', '\u00c2\u00b0', '\u00c3', '\u00e2\u20ac\u00a6', '\ufffd'];
 // a lone capital A-tilde is legitimate in Portuguese ("SÃO PAULO"); mojibake is

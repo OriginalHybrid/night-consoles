@@ -2,8 +2,10 @@
 // This is a manual bake step; the runtime never depends on it being fresh.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const OUT = 'D:/Work/project-plans/uispace/shared/data/declination/fallback.json';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const OUT = path.join(ROOT, 'shared/data/declination/fallback.json');
 const get = async (url) => {
   const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
   if (!r.ok) throw new Error(url + ' ' + r.status);

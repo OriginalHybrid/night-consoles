@@ -4,8 +4,10 @@
 // thermal detections are fetched live by the page at runtime.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const FINAL = 'D:/Work/project-plans/uispace/shared/data/spotfire';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const FINAL = path.join(ROOT, 'shared/data/spotfire');
 fs.mkdirSync(FINAL, { recursive: true });
 
 let seed = 0x5f1e2026;

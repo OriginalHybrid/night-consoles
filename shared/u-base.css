@@ -1,7 +1,6 @@
 /* ============================================================================
-   uispace — shared FUI style system (clean-room)
-   Original CSS. Layout grammar inspired by cinematic FUI references;
-   no stylesheet, markup or text is copied from uispace.org.
+   Night Consoles — shared FUI style system (clean-room)
+   Original CSS. Layout grammar inspired by cinematic FUI references.
    ========================================================================== */
 
 :root {
@@ -351,3 +350,27 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* index return link ------------------------------------------------------- */
+.nc-home {
+  flex: 0 0 auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 6px;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, .22);
+  color: inherit;
+  font: inherit;
+  font-size: 9px;
+  line-height: 1.15;
+  letter-spacing: .12em;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: .72;
+  pointer-events: auto;
+}
+.nc-home:hover, .nc-home:focus-visible { opacity: 1; text-decoration: none; }

@@ -1,11 +1,11 @@
 /* ============================================================================
-   uispace — shared behaviour + canvas toolkit (clean-room, original code)
+   Night Consoles — shared behaviour + canvas toolkit (clean-room, original code)
    Exposes window.U. Every theme page links this file and calls U.page(name).
    ========================================================================== */
 (function (g) {
   'use strict';
   const U = g.U = {};
-  const NS = g.UISPACE = g.UISPACE || {};
+  const NS = g.NIGHTCONSOLES = g.NIGHTCONSOLES || {};
   const TAU = Math.PI * 2;
 
   /* ------------------------------------------------------------ tiny helpers */

@@ -11,13 +11,14 @@
 import fs from 'node:fs';
 import zlib from 'node:zlib';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve('D:/Work/project-plans/uispace');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = path.join(ROOT, 'shared/data/harrow');
 fs.mkdirSync(OUT, { recursive: true });
 const write = (name, obj) => fs.writeFileSync(path.join(OUT, name), JSON.stringify(obj, null, name.endsWith('mesh.json') ? 0 : 2), 'utf8');
 const json = async (url) => {
-  const r = await fetch(url, { headers: { 'user-agent': 'uispace-harrow-data/1.0' } });
+  const r = await fetch(url, { headers: { 'user-agent': 'night-consoles-harrow-data/1.0' } });
   if (!r.ok) throw new Error(`${url} -> HTTP ${r.status}`);
   return await r.json();
 };

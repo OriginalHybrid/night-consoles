@@ -4,8 +4,9 @@
 //   node fix-encoding.mjs [--apply]
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = 'D:/Work/project-plans/uispace';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const APPLY = process.argv.includes('--apply');
 
 // cp1252 byte -> unicode
