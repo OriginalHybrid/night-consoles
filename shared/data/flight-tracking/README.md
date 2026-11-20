@@ -7,7 +7,8 @@ Fallback and global-background data for the `flight-tracking` theme.
 - `flights.json` - 110 simulated global flights, 8 region presets, and the default region.
 - `../../assets/flight-tracking/airports.json` - curated major-airport coordinates.
 - `../../assets/flight-tracking/aircraft-types.json` - aircraft type, capacity, range, and geometry metadata for the 3D hologram.
-- `../../assets/flight-tracking/world-110m.geojson` - Natural Earth 110m land.
+- `../../assets/flight-tracking/world-50m.geojson` - Natural Earth 50m land.
+- `../../assets/flight-tracking/borders-50m.geojson` - Natural Earth 50m admin boundaries.
 - `../../assets/flight-tracking/india-official-simplified.geojson` - India official-boundary overlay, simplified from the DataMeet India composite.
 - `../../specs/_tests/make-flight-tracking-data.mjs` - deterministic generator.
 
