@@ -1,6 +1,6 @@
 # Night Consoles
 
-A growing collection of self-contained, large-format "night console" data interfaces built with HTML, CSS, Canvas, and WebGL. The project is a static site with no build step and no package manager required.
+A growing collection of self-contained, large-format "night console" data interfaces built with HTML, CSS, Canvas, and WebGL (Inspired from uispaces.org). The project is a static site with no build step and no package manager required.
 
 See [dashboards.md](dashboards.md) for a detailed reference to each dashboard, its views, and whether its data is live, baked, simulated, or synthetic.
 
